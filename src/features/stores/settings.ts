@@ -880,7 +880,7 @@ const migratePersistedSettings = (
       DEFAULT_GAME_COMMENTARY_CONFIG.gameCommentaryPromptTemplate
   }
 
-  return migrated
+  return migrated as Partial<SettingsState>
 }
 
 const mergePersistedSettings = (
