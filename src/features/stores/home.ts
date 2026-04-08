@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
+import { createJSONStorage, persist, StateStorage } from 'zustand/middleware'
 
 import { Message } from '@/features/messages/messages'
 import { Viewer } from '../vrmViewer/viewer'
@@ -42,6 +42,98 @@ export interface TransientState {
 }
 
 export type HomeState = PersistedState & TransientState
+
+const HOME_STORAGE_KEY = 'aitube-kit-home'
+const HOME_STORAGE_WRITE_DEBOUNCE_MS = 750
+
+let pendingHomePersistValue: string | null = null
+let homePersistTimer: ReturnType<typeof setTimeout> | null = null
+let homePersistListenersRegistered = false
+
+const flushPendingHomePersist = () => {
+  if (typeof window === 'undefined' || pendingHomePersistValue === null) {
+    return
+  }
+
+  window.localStorage.setItem(HOME_STORAGE_KEY, pendingHomePersistValue)
+  pendingHomePersistValue = null
+}
+
+const scheduleHomePersistWrite = (value: string) => {
+  pendingHomePersistValue = value
+
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  if (homePersistTimer) {
+    clearTimeout(homePersistTimer)
+  }
+
+  homePersistTimer = setTimeout(() => {
+    homePersistTimer = null
+    flushPendingHomePersist()
+  }, HOME_STORAGE_WRITE_DEBOUNCE_MS)
+}
+
+const clearPendingHomePersist = () => {
+  pendingHomePersistValue = null
+  if (homePersistTimer) {
+    clearTimeout(homePersistTimer)
+    homePersistTimer = null
+  }
+}
+
+const registerHomePersistFlushListeners = () => {
+  if (typeof window === 'undefined' || homePersistListenersRegistered) {
+    return
+  }
+
+  const flush = () => {
+    if (homePersistTimer) {
+      clearTimeout(homePersistTimer)
+      homePersistTimer = null
+    }
+    flushPendingHomePersist()
+  }
+
+  window.addEventListener('pagehide', flush)
+  window.addEventListener('beforeunload', flush)
+  homePersistListenersRegistered = true
+}
+
+const homePersistStorage: StateStorage = {
+  getItem: (name) => {
+    if (typeof window === 'undefined') {
+      return null
+    }
+    return window.localStorage.getItem(name)
+  },
+  setItem: (name, value) => {
+    if (typeof window === 'undefined') {
+      return
+    }
+
+    if (name !== HOME_STORAGE_KEY) {
+      window.localStorage.setItem(name, value)
+      return
+    }
+
+    registerHomePersistFlushListeners()
+    scheduleHomePersistWrite(value)
+  },
+  removeItem: (name) => {
+    if (typeof window === 'undefined') {
+      return
+    }
+
+    if (name === HOME_STORAGE_KEY) {
+      clearPendingHomePersist()
+    }
+
+    window.localStorage.removeItem(name)
+  },
+}
 
 // 更新の一時的なバッファリングを行うための変数
 let saveDebounceTimer: ReturnType<typeof setTimeout> | null = null
@@ -128,7 +220,6 @@ const homeStore = create<HomeState>()(
               ...message,
               id: messageId,
             }
-            console.log(`Message updated: ID=${messageId}`)
           } else {
             if (!message.role || message.content === undefined) {
               console.error(
@@ -147,7 +238,6 @@ const homeStore = create<HomeState>()(
               ...(message.thinking && { thinking: message.thinking }),
             }
             updatedChatLog = [...currentChatLog, newMessage]
-            console.log(`Message added: ID=${messageId}`)
           }
 
           return { chatLog: updatedChatLog }
@@ -172,7 +262,8 @@ const homeStore = create<HomeState>()(
       lastDetectionTime: null,
     }),
     {
-      name: 'aitube-kit-home',
+      name: HOME_STORAGE_KEY,
+      storage: createJSONStorage(() => homePersistStorage),
       partialize: ({ chatLog, showIntroduction }) => ({
         chatLog: messageSelectors.cutImageMessage(chatLog),
         showIntroduction,
@@ -226,6 +317,11 @@ homeStore.subscribe((state, prevState) => {
         }
 
         console.log(`Saving ${messagesWithEmbedding.length} new messages...`)
+
+        if (typeof fetch !== 'function') {
+          console.warn('fetch is unavailable. Skipping chat log save.')
+          return
+        }
 
         void fetch('/api/save-chat-log', {
           method: 'POST',

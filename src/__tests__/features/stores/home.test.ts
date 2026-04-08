@@ -32,6 +32,11 @@ describe('homeStore', () => {
   beforeEach(() => {
     jest.spyOn(console, 'log').mockImplementation(() => {})
     jest.spyOn(console, 'error').mockImplementation(() => {})
+    ;(global as typeof globalThis & { fetch: jest.Mock }).fetch = jest
+      .fn()
+      .mockResolvedValue({
+        ok: true,
+      })
     // Reset store state
     homeStore.setState({
       chatLog: [],
@@ -42,6 +47,7 @@ describe('homeStore', () => {
 
   afterEach(() => {
     jest.restoreAllMocks()
+    delete (global as typeof globalThis & { fetch?: jest.Mock }).fetch
   })
 
   describe('chatProcessingCount', () => {
