@@ -240,6 +240,7 @@ interface General {
   dynamicRetrievalThreshold: number
   maxPastMessages: number
   useVideoAsBackground: boolean
+  hideVideoDisplay: boolean
   temperature: number
   maxTokens: number
   reasoningMode: boolean
@@ -563,6 +564,7 @@ const getInitialValuesFromEnv = (): SettingsState => ({
     parseInt(process.env.NEXT_PUBLIC_MAX_PAST_MESSAGES || '10') || 10,
   useVideoAsBackground:
     process.env.NEXT_PUBLIC_USE_VIDEO_AS_BACKGROUND === 'true',
+  hideVideoDisplay: process.env.NEXT_PUBLIC_HIDE_VIDEO_DISPLAY === 'true',
   temperature: parseFloat(process.env.NEXT_PUBLIC_TEMPERATURE || '1.0') || 1.0,
   maxTokens: parseInt(process.env.NEXT_PUBLIC_MAX_TOKENS || '4096') || 4096,
   reasoningMode: process.env.NEXT_PUBLIC_REASONING_MODE === 'true',
@@ -1062,6 +1064,7 @@ const settingsStore = create<SettingsState>()(
         surprisedMotionGroup: state.surprisedMotionGroup,
         maxPastMessages: state.maxPastMessages,
         useVideoAsBackground: state.useVideoAsBackground,
+        hideVideoDisplay: state.hideVideoDisplay,
         showQuickMenu: state.showQuickMenu,
         temperature: state.temperature,
         maxTokens: state.maxTokens,

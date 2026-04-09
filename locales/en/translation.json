@@ -429,6 +429,8 @@
   "InputArea": "Input area",
   "SideArea": "Side Panel",
   "NoDisplay": "Icon only display",
+  "HideVideoDisplay": "Hide video display",
+  "ShowVideoDisplay": "Show video display",
   "RemoveImage": "Delete image",
   "PasteImageSupported": "Image paste support",
   "ImageSizeExceeded": "Image size exceeds the 10MB limit",
