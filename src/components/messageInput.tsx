@@ -544,6 +544,7 @@ export const MessageInput = ({
               )}
               <textarea
                 ref={textareaRef}
+                data-testid="chat-message-input"
                 placeholder={
                   chatProcessing
                     ? `${t('AnswerGenerating')}${loadingDots}`
@@ -578,6 +579,7 @@ export const MessageInput = ({
                 isProcessing={chatProcessing}
                 disabled={chatProcessing || !userMessage || realtimeAPIMode}
                 onClick={handleSendClick}
+                data-testid="chat-send-button"
               />
 
               <IconButton
@@ -585,6 +587,7 @@ export const MessageInput = ({
                 className="bg-secondary hover:bg-secondary-hover active:bg-secondary-press disabled:bg-secondary-disabled"
                 onClick={onClickStopButton}
                 isProcessing={false}
+                data-testid="chat-stop-button"
               />
             </div>
           </div>

@@ -85,6 +85,7 @@ export const ChatLog = () => {
             <div key={i} ref={messages.length - 1 === i ? chatScrollRef : null}>
               {typeof msg.content === 'string' ? (
                 <Chat
+                  index={i}
                   role={msg.role}
                   message={msg.content}
                   thinking={msg.thinking}
@@ -95,6 +96,7 @@ export const ChatLog = () => {
               ) : (
                 <>
                   <Chat
+                    index={i}
                     role={msg.role}
                     message={msg.content ? msg.content[0].text : ''}
                     thinking={msg.thinking}
@@ -127,6 +129,7 @@ export const ChatLog = () => {
 }
 
 const Chat = ({
+  index,
   role,
   message,
   thinking,
@@ -134,6 +137,7 @@ const Chat = ({
   userName,
   userDisplayName,
 }: {
+  index: number
   role: string
   message: string
   thinking?: string
@@ -156,7 +160,11 @@ const Chat = ({
   const offsetX = role === 'user' ? 'pl-4 sm:pl-10' : 'pr-4 sm:pr-10'
 
   return (
-    <div className={`mx-auto ml-0 md:ml-10 lg:ml-20 my-4 ${offsetX}`}>
+    <div
+      className={`mx-auto ml-0 md:ml-10 lg:ml-20 my-4 ${offsetX}`}
+      data-testid={`chat-message-${role}`}
+      data-message-index={index}
+    >
       {role === 'code' ? (
         <pre className="whitespace-pre-wrap break-words bg-[#1F2937] text-theme p-4 rounded-lg">
           <code className="font-mono text-xs sm:text-sm">{message}</code>

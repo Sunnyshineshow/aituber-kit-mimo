@@ -127,6 +127,7 @@ const KioskSettings = () => {
             <ToggleSwitch
               enabled={kioskModeEnabled}
               onChange={(v) => settingsStore.setState({ kioskModeEnabled: v })}
+              testId="kiosk-mode-toggle"
             />
           </div>
         </div>
@@ -146,6 +147,7 @@ const KioskSettings = () => {
               value={passcodeInput}
               onChange={handlePasscodeChange}
               onBlur={handlePasscodeBlur}
+              data-testid="kiosk-passcode-input"
               aria-label={t('KioskPasscode')}
               className="w-48 px-4 py-2 bg-white border border-gray-300 rounded-lg font-mono"
               autoComplete="off"
@@ -175,6 +177,7 @@ const KioskSettings = () => {
               value={kioskMaxInputLength}
               onChange={handleMaxInputLengthChange}
               onBlur={handleMaxInputLengthBlur}
+              data-testid="kiosk-max-input-length-input"
               aria-label={t('KioskMaxInputLength')}
               className="w-24 px-4 py-2 bg-white border border-gray-300 rounded-lg"
             />
@@ -196,6 +199,7 @@ const KioskSettings = () => {
               onChange={(v) =>
                 settingsStore.setState({ kioskNgWordEnabled: v })
               }
+              testId="kiosk-ng-word-toggle"
             />
           </div>
 
@@ -211,6 +215,7 @@ const KioskSettings = () => {
                 value={ngWordsInput}
                 onChange={handleNgWordsChange}
                 onBlur={handleNgWordsBlur}
+                data-testid="kiosk-ng-words-input"
                 className="w-full h-24 px-4 py-2 bg-white border border-gray-300 rounded-lg resize-none"
                 aria-label={t('KioskNgWords')}
                 placeholder={t('KioskNgWordsPlaceholder')}

@@ -19,9 +19,17 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '24'
-          node-version-file: '.nvmrc'
+          node-version: '24.x'
           cache: 'npm'
+
+      - name: Setup npm
+        run: npm install -g npm@^11.6.2
+
+      - name: Verify toolchain
+        run: |
+          node --version
+          npm --version
+          node -e "const { execSync } = require('child_process'); const nodeMajor = Number(process.versions.node.split('.')[0]); const npmVersion = execSync('npm --version', { encoding: 'utf8' }).trim().split('.').map(Number); if (nodeMajor !== 24 || npmVersion[0] !== 11 || npmVersion[1] < 6 || (npmVersion[1] === 6 && npmVersion[2] < 2)) process.exit(1);"
 
       - name: Install dependencies
         run: npm ci
@@ -31,3 +39,113 @@ jobs:
 
       - name: Run tests
         run: npm test
+
+  e2e:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install canvas dependencies (cairo)
+        run: sudo apt-get update && sudo apt-get install -y libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24.x'
+          cache: 'npm'
+
+      - name: Setup npm
+        run: npm install -g npm@^11.6.2
+
+      - name: Verify toolchain
+        run: |
+          node --version
+          npm --version
+          node -e "const { execSync } = require('child_process'); const nodeMajor = Number(process.versions.node.split('.')[0]); const npmVersion = execSync('npm --version', { encoding: 'utf8' }).trim().split('.').map(Number); if (nodeMajor !== 24 || npmVersion[0] !== 11 || npmVersion[1] < 6 || (npmVersion[1] === 6 && npmVersion[2] < 2)) process.exit(1);"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npm run test:e2e:install:with-deps
+
+      - name: List E2E tests
+        run: npm run test:e2e -- --list
+
+      - name: Run E2E tests
+        run: npm run test:e2e
+
+      - name: Upload Playwright HTML report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-e2e
+          path: playwright-report/
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Upload Playwright traces and screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-test-results-e2e
+          path: test-results/
+          if-no-files-found: ignore
+          retention-days: 14
+
+  e2e-production:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install canvas dependencies (cairo)
+        run: sudo apt-get update && sudo apt-get install -y libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24.x'
+          cache: 'npm'
+
+      - name: Setup npm
+        run: npm install -g npm@^11.6.2
+
+      - name: Verify toolchain
+        run: |
+          node --version
+          npm --version
+          node -e "const { execSync } = require('child_process'); const nodeMajor = Number(process.versions.node.split('.')[0]); const npmVersion = execSync('npm --version', { encoding: 'utf8' }).trim().split('.').map(Number); if (nodeMajor !== 24 || npmVersion[0] !== 11 || npmVersion[1] < 6 || (npmVersion[1] === 6 && npmVersion[2] < 2)) process.exit(1);"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npm run test:e2e:install:with-deps
+
+      - name: List production E2E tests
+        run: npm run test:e2e:production -- --list
+
+      - name: Run production E2E smoke
+        env:
+          E2E_PORT: '3201'
+        run: npm run test:e2e:production
+
+      - name: Upload production Playwright HTML report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-e2e-production
+          path: playwright-report/
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Upload production Playwright traces and screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-test-results-e2e-production
+          path: test-results/
+          if-no-files-found: ignore
+          retention-days: 14

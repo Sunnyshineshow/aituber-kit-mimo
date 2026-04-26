@@ -15,7 +15,17 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version-file: '.nvmrc'
+          node-version: '24.x'
+          cache: 'npm'
+
+      - name: Setup npm
+        run: npm install -g npm@^11.6.2
+
+      - name: Verify toolchain
+        run: |
+          node --version
+          npm --version
+          node -e "const { execSync } = require('child_process'); const nodeMajor = Number(process.versions.node.split('.')[0]); const npmVersion = execSync('npm --version', { encoding: 'utf8' }).trim().split('.').map(Number); if (nodeMajor !== 24 || npmVersion[0] !== 11 || npmVersion[1] < 6 || (npmVersion[1] === 6 && npmVersion[2] < 2)) process.exit(1);"
 
       - name: Install dependencies
         run: npm ci
@@ -24,7 +34,7 @@ jobs:
         run: |
           npm run lint
           git add .
-          if ! git diff --exit-code; then
+          if ! git diff --cached --exit-code; then
             echo "ESLint changes detected. Please commit the changes."
             exit 1
           fi
@@ -33,7 +43,7 @@ jobs:
         run: |
           npm run format
           git add .
-          if ! git diff --exit-code; then
+          if ! git diff --cached --exit-code; then
             echo "Prettier changes detected. Please commit the changes."
             exit 1
           fi

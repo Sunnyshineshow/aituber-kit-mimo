@@ -174,7 +174,10 @@ export const PasscodeDialog: React.FC<PasscodeDialogProps> = ({
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+      data-testid="kiosk-passcode-dialog"
+    >
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-80 max-w-[90vw]">
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
           {t('Kiosk.PasscodeTitle')}
@@ -188,6 +191,7 @@ export const PasscodeDialog: React.FC<PasscodeDialogProps> = ({
           onChange={(e) => setPasscode(e.target.value)}
           onKeyDown={handleKeyDown}
           disabled={isLocked}
+          data-testid="kiosk-passcode-dialog-input"
           className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md
                      bg-white dark:bg-gray-700 text-gray-900 dark:text-white
                      focus:outline-none focus:ring-2 focus:ring-blue-500
@@ -197,23 +201,37 @@ export const PasscodeDialog: React.FC<PasscodeDialogProps> = ({
         />
 
         {error && !isLocked && (
-          <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>
+          <p
+            className="mt-2 text-sm text-red-600 dark:text-red-400"
+            data-testid="kiosk-passcode-error"
+          >
+            {error}
+          </p>
         )}
 
         {isLocked && lockoutCountdown > 0 && (
-          <p className="mt-2 text-sm text-orange-600 dark:text-orange-400">
+          <p
+            className="mt-2 text-sm text-orange-600 dark:text-orange-400"
+            data-testid="kiosk-passcode-lockout"
+          >
             {t('Kiosk.PasscodeLocked')} ({lockoutCountdown}秒)
           </p>
         )}
 
         {!isLocked && attempts > 0 && remainingAttempts > 0 && (
-          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+          <p
+            className="mt-2 text-sm text-gray-600 dark:text-gray-400"
+            data-testid="kiosk-passcode-remaining-attempts"
+          >
             {t('Kiosk.PasscodeRemainingAttempts', { count: remainingAttempts })}
           </p>
         )}
 
         {totalFailures >= RECOVERY_THRESHOLD && (
-          <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+          <p
+            className="mt-2 text-xs text-gray-500 dark:text-gray-400"
+            data-testid="kiosk-passcode-recovery-hint"
+          >
             {t('Kiosk.RecoveryHint')}
           </p>
         )}
@@ -221,6 +239,7 @@ export const PasscodeDialog: React.FC<PasscodeDialogProps> = ({
         <div className="mt-4 flex justify-end gap-2">
           <button
             onClick={onClose}
+            data-testid="kiosk-passcode-cancel-button"
             className="px-4 py-2 text-gray-700 dark:text-gray-300
                        hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
           >
@@ -231,6 +250,7 @@ export const PasscodeDialog: React.FC<PasscodeDialogProps> = ({
             disabled={
               isLocked || (passcode.length === 0 && correctPasscode.length > 0)
             }
+            data-testid="kiosk-passcode-unlock-button"
             className="px-4 py-2 bg-blue-600 text-white rounded-md
                        hover:bg-blue-700 transition-colors
                        disabled:bg-gray-400 disabled:cursor-not-allowed"

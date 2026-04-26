@@ -186,6 +186,7 @@ const Slides: React.FC<SlidesProps> = ({ markdown }) => {
   return (
     <div
       className="flex flex-col items-center justify-center"
+      data-testid="slide-mode-viewer"
       style={{
         height: '100vh',
         padding: '10px 0',

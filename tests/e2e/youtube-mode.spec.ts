@@ -4,6 +4,7 @@ import {
   expectPersistedSetting,
   gotoHome,
   openSettings,
+  openSettingsTab,
   prepareApp,
 } from './helpers/app'
 
@@ -17,7 +18,7 @@ test('can configure YouTube mode and start or stop polling without API keys', as
   await gotoHome(page)
   await openSettings(page)
 
-  await page.getByTestId('settings-tab-youtube').click()
+  await openSettingsTab(page, 'youtube')
   await expect(page.getByTestId('youtube-mode-toggle')).toBeVisible()
 
   await page.getByTestId('youtube-mode-toggle').click()

@@ -31,5 +31,13 @@
     ".next/types/**/*.ts",
     "src/types/**/*.d.ts"
   ],
-  "exclude": ["node_modules", ".mypy_cache", "scripts"]
+  "exclude": [
+    "node_modules",
+    "**/node_modules",
+    ".mypy_cache",
+    "scripts",
+    "aituber-kit-docs",
+    "aituber-kit-lp",
+    "promo-video"
+  ]
 }

@@ -1050,6 +1050,7 @@ const settingsStore = create<SettingsState>()(
         audioMode: state.audioMode,
         audioModeInputType: state.audioModeInputType,
         audioModeVoice: state.audioModeVoice,
+        slideMode: state.slideMode,
         messageReceiverEnabled: state.messageReceiverEnabled,
         clientId: state.clientId,
         useSearchGrounding: state.useSearchGrounding,

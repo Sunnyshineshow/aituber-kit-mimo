@@ -361,6 +361,8 @@ export const Menu = () => {
                       menuStore.setState({ slideVisible: !slideVisible })
                     }
                     disabled={slidePlaying}
+                    aria-pressed={slideVisible}
+                    data-testid="slide-visibility-toggle-button"
                   />
                 </div>
               )}

@@ -77,6 +77,7 @@ const Slide = () => {
           enabled={slideMode}
           onChange={() => toggleSlideMode()}
           disabled={!isSlideAvailable}
+          testId="slide-mode-toggle"
         />
       </div>
       <div className="mt-6 mb-4 text-xl font-bold">
@@ -86,6 +87,7 @@ const Slide = () => {
       <div className="flex items-center gap-2">
         <select
           id="folder-select"
+          data-testid="slide-folder-select"
           className="px-4 py-2 bg-white hover:bg-white-hover rounded-lg w-full md:w-1/2"
           value={selectedSlideDocs || ''}
           onChange={handleFolderChange}

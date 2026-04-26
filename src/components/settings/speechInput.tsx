@@ -148,6 +148,7 @@ const SpeechInput = () => {
                     initialSpeechTimeout: parseFloat(e.target.value),
                   })
                 }
+                data-testid="initial-speech-timeout-input"
                 className="mt-2 mb-4 input-range"
               />
             </div>
@@ -172,6 +173,7 @@ const SpeechInput = () => {
                     noSpeechTimeout: parseFloat(e.target.value),
                   })
                 }
+                data-testid="no-speech-timeout-input"
                 className="mt-2 mb-4 input-range"
               />
             </div>
@@ -184,6 +186,7 @@ const SpeechInput = () => {
                 onChange={(v) =>
                   settingsStore.setState({ showSilenceProgressBar: v })
                 }
+                testId="show-silence-progress-bar-toggle"
               />
             </div>
           </div>
@@ -197,6 +200,7 @@ const SpeechInput = () => {
               onChange={(v) =>
                 settingsStore.setState({ continuousMicListeningMode: v })
               }
+              testId="continuous-mic-listening-toggle"
             />
           </div>
         </>
