@@ -1,8 +1,14 @@
 import {
   buildGameCommentaryMessages,
+  generateGameCommentary,
   parseCommentaryResponse,
 } from '@/features/gameCommentary/generateGameCommentary'
 import { normalizeGameCommentarySceneAnalysis } from '@/features/gameCommentary/analyzeGameCommentaryScene'
+import { getAIChatResponseStream } from '@/features/chat/aiChatFactory'
+
+jest.mock('@/features/chat/aiChatFactory', () => ({
+  getAIChatResponseStream: jest.fn(),
+}))
 
 jest.mock('@/features/stores/settings', () => ({
   __esModule: true,
@@ -15,6 +21,19 @@ jest.mock('@/features/stores/settings', () => ({
 }))
 
 describe('game commentary helpers', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+  })
+
+  function createTextStream(text: string): ReadableStream<string> {
+    return new ReadableStream({
+      start(controller) {
+        controller.enqueue(text)
+        controller.close()
+      },
+    })
+  }
+
   it('builds commentary messages with background scene analyses', () => {
     const messages = buildGameCommentaryMessages(
       [{ commentary: '前回の実況', sceneDescription: '前回のシーン' }],
@@ -53,6 +72,50 @@ describe('game commentary helpers', () => {
       emotion: 'happy',
       sceneDescription: 'プレイヤーがボスの左後方へ回り込み、HPは6割。',
     })
+  })
+
+  it('passes AbortSignal to the AI stream when generating commentary', async () => {
+    const controller = new AbortController()
+    ;(getAIChatResponseStream as jest.Mock).mockResolvedValue(
+      createTextStream('[happy]ナイス！\n[scene]安全地帯に移動した')
+    )
+
+    const result = await generateGameCommentary(
+      [],
+      'data:image/jpeg;base64,current',
+      [],
+      [],
+      { signal: controller.signal }
+    )
+
+    expect(getAIChatResponseStream).toHaveBeenCalledWith(expect.any(Array), {
+      signal: controller.signal,
+    })
+    expect(result).toEqual({
+      text: 'ナイス！',
+      emotion: 'happy',
+      sceneDescription: '安全地帯に移動した',
+    })
+  })
+
+  it('returns null without logging an API error when commentary generation is aborted', async () => {
+    const abortError = new DOMException('Aborted', 'AbortError')
+    const originalConsoleError = console.error
+    console.error = jest.fn()
+    ;(getAIChatResponseStream as jest.Mock).mockRejectedValue(abortError)
+
+    await expect(
+      generateGameCommentary([], 'data:image/jpeg;base64,current', [], [], {
+        signal: new AbortController().signal,
+      })
+    ).resolves.toBeNull()
+
+    expect(console.error).not.toHaveBeenCalledWith(
+      'ゲーム実況コメント生成エラー:',
+      abortError
+    )
+
+    console.error = originalConsoleError
   })
 
   it('normalizes background scene analysis output', () => {

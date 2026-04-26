@@ -11,7 +11,7 @@ import { SpeakQueue } from '@/features/messages/speakQueue'
 const mockCaptureFrame = jest.fn(() => 'data:image/jpeg;base64,test')
 const mockCaptureAvailable = jest.fn(() => true)
 const mockGenerateGameCommentary = generateGameCommentary as jest.Mock
-const mockStopAll = SpeakQueue.stopAll as jest.Mock
+const mockStopSession = SpeakQueue.stopSession as jest.Mock
 const mockSpeakCharacter = jest.fn()
 
 let settingsState: Record<string, unknown>
@@ -81,6 +81,7 @@ jest.mock('@/features/messages/speakQueue', () => ({
       checkSessionId: jest.fn(),
     })),
     stopAll: jest.fn(),
+    stopSession: jest.fn(),
     onSpeakCompletion: jest.fn(),
     removeSpeakCompletionCallback: jest.fn(),
   },
@@ -198,7 +199,9 @@ describe('useGameCommentaryMode', () => {
       await Promise.resolve()
     })
 
-    expect(mockStopAll).toHaveBeenCalledTimes(1)
+    expect(mockStopSession).toHaveBeenCalledWith(
+      expect.stringMatching(/^game-commentary-/)
+    )
     expect(result.current.state).toBe('waiting')
     expect(result.current.secondsUntilNextCapture).toBe(5)
 
@@ -250,8 +253,11 @@ describe('useGameCommentaryMode', () => {
       await Promise.resolve()
     })
 
-    expect(mockStopAll).toHaveBeenCalledTimes(1)
+    expect(mockStopSession).toHaveBeenCalledWith(null)
     expect(result.current.state).toBe('waiting')
+    expect(mockGenerateGameCommentary.mock.calls[0][4].signal.aborted).toBe(
+      true
+    )
 
     await act(async () => {
       deferred.resolve({
@@ -304,7 +310,8 @@ describe('useGameCommentaryMode', () => {
         { role: 'assistant', content: 'm4' },
         { role: 'user', content: 'm5' },
       ],
-      []
+      [],
+      expect.objectContaining({ signal: expect.any(Object) })
     )
   })
 })

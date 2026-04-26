@@ -220,6 +220,39 @@ describe('openAIAudioChat', () => {
       expect(bufferManagerInstance.flush).toHaveBeenCalled()
     })
 
+    it('AbortSignalが指定された場合はOpenAI SDKへ渡す', async () => {
+      const controller = new AbortController()
+      const mockAsyncIterator = {
+        async *[Symbol.asyncIterator]() {},
+      }
+      const mockCreate = jest.fn().mockResolvedValue(mockAsyncIterator)
+      ;(OpenAI as unknown as jest.Mock).mockImplementation(() => ({
+        chat: {
+          completions: {
+            create: mockCreate,
+          },
+        },
+      }))
+
+      await getOpenAIAudioChatResponseStream(testMessages, {
+        signal: controller.signal,
+      })
+
+      expect(mockCreate).toHaveBeenCalledWith(
+        {
+          model: defaultModels.openaiAudio,
+          messages: testMessages,
+          stream: true,
+          modalities: ['text', 'audio'],
+          audio: {
+            voice: 'alloy',
+            format: 'pcm16',
+          },
+        },
+        { signal: controller.signal }
+      )
+    })
+
     it('APIエラーを適切に処理する', async () => {
       const mockError = new Error('API error')
       const mockCreate = jest.fn().mockRejectedValue(mockError)

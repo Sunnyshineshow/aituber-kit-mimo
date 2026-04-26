@@ -199,6 +199,34 @@ describe('vercelAIChat', () => {
       expect(result).toBe('こんにちは')
     })
 
+    it('AbortSignalが指定された場合はfetchへ渡す', async () => {
+      const controller = new AbortController()
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        headers: {
+          get: () => 'text/plain; charset=utf-8',
+        },
+        body: {
+          getReader: () => ({
+            read: jest.fn().mockResolvedValue({ done: true }),
+            releaseLock: jest.fn(),
+          }),
+        },
+      })
+
+      await getVercelAIChatResponseStream(testMessages, {
+        signal: controller.signal,
+      })
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        '/api/ai/vercel',
+        expect.objectContaining({
+          signal: controller.signal,
+        })
+      )
+    })
+
     it('OpenAIのtext/plainレスポンスをチャンクごとに処理する', async () => {
       const mockReader = {
         read: jest.fn(),

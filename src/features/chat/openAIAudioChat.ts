@@ -11,9 +11,11 @@ import { messageSelectors } from '../messages/messageSelectors'
 import { ChatCompletionMessageParam } from 'openai/resources/chat/completions'
 import { AudioModeModel, RealtimeAPIModeVoice } from '../constants/settings'
 import { defaultModels } from '../constants/aiModels'
+import type { AIChatResponseStreamOptions } from './aiChatFactory'
 
 export async function getOpenAIAudioChatResponseStream(
-  messages: Message[]
+  messages: Message[],
+  options: AIChatResponseStreamOptions = {}
 ): Promise<ReadableStream<string>> {
   const ss = settingsStore.getState()
   const openai = new OpenAI({
@@ -22,7 +24,7 @@ export async function getOpenAIAudioChatResponseStream(
   })
 
   try {
-    const response = await openai.chat.completions.create({
+    const request = {
       model: (ss.selectAIModel as AudioModeModel) || defaultModels.openaiAudio,
       messages: messageSelectors.getAudioMessages(
         messages
@@ -33,7 +35,13 @@ export async function getOpenAIAudioChatResponseStream(
         voice: ss.audioModeVoice as RealtimeAPIModeVoice,
         format: 'pcm16',
       },
-    })
+    } as const
+
+    const response = options.signal
+      ? await openai.chat.completions.create(request, {
+          signal: options.signal,
+        })
+      : await openai.chat.completions.create(request)
 
     return new ReadableStream({
       async start(controller) {
@@ -44,6 +52,8 @@ export async function getOpenAIAudioChatResponseStream(
         })
 
         for await (const chunk of response) {
+          if (options.signal?.aborted) break
+
           const audio = (chunk.choices[0]?.delta as any)?.audio
           if (audio) {
             if (audio.transcript) {
@@ -68,6 +78,10 @@ export async function getOpenAIAudioChatResponseStream(
       },
     })
   } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      throw error
+    }
+
     console.error('OpenAI Audio API error:', error)
     throw error
   }

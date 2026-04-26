@@ -7,6 +7,7 @@ import {
 } from '@/features/constants/settings'
 import settingsStore from '../stores/settings'
 import { getSessionId } from '@/utils/sessionId'
+import type { AIChatResponseStreamOptions } from './aiChatFactory'
 
 // 推論/思考チャンクを通常テキストと区別するためのマーカー
 // null byteプレフィックスはLLMテキスト出力に現れないため安全
@@ -152,7 +153,8 @@ export async function getVercelAIChatResponse(messages: Message[]) {
 }
 
 export async function getVercelAIChatResponseStream(
-  messages: Message[]
+  messages: Message[],
+  options: AIChatResponseStreamOptions = {}
 ): Promise<ReadableStream<string>> {
   const {
     aiApiKey,
@@ -215,13 +217,18 @@ export async function getVercelAIChatResponseStream(
     })
   }
 
-  const response = await fetch(apiEndpoint, {
+  const fetchOptions: RequestInit = {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(requestData),
-  })
+  }
+  if (options.signal) {
+    fetchOptions.signal = options.signal
+  }
+
+  const response = await fetch(apiEndpoint, fetchOptions)
 
   const contentType = response.headers.get('content-type') || ''
   const isPlainTextStream = contentType.includes('text/plain')
@@ -341,6 +348,10 @@ export async function getVercelAIChatResponseStream(
             controller.enqueue(buffer)
           }
         } catch (error) {
+          if (error instanceof DOMException && error.name === 'AbortError') {
+            return
+          }
+
           console.error(
             `Error fetching ${selectAIService} API response:`,
             error
@@ -359,6 +370,10 @@ export async function getVercelAIChatResponseStream(
       },
     })
   } catch (error: any) {
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      throw error
+    }
+
     const errorMessage = handleApiError(
       error.cause ? error.cause.errorCode : 'AIAPIError'
     )

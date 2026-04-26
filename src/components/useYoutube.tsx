@@ -55,6 +55,7 @@ const useYoutube = ({ handleSendChat }: Params): UseYoutubeReturn => {
       isProcessingRef.current ||
       hs.chatProcessing ||
       hs.chatProcessingCount > 0 ||
+      hs.isSpeaking ||
       !ss.youtubeMode ||
       !ss.youtubePlaying
     ) {

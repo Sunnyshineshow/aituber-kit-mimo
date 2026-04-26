@@ -73,6 +73,42 @@ export class SpeakQueue {
     homeStore.setState({ isSpeaking: false })
   }
 
+  /**
+   * 指定セッションの発話だけを停止します。
+   * 現在の発話セッションが一致しない場合は、キュー内の該当タスクだけを破棄します。
+   */
+  public static stopSession(sessionId: string | null) {
+    if (!sessionId) return
+
+    const instance = SpeakQueue.getInstance()
+    instance.queue = instance.queue.filter(
+      (task) => task.sessionId !== sessionId
+    )
+
+    if (instance.currentSessionId !== sessionId) {
+      return
+    }
+
+    instance.stopped = true
+    instance.isProcessing = false
+    SpeakQueue.stopTokenCounter++
+    instance.clearQueue()
+
+    const hs = homeStore.getState()
+    const ss = settingsStore.getState()
+    if (ss.modelType === 'live2d') {
+      Live2DHandler.stopSpeaking()
+    } else if (ss.modelType === 'pngtuber') {
+      PNGTuberHandler.stopSpeaking()
+    } else {
+      hs.viewer.model?.stopSpeaking()
+      if (hs.viewer.model?.poseManager?.isActive) {
+        hs.viewer.model?.poseManager?.resetToIdle(hs.viewer.model)
+      }
+    }
+    homeStore.setState({ isSpeaking: false })
+  }
+
   async addTask(task: SpeakTask) {
     this.queue.push(task)
     // キューにタスクが追加された時点で発話中フラグを立てる

@@ -2,6 +2,7 @@ import settingsStore from '@/features/stores/settings'
 import { Message } from '../messages/messages'
 import i18next from 'i18next'
 import toastStore from '@/features/stores/toast'
+import type { AIChatResponseStreamOptions } from './aiChatFactory'
 
 function handleApiError(errorCode: string): string {
   const languageCode = settingsStore.getState().selectLanguage
@@ -13,9 +14,10 @@ export async function getDifyChatResponseStream(
   messages: Message[],
   apiKey: string,
   url: string,
-  conversationId: string
+  conversationId: string,
+  options: AIChatResponseStreamOptions = {}
 ): Promise<ReadableStream<string>> {
-  const response = await fetch('/api/difyChat', {
+  const fetchOptions: RequestInit = {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -27,7 +29,12 @@ export async function getDifyChatResponseStream(
       conversationId,
       stream: true,
     }),
-  })
+  }
+  if (options.signal) {
+    fetchOptions.signal = options.signal
+  }
+
+  const response = await fetch('/api/difyChat', fetchOptions)
 
   try {
     if (!response.ok) {
@@ -82,6 +89,10 @@ export async function getDifyChatResponseStream(
             })
           }
         } catch (error) {
+          if (error instanceof DOMException && error.name === 'AbortError') {
+            return
+          }
+
           console.error(`Error fetching Dify API response:`, error)
 
           toastStore.getState().addToast({
@@ -98,6 +109,10 @@ export async function getDifyChatResponseStream(
       },
     })
   } catch (error: any) {
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      throw error
+    }
+
     const errorMessage = handleApiError(
       error.cause ? error.cause.errorCode : 'AIAPIError'
     )

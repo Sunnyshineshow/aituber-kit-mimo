@@ -55,6 +55,28 @@ describe('aiChatFactory', () => {
     expect(result).toBe(mockStream)
   })
 
+  it('OpenAIオーディオモードでAbortSignalが指定された場合だけオプションを渡す', async () => {
+    const mockStream = createMockStream()
+    const controller = new AbortController()
+    ;(getOpenAIAudioChatResponseStream as jest.Mock).mockResolvedValue(
+      mockStream
+    )
+    ;(settingsStore.getState as jest.Mock).mockReturnValue({
+      selectAIService: 'openai',
+      audioMode: true,
+    })
+
+    const result = await getAIChatResponseStream(testMessages, {
+      signal: controller.signal,
+    })
+
+    expect(getOpenAIAudioChatResponseStream).toHaveBeenCalledWith(
+      testMessages,
+      { signal: controller.signal }
+    )
+    expect(result).toBe(mockStream)
+  })
+
   it('Vercel AI SDKをサポートするサービスの場合、getVercelAIChatResponseStreamを呼び出す', async () => {
     const aiServices = [
       'openai',
@@ -93,6 +115,25 @@ describe('aiChatFactory', () => {
     }
   })
 
+  it('Vercel AI SDKをサポートするサービスでAbortSignalが指定された場合だけオプションを渡す', async () => {
+    const mockStream = createMockStream()
+    const controller = new AbortController()
+    ;(getVercelAIChatResponseStream as jest.Mock).mockResolvedValue(mockStream)
+    ;(settingsStore.getState as jest.Mock).mockReturnValue({
+      selectAIService: 'openai',
+      audioMode: false,
+    })
+
+    const result = await getAIChatResponseStream(testMessages, {
+      signal: controller.signal,
+    })
+
+    expect(getVercelAIChatResponseStream).toHaveBeenCalledWith(testMessages, {
+      signal: controller.signal,
+    })
+    expect(result).toBe(mockStream)
+  })
+
   it('Difyサービスの場合、getDifyChatResponseStreamを呼び出す', async () => {
     const mockStream = createMockStream()
     ;(getDifyChatResponseStream as jest.Mock).mockResolvedValue(mockStream)
@@ -111,6 +152,32 @@ describe('aiChatFactory', () => {
       'test-key',
       'https://test-url',
       'test-conversation-id'
+    )
+    expect(result).toBe(mockStream)
+  })
+
+  it('DifyサービスでAbortSignalが指定された場合だけオプションを渡す', async () => {
+    const mockStream = createMockStream()
+    const controller = new AbortController()
+    ;(getDifyChatResponseStream as jest.Mock).mockResolvedValue(mockStream)
+    ;(settingsStore.getState as jest.Mock).mockReturnValue({
+      selectAIService: 'dify',
+      audioMode: false,
+      difyKey: 'test-key',
+      difyUrl: 'https://test-url',
+      difyConversationId: 'test-conversation-id',
+    })
+
+    const result = await getAIChatResponseStream(testMessages, {
+      signal: controller.signal,
+    })
+
+    expect(getDifyChatResponseStream).toHaveBeenCalledWith(
+      testMessages,
+      'test-key',
+      'https://test-url',
+      'test-conversation-id',
+      { signal: controller.signal }
     )
     expect(result).toBe(mockStream)
   })

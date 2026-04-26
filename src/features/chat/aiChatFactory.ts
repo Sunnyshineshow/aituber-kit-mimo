@@ -5,13 +5,20 @@ import { getVercelAIChatResponseStream } from './vercelAIChat'
 import settingsStore from '@/features/stores/settings'
 import { getOpenAIAudioChatResponseStream } from '@/features/chat/openAIAudioChat'
 
+export interface AIChatResponseStreamOptions {
+  signal?: AbortSignal
+}
+
 export async function getAIChatResponseStream(
-  messages: Message[]
+  messages: Message[],
+  options: AIChatResponseStreamOptions = {}
 ): Promise<ReadableStream<string> | null> {
   const ss = settingsStore.getState()
 
   if (ss.selectAIService == 'openai' && ss.audioMode) {
-    return getOpenAIAudioChatResponseStream(messages)
+    return options.signal
+      ? getOpenAIAudioChatResponseStream(messages, options)
+      : getOpenAIAudioChatResponseStream(messages)
   }
 
   switch (ss.selectAIService as AIService) {
@@ -30,14 +37,24 @@ export async function getAIChatResponseStream(
     case 'lmstudio':
     case 'ollama':
     case 'custom-api':
-      return getVercelAIChatResponseStream(messages)
+      return options.signal
+        ? getVercelAIChatResponseStream(messages, options)
+        : getVercelAIChatResponseStream(messages)
     case 'dify':
-      return getDifyChatResponseStream(
-        messages,
-        ss.difyKey || '',
-        ss.difyUrl || '',
-        ss.difyConversationId
-      )
+      return options.signal
+        ? getDifyChatResponseStream(
+            messages,
+            ss.difyKey || '',
+            ss.difyUrl || '',
+            ss.difyConversationId,
+            options
+          )
+        : getDifyChatResponseStream(
+            messages,
+            ss.difyKey || '',
+            ss.difyUrl || '',
+            ss.difyConversationId
+          )
     default:
       throw new Error(`Unsupported AI service: ${ss.selectAIService}`)
   }

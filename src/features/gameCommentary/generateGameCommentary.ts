@@ -1,4 +1,5 @@
 import { getAIChatResponseStream } from '@/features/chat/aiChatFactory'
+import type { AIChatResponseStreamOptions } from '@/features/chat/aiChatFactory'
 import { THINKING_MARKER } from '@/features/chat/vercelAIChat'
 import { Message, EmotionType, EMOTIONS } from '@/features/messages/messages'
 import settingsStore from '@/features/stores/settings'
@@ -75,7 +76,8 @@ export async function generateGameCommentary(
   commentaryHistory: CommentaryHistoryEntry[],
   imageData: string,
   recentChatMessages?: Array<{ role: string; content: string }>,
-  backgroundSceneAnalyses: BackgroundSceneAnalysisEntry[] = []
+  backgroundSceneAnalyses: BackgroundSceneAnalysisEntry[] = [],
+  options: AIChatResponseStreamOptions = {}
 ): Promise<{
   text: string
   emotion: EmotionType
@@ -89,7 +91,7 @@ export async function generateGameCommentary(
   )
 
   try {
-    const stream = await getAIChatResponseStream(messages)
+    const stream = await getAIChatResponseStream(messages, options)
     if (!stream) return null
 
     const reader = stream.getReader()
@@ -112,6 +114,10 @@ export async function generateGameCommentary(
 
     return parseCommentaryResponse(fullText)
   } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      return null
+    }
+
     console.error('ゲーム実況コメント生成エラー:', error)
     return null
   }

@@ -101,6 +101,7 @@ export function useGameCommentaryMode({
   const stateRef = useRef<GameCommentaryState>(state)
   stateRef.current = state
   const commentaryRequestTokenRef = useRef(0)
+  const commentaryAbortControllerRef = useRef<AbortController | null>(null)
   const captureIntervalRef = useRef(gameCommentaryCaptureInterval)
   captureIntervalRef.current = gameCommentaryCaptureInterval
   const backgroundAnalysisGenerationRef = useRef(0)
@@ -139,10 +140,16 @@ export function useGameCommentaryMode({
     return true
   }, [])
 
+  const abortActiveCommentaryRequest = useCallback(() => {
+    commentaryAbortControllerRef.current?.abort()
+    commentaryAbortControllerRef.current = null
+  }, [])
+
   const invalidateActiveCommentary = useCallback(() => {
     commentaryRequestTokenRef.current += 1
+    abortActiveCommentaryRequest()
     isProcessingRef.current = false
-  }, [])
+  }, [abortActiveCommentaryRequest])
 
   // ----- ring bufferに追加 -----
   const addToHistory = useCallback(
@@ -323,6 +330,9 @@ export function useGameCommentaryMode({
     }
 
     // AI実況コメント生成
+    const abortController = new AbortController()
+    commentaryAbortControllerRef.current = abortController
+
     try {
       const backgroundSceneAnalyses = backgroundSceneAnalysesRef.current
       resetBackgroundSceneAnalyses()
@@ -342,7 +352,8 @@ export function useGameCommentaryMode({
         commentaryHistoryRef.current,
         imageData,
         recentMessages,
-        backgroundSceneAnalyses
+        backgroundSceneAnalyses,
+        { signal: abortController.signal }
       )
 
       if (!result) {
@@ -427,11 +438,19 @@ export function useGameCommentaryMode({
         )
       }
     } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        return
+      }
+
       console.error('ゲーム実況コメント生成エラー:', error)
       isProcessingRef.current = false
       if (isRunningRef.current) {
         setState('waiting')
         scheduleNext()
+      }
+    } finally {
+      if (commentaryAbortControllerRef.current === abortController) {
+        commentaryAbortControllerRef.current = null
       }
     }
   }, [
@@ -458,7 +477,8 @@ export function useGameCommentaryMode({
     clearBackgroundAnalysisTimer()
     resetBackgroundSceneAnalyses()
     invalidateActiveCommentary()
-    SpeakQueue.stopAll()
+    SpeakQueue.stopSession(sessionIdRef.current)
+    sessionIdRef.current = null
     setState('waiting')
     setSecondsUntilNextCapture(captureIntervalRef.current)
     callbackRefs.current.onCommentaryInterrupted?.()
@@ -479,7 +499,8 @@ export function useGameCommentaryMode({
       setState('disabled')
       clearTimers()
       clearBackgroundAnalysisTimer()
-      SpeakQueue.stopAll()
+      SpeakQueue.stopSession(sessionIdRef.current)
+      sessionIdRef.current = null
       commentaryHistoryRef.current = []
       resetBackgroundSceneAnalyses()
       invalidateActiveCommentary()

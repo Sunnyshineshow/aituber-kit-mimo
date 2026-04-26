@@ -131,6 +131,35 @@ describe('difyChat', () => {
       })
     })
 
+    it('AbortSignalが指定された場合はfetchへ渡す', async () => {
+      const controller = new AbortController()
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        body: {
+          getReader: () => ({
+            read: jest.fn().mockResolvedValue({ done: true }),
+            releaseLock: jest.fn(),
+          }),
+        },
+      })
+
+      await getDifyChatResponseStream(
+        testMessages,
+        'test-api-key',
+        'https://test-dify-url',
+        'old-conversation-id',
+        { signal: controller.signal }
+      )
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        '/api/difyChat',
+        expect.objectContaining({
+          signal: controller.signal,
+        })
+      )
+    })
+
     it('agent_messageイベントを処理する', async () => {
       const mockReader = {
         read: jest.fn(),
