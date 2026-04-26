@@ -13,6 +13,8 @@ import {
 } from '@/features/gameCommentary/generateGameCommentary'
 import { GAME_COMMENTARY_BACKGROUND_ANALYSIS } from '@/features/gameCommentary/gameCommentaryTypes'
 
+const MIN_SCHEDULED_CAPTURE_INTERVAL_SECONDS = 3
+
 /**
  * ゲーム実況モードの状態型
  */
@@ -106,6 +108,13 @@ export function useGameCommentaryMode({
   captureIntervalRef.current = gameCommentaryCaptureInterval
   const backgroundAnalysisGenerationRef = useRef(0)
   const queueNextBackgroundAnalysisRef = useRef<() => void>(() => {})
+
+  const getEffectiveCaptureInterval = useCallback(() => {
+    return Math.max(
+      captureIntervalRef.current,
+      MIN_SCHEDULED_CAPTURE_INTERVAL_SECONDS
+    )
+  }, [])
 
   // Callback refs to avoid stale closures
   const callbackRefs = useRef({
@@ -281,7 +290,7 @@ export function useGameCommentaryMode({
   // ----- 次回キャプチャのスケジュール -----
   const scheduleNext = useCallback(() => {
     clearTimers()
-    const interval = captureIntervalRef.current
+    const interval = getEffectiveCaptureInterval()
     setSecondsUntilNextCapture(interval)
 
     if (interval > 0) {
@@ -294,7 +303,7 @@ export function useGameCommentaryMode({
       triggerCommentary()
     }, interval * 1000)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [clearTimers])
+  }, [clearTimers, getEffectiveCaptureInterval])
 
   // ----- 実況トリガー -----
   const triggerCommentary = useCallback(async () => {
@@ -465,11 +474,17 @@ export function useGameCommentaryMode({
   // ----- タイマーリセット -----
   const resetTimer = useCallback(() => {
     clearTimers()
-    setSecondsUntilNextCapture(captureIntervalRef.current)
+    setSecondsUntilNextCapture(getEffectiveCaptureInterval())
     if (isRunning && state !== 'disabled') {
       scheduleNext()
     }
-  }, [isRunning, state, clearTimers, scheduleNext])
+  }, [
+    isRunning,
+    state,
+    clearTimers,
+    getEffectiveCaptureInterval,
+    scheduleNext,
+  ])
 
   // ----- 実況停止 -----
   const stopCommentary = useCallback(() => {
@@ -480,11 +495,12 @@ export function useGameCommentaryMode({
     SpeakQueue.stopSession(sessionIdRef.current)
     sessionIdRef.current = null
     setState('waiting')
-    setSecondsUntilNextCapture(captureIntervalRef.current)
+    setSecondsUntilNextCapture(getEffectiveCaptureInterval())
     callbackRefs.current.onCommentaryInterrupted?.()
   }, [
     clearBackgroundAnalysisTimer,
     clearTimers,
+    getEffectiveCaptureInterval,
     invalidateActiveCommentary,
     resetBackgroundSceneAnalyses,
   ])
@@ -493,7 +509,7 @@ export function useGameCommentaryMode({
   useEffect(() => {
     if (isRunning) {
       setState('waiting')
-      setSecondsUntilNextCapture(captureIntervalRef.current)
+      setSecondsUntilNextCapture(getEffectiveCaptureInterval())
       scheduleNext()
     } else {
       setState('disabled')
@@ -514,6 +530,7 @@ export function useGameCommentaryMode({
     isRunning,
     clearBackgroundAnalysisTimer,
     clearTimers,
+    getEffectiveCaptureInterval,
     invalidateActiveCommentary,
     resetBackgroundSceneAnalyses,
     scheduleNext,
@@ -547,6 +564,16 @@ export function useGameCommentaryMode({
     if (!isRunning) return
 
     const unsubscribe = homeStore.subscribe((hState, prevState) => {
+      const interactionStarted =
+        (!prevState.chatProcessing && hState.chatProcessing) ||
+        (!prevState.isSpeaking && hState.isSpeaking)
+
+      if (interactionStarted && stateRef.current === 'capturing') {
+        stopCommentary()
+        resetTimer()
+        return
+      }
+
       if (hState.chatLog !== prevState.chatLog && hState.chatLog.length > 0) {
         // ユーザー入力があったらタイマーリセット
         const latestMsg = hState.chatLog[hState.chatLog.length - 1]

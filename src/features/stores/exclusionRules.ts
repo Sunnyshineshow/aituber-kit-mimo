@@ -363,4 +363,18 @@ export const exclusionRules: ExclusionRule[] = [
       gameCommentaryEnabled: false,
     }),
   },
+
+  // Rule 21: gameCommentaryEnabled OFF → 再生状態も停止
+  {
+    id: 'gameCommentary-off-stopPlaying',
+    description:
+      'gameCommentaryEnabled OFF時にgameCommentaryPlayingもOFFにする',
+    trigger: (incoming, merged, prev) =>
+      wasSet(incoming, 'gameCommentaryEnabled') &&
+      prev.gameCommentaryEnabled === true &&
+      merged.gameCommentaryEnabled === false,
+    apply: () => ({
+      gameCommentaryPlaying: false,
+    }),
+  },
 ]

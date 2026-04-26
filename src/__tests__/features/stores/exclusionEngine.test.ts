@@ -598,6 +598,31 @@ describe('排他エンジン (computeExclusions)', () => {
     })
   })
 
+  describe('Rule 21: gameCommentary-off-stopPlaying', () => {
+    it('gameCommentaryEnabled OFF で gameCommentaryPlaying も OFF', () => {
+      const prev = createBaseState({
+        gameCommentaryEnabled: true,
+        gameCommentaryPlaying: true,
+      })
+      const incoming = { gameCommentaryEnabled: false }
+      const { corrections } = computeExclusions(incoming, prev)
+
+      expect(corrections.gameCommentaryPlaying).toBe(false)
+    })
+
+    it('他モードの排他で gameCommentaryEnabled が OFF になる場合も再生状態を止める', () => {
+      const prev = createBaseState({
+        gameCommentaryEnabled: true,
+        gameCommentaryPlaying: true,
+      })
+      const incoming = { realtimeAPIMode: true }
+      const { corrections } = computeExclusions(incoming, prev)
+
+      expect(corrections.gameCommentaryEnabled).toBe(false)
+      expect(corrections.gameCommentaryPlaying).toBe(false)
+    })
+  })
+
   describe('Rule 20: presenceDetection-on-disableGameCommentary', () => {
     it('presenceDetectionEnabled ON で gameCommentaryEnabled が OFF', () => {
       const prev = createBaseState({

@@ -131,7 +131,14 @@ const GameCommentarySettings = () => {
             <ToggleSwitch
               enabled={gameCommentaryEnabled}
               onChange={(v) =>
-                settingsStore.setState({ gameCommentaryEnabled: v })
+                settingsStore.setState(
+                  v
+                    ? { gameCommentaryEnabled: true }
+                    : {
+                        gameCommentaryEnabled: false,
+                        gameCommentaryPlaying: false,
+                      }
+                )
               }
               disabled={isDisabledByExclusion}
             />

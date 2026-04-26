@@ -281,6 +281,44 @@ describe('useGameCommentaryMode', () => {
     expect(mockGenerateGameCommentary).toHaveBeenCalledTimes(2)
   })
 
+  it('cancels an in-flight commentary generation when another chat process starts', async () => {
+    const deferred = createDeferred<{
+      text: string
+      emotion: string
+      sceneDescription: string
+    }>()
+    mockGenerateGameCommentary.mockReturnValueOnce(deferred.promise)
+
+    const { result } = renderHook(() => useGameCommentaryMode({}))
+
+    await act(async () => {
+      jest.advanceTimersByTime(5000)
+      await Promise.resolve()
+    })
+
+    await waitFor(() => {
+      expect(result.current.state).toBe('capturing')
+    })
+
+    const prevState = homeState
+    const nextState = {
+      ...homeState,
+      chatProcessing: true,
+    }
+
+    await act(async () => {
+      homeState = nextState
+      homeSubscriber?.(nextState, prevState)
+      await Promise.resolve()
+    })
+
+    expect(mockStopSession).toHaveBeenCalledWith(null)
+    expect(result.current.state).toBe('waiting')
+    expect(mockGenerateGameCommentary.mock.calls[0][4].signal.aborted).toBe(
+      true
+    )
+  })
+
   it('uses maxPastMessages for recent chat context during commentary generation', async () => {
     setupSettingsState({ maxPastMessages: 3 })
     setupHomeState({
@@ -313,5 +351,27 @@ describe('useGameCommentaryMode', () => {
       [],
       expect.objectContaining({ signal: expect.any(Object) })
     )
+  })
+
+  it('uses a runtime lower bound when capture interval is set to zero', async () => {
+    setupSettingsState({ gameCommentaryCaptureInterval: 0 })
+
+    renderHook(() => useGameCommentaryMode({}))
+
+    await act(async () => {
+      jest.advanceTimersByTime(2999)
+      await Promise.resolve()
+    })
+
+    expect(mockGenerateGameCommentary).not.toHaveBeenCalled()
+
+    await act(async () => {
+      jest.advanceTimersByTime(1)
+      await Promise.resolve()
+    })
+
+    await flushAsync()
+
+    expect(mockGenerateGameCommentary).toHaveBeenCalledTimes(1)
   })
 })
