@@ -31,14 +31,21 @@ class CaptureService {
    * @param quality - JPEG quality (0.0-1.0, default 0.7)
    * @returns Base64 data URL string or null if unavailable
    */
-  captureFrame(maxWidth?: number, quality?: number): string | null {
+  async captureFrame(
+    maxWidth?: number,
+    quality?: number
+  ): Promise<string | null> {
     const raw = this.captureFrameFn?.() ?? null
     if (!raw) return null
     if (!maxWidth || maxWidth <= 0) return raw
 
     try {
-      const img = new Image()
-      img.src = raw
+      const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+        const image = new Image()
+        image.onload = () => resolve(image)
+        image.onerror = reject
+        image.src = raw
+      })
 
       if (img.width <= maxWidth) return raw
 

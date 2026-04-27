@@ -36,7 +36,7 @@ user-invocable: true
 
 まず、マスターとなる日本語の翻訳ファイルを読み込みます：
 
-```
+```text
 locales/ja/translation.json
 ```
 
@@ -81,7 +81,7 @@ locales/ja/translation.json
 
 ## 使用例
 
-```
+```text
 /sync-translations
 ```
 

@@ -312,12 +312,21 @@ export async function mockBrowserAPIs(page: Page) {
       return new MediaStream()
     }
 
+    const mediaDevices = navigator.mediaDevices ?? ({} as MediaDevices)
+
+    Object.defineProperty(mediaDevices, 'getDisplayMedia', {
+      configurable: true,
+      value: async () => createDisplayStream(),
+    })
+
+    Object.defineProperty(mediaDevices, 'getUserMedia', {
+      configurable: true,
+      value: async () => createDisplayStream(),
+    })
+
     Object.defineProperty(navigator, 'mediaDevices', {
       configurable: true,
-      value: {
-        getDisplayMedia: async () => createDisplayStream(),
-        getUserMedia: async () => createDisplayStream(),
-      },
+      value: mediaDevices,
     })
 
     HTMLMediaElement.prototype.play = async () => {}

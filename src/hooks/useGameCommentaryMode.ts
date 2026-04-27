@@ -242,14 +242,13 @@ export function useGameCommentaryMode({
       gameCommentaryImageQuality,
       GAME_COMMENTARY_BACKGROUND_ANALYSIS.IMAGE_QUALITY
     )
-    const imageData = captureService.captureFrame(maxWidth, quality)
-
-    if (!imageData) return
-
     isBackgroundAnalysisInFlightRef.current = true
     const generationAtStart = backgroundAnalysisGenerationRef.current
 
     try {
+      const imageData = await captureService.captureFrame(maxWidth, quality)
+      if (!imageData) return
+
       const summary = await analyzeGameCommentaryScene(imageData)
       if (!summary) return
       if (generationAtStart !== backgroundAnalysisGenerationRef.current) return
@@ -349,7 +348,7 @@ export function useGameCommentaryMode({
     commentaryRequestTokenRef.current = requestToken
 
     // キャプチャ取得
-    const imageData = captureService.captureFrame(
+    const imageData = await captureService.captureFrame(
       gameCommentaryResizeWidth,
       gameCommentaryImageQuality
     )

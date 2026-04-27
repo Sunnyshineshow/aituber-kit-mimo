@@ -74,6 +74,8 @@ jobs:
         run: npm run test:e2e -- --list
 
       - name: Run E2E tests
+        env:
+          E2E_PORT: '3200'
         run: npm run test:e2e
 
       - name: Upload Playwright HTML report

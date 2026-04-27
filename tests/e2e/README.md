@@ -32,7 +32,7 @@ npm run test:e2e:install:with-deps
 npm run test:e2e
 ```
 
-通常実行では `chromium` project が desktop spec を、`mobile-chromium` project が `*.mobile.spec.ts` の最小 smoke を実行します。現時点の `npx playwright test --list` は合計 13 tests で、内訳は `chromium` 12 tests、`mobile-chromium` 1 test です。既存の desktop spec は mobile project では実行しません。
+通常実行では `chromium` project が desktop spec を、`mobile-chromium` project が `*.mobile.spec.ts` の最小 smoke を実行します。現在のテスト件数は `npx playwright test --list` で確認してください。既存の desktop spec は mobile project では実行しません。
 
 ブラウザを表示して動きを確認する場合は headed 実行を使います。
 
@@ -65,7 +65,7 @@ mobile smoke だけを実行する場合は project を指定します。
 npm run test:e2e -- --project=mobile-chromium
 ```
 
-production mode 相当の smoke は、通常の E2E から分離しています。`E2E_MODE=production` を指定すると `next build && next start` でサーバーを起動し、`*.production.spec.ts` だけを `production-chromium` project で実行します。現時点の `E2E_MODE=production npx playwright test --list` は 1 test です。
+production mode 相当の smoke は、通常の E2E から分離しています。`E2E_MODE=production` を指定すると `next build && next start` でサーバーを起動し、`*.production.spec.ts` だけを `production-chromium` project で実行します。現在のテスト件数は `E2E_MODE=production npx playwright test --list` で確認してください。
 
 ```bash
 npm run test:e2e:production

@@ -100,22 +100,25 @@ describe('game commentary helpers', () => {
 
   it('returns null without logging an API error when commentary generation is aborted', async () => {
     const abortError = new DOMException('Aborted', 'AbortError')
-    const originalConsoleError = console.error
-    console.error = jest.fn()
+    const consoleErrorSpy = jest
+      .spyOn(console, 'error')
+      .mockImplementation(() => {})
     ;(getAIChatResponseStream as jest.Mock).mockRejectedValue(abortError)
 
-    await expect(
-      generateGameCommentary([], 'data:image/jpeg;base64,current', [], [], {
-        signal: new AbortController().signal,
-      })
-    ).resolves.toBeNull()
+    try {
+      await expect(
+        generateGameCommentary([], 'data:image/jpeg;base64,current', [], [], {
+          signal: new AbortController().signal,
+        })
+      ).resolves.toBeNull()
 
-    expect(console.error).not.toHaveBeenCalledWith(
-      'ゲーム実況コメント生成エラー:',
-      abortError
-    )
-
-    console.error = originalConsoleError
+      expect(console.error).not.toHaveBeenCalledWith(
+        'ゲーム実況コメント生成エラー:',
+        abortError
+      )
+    } finally {
+      consoleErrorSpy.mockRestore()
+    }
   })
 
   it('normalizes background scene analysis output', () => {

@@ -97,8 +97,8 @@ test('can configure kiosk mode and enforce browser input restrictions', async ({
   await messageInput.fill('this contains blocked')
   await page.getByTestId('chat-send-button').click({ force: true })
 
-  await page.waitForTimeout(300)
-  await expect.poll(() => aiRequests.length).toBe(0)
+  await expect(page.getByText('不適切な内容が含まれています')).toBeVisible()
+  expect(aiRequests).toHaveLength(0)
 })
 
 test('opens the passcode dialog from kiosk overlay and temporarily unlocks settings', async ({
