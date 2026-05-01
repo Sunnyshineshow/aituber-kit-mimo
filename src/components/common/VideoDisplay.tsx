@@ -21,7 +21,7 @@ interface VideoDisplayProps {
   mediaStream?: MediaStream | null
   onCapture?: () => void
   onToggleSource?: () => void
-  onClose?: () => void
+  onStopSource?: () => void
   toggleSourceIcon?: string
   toggleSourceDisabled?: boolean
   showToggleButton?: boolean
@@ -35,7 +35,7 @@ export const VideoDisplay = forwardRef<HTMLDivElement, VideoDisplayProps>(
       mediaStream,
       onCapture,
       onToggleSource,
-      onClose,
+      onStopSource,
       toggleSourceIcon = '24/Roll',
       toggleSourceDisabled = false,
       showToggleButton = true,
@@ -232,9 +232,28 @@ export const VideoDisplay = forwardRef<HTMLDivElement, VideoDisplayProps>(
       settingsStore.setState({ hideVideoDisplay: !hideVideoDisplay })
     }, [hideVideoDisplay])
 
-    const hiddenToggleLabel = hideVideoDisplay
-      ? t('ShowVideoDisplay')
-      : t('HideVideoDisplay')
+    const handleStopSource = useCallback(() => {
+      onStopSource?.()
+      settingsStore.setState({
+        hideVideoDisplay: false,
+        useVideoAsBackground: false,
+      })
+      resetPosition()
+    }, [onStopSource, resetPosition])
+
+    const stopSourceLabel = t(
+      'StopScreenShare',
+      'Stop screen sharing'
+    ) as string
+    const hidePreviewLabel = t(
+      'HideVideoPreview',
+      'Hide preview (sharing continues)'
+    ) as string
+    const showPreviewLabel = t('ShowVideoDisplay') as string
+    const videoControlButtonClass =
+      '!min-w-9 !min-h-9 !w-9 !h-9 !p-1 rounded-xl'
+    const videoControlSecondaryClass = `${videoControlButtonClass} bg-secondary hover:bg-secondary-hover active:bg-secondary-press disabled:bg-secondary-disabled`
+    const videoControlStopClass = `${videoControlButtonClass} bg-toast-error hover:bg-toast-error-hover active:bg-toast-error-hover disabled:bg-primary-disabled`
 
     // Calculate actual video bounds within container
     const updateVideoBounds = useCallback(() => {
@@ -439,11 +458,22 @@ export const VideoDisplay = forwardRef<HTMLDivElement, VideoDisplayProps>(
               </>
             )}
             {showFloatingPreview && (
-              <div className="md:block absolute top-2 right-2">
+              <div className="absolute top-3 right-3 flex items-center gap-2">
+                {onStopSource && (
+                  <IconButton
+                    iconName="stop"
+                    className={videoControlStopClass}
+                    isProcessing={false}
+                    onClick={handleStopSource}
+                    title={stopSourceLabel}
+                    aria-label={stopSourceLabel}
+                    data-testid="stop-screen-share-button"
+                  />
+                )}
                 {showToggleButton && (
                   <IconButton
                     iconName={toggleSourceIcon}
-                    className="bg-secondary hover:bg-secondary-hover active:bg-secondary-press disabled:bg-secondary-disabled m-2"
+                    className={videoControlSecondaryClass}
                     isProcessing={false}
                     disabled={toggleSourceDisabled}
                     onClick={onToggleSource}
@@ -451,31 +481,21 @@ export const VideoDisplay = forwardRef<HTMLDivElement, VideoDisplayProps>(
                 )}
                 <IconButton
                   iconName="24/Expand"
-                  className="bg-secondary hover:bg-secondary-hover active:bg-secondary-press disabled:bg-secondary-disabled m-2"
+                  className={videoControlSecondaryClass}
                   isProcessing={false}
                   onClick={handleExpand}
                 />
                 <IconButton
-                  iconName={hideVideoDisplay ? '24/Hide' : '24/Show'}
-                  className="bg-secondary hover:bg-secondary-hover active:bg-secondary-press disabled:bg-secondary-disabled m-2"
+                  iconName="24/Hide"
+                  className={videoControlSecondaryClass}
                   isProcessing={false}
                   onClick={handleToggleHidden}
-                  title={hiddenToggleLabel}
-                  aria-label={hiddenToggleLabel}
+                  title={hidePreviewLabel}
+                  aria-label={hidePreviewLabel}
                 />
-                {onClose && (
-                  <IconButton
-                    iconName="24/Close"
-                    className="bg-secondary hover:bg-secondary-hover active:bg-secondary-press disabled:bg-secondary-disabled m-2"
-                    isProcessing={false}
-                    onClick={onClose}
-                    title={t('Close')}
-                    aria-label={t('Close')}
-                  />
-                )}
                 <IconButton
                   iconName="24/Shutter"
-                  className="z-30 bg-secondary hover:bg-secondary-hover active:bg-secondary-press disabled:bg-secondary-disabled m-2"
+                  className={`z-30 ${videoControlSecondaryClass}`}
                   isProcessing={false}
                   onClick={handleCapture}
                 />
@@ -484,11 +504,22 @@ export const VideoDisplay = forwardRef<HTMLDivElement, VideoDisplayProps>(
           </div>
         </div>
         {(useVideoAsBackground || hideVideoDisplay) && (
-          <div className="fixed top-4 right-4 z-40 pointer-events-auto">
+          <div className="fixed top-5 right-5 z-40 pointer-events-auto flex items-center gap-2">
+            {onStopSource && (
+              <IconButton
+                iconName="stop"
+                className={videoControlStopClass}
+                isProcessing={false}
+                onClick={handleStopSource}
+                title={stopSourceLabel}
+                aria-label={stopSourceLabel}
+                data-testid="stop-screen-share-button"
+              />
+            )}
             {showToggleButton && (
               <IconButton
                 iconName={toggleSourceIcon}
-                className="bg-secondary hover:bg-secondary-hover active:bg-secondary-press disabled:bg-secondary-disabled m-2"
+                className={videoControlSecondaryClass}
                 isProcessing={false}
                 disabled={toggleSourceDisabled}
                 onClick={onToggleSource}
@@ -496,31 +527,23 @@ export const VideoDisplay = forwardRef<HTMLDivElement, VideoDisplayProps>(
             )}
             <IconButton
               iconName="24/Expand"
-              className="bg-secondary hover:bg-secondary-hover active:bg-secondary-press disabled:bg-secondary-disabled m-2"
+              className={videoControlSecondaryClass}
               isProcessing={false}
               onClick={handleExpand}
             />
             <IconButton
-              iconName={hideVideoDisplay ? '24/Hide' : '24/Show'}
-              className="bg-secondary hover:bg-secondary-hover active:bg-secondary-press disabled:bg-secondary-disabled m-2"
+              iconName={hideVideoDisplay ? '24/Show' : '24/Hide'}
+              className={videoControlSecondaryClass}
               isProcessing={false}
               onClick={handleToggleHidden}
-              title={hiddenToggleLabel}
-              aria-label={hiddenToggleLabel}
+              title={hideVideoDisplay ? showPreviewLabel : hidePreviewLabel}
+              aria-label={
+                hideVideoDisplay ? showPreviewLabel : hidePreviewLabel
+              }
             />
-            {onClose && (
-              <IconButton
-                iconName="24/Close"
-                className="bg-secondary hover:bg-secondary-hover active:bg-secondary-press disabled:bg-secondary-disabled m-2"
-                isProcessing={false}
-                onClick={onClose}
-                title={t('Close')}
-                aria-label={t('Close')}
-              />
-            )}
             <IconButton
               iconName="24/Shutter"
-              className="z-30 bg-secondary hover:bg-secondary-hover active:bg-secondary-press disabled:bg-secondary-disabled m-2"
+              className={`z-30 ${videoControlSecondaryClass}`}
               isProcessing={false}
               onClick={handleCapture}
             />
