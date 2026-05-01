@@ -70,6 +70,7 @@ export const VideoDisplay = forwardRef<HTMLDivElement, VideoDisplayProps>(
       setPosition: setDragPosition,
       style: dragStyle,
     } = useDraggable()
+
     const handleResize = useCallback(
       ({
         direction,
@@ -93,6 +94,7 @@ export const VideoDisplay = forwardRef<HTMLDivElement, VideoDisplayProps>(
       },
       [setDragPosition]
     )
+
     const { size, isResizing, handleResizeStart, setSize } = useResizable({
       initialWidth: MINI_VIDEO_MAX_WIDTH,
       initialHeight: MINI_VIDEO_MAX_HEIGHT,
@@ -240,6 +242,7 @@ export const VideoDisplay = forwardRef<HTMLDivElement, VideoDisplayProps>(
 
       const container = containerRef.current
       const video = videoRef.current
+
       if (!video || video.videoHeight === 0 || video.videoWidth === 0) {
         setVideoBounds({
           x: 0,

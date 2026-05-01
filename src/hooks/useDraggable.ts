@@ -23,8 +23,11 @@ export const useDraggable = (
       if (typeof window === 'undefined' || typeof navigator === 'undefined') {
         return
       }
+      const hasCoarsePointer =
+        typeof window.matchMedia === 'function' &&
+        window.matchMedia('(pointer: coarse)').matches
       setIsMobile(
-        window.innerWidth <= 768 ||
+        hasCoarsePointer ||
           /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
       )
     }
