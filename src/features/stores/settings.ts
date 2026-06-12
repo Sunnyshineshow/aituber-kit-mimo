@@ -295,6 +295,12 @@ export type SettingsState = APIKeys &
   KioskModeSettings &
   GameCommentarySettings
 
+// 0を有効値として扱う環境変数用の数値パーサー（`parseInt(...) || default` は "0" がdefaultに化ける）
+const parseEnvInt = (value: string | undefined, fallback: number): number => {
+  const parsed = parseInt(value ?? '', 10)
+  return Number.isNaN(parsed) ? fallback : parsed
+}
+
 // Function to get initial values from environment variables
 const getInitialValuesFromEnv = (): SettingsState => ({
   // API Keys
@@ -786,12 +792,14 @@ const getInitialValuesFromEnv = (): SettingsState => ({
     process.env.NEXT_PUBLIC_GAME_COMMENTARY_ENABLED === 'true' ||
     DEFAULT_GAME_COMMENTARY_CONFIG.gameCommentaryEnabled,
   gameCommentaryPlaying: DEFAULT_GAME_COMMENTARY_CONFIG.gameCommentaryPlaying,
-  gameCommentaryCaptureInterval:
-    parseInt(process.env.NEXT_PUBLIC_GAME_COMMENTARY_CAPTURE_INTERVAL || '') ||
-    DEFAULT_GAME_COMMENTARY_CONFIG.gameCommentaryCaptureInterval,
-  gameCommentaryContextCount:
-    parseInt(process.env.NEXT_PUBLIC_GAME_COMMENTARY_CONTEXT_COUNT || '') ||
-    DEFAULT_GAME_COMMENTARY_CONFIG.gameCommentaryContextCount,
+  gameCommentaryCaptureInterval: parseEnvInt(
+    process.env.NEXT_PUBLIC_GAME_COMMENTARY_CAPTURE_INTERVAL,
+    DEFAULT_GAME_COMMENTARY_CONFIG.gameCommentaryCaptureInterval
+  ),
+  gameCommentaryContextCount: parseEnvInt(
+    process.env.NEXT_PUBLIC_GAME_COMMENTARY_CONTEXT_COUNT,
+    DEFAULT_GAME_COMMENTARY_CONFIG.gameCommentaryContextCount
+  ),
   gameCommentaryPromptTemplate:
     process.env.NEXT_PUBLIC_GAME_COMMENTARY_PROMPT_TEMPLATE ||
     DEFAULT_GAME_COMMENTARY_CONFIG.gameCommentaryPromptTemplate,
@@ -802,24 +810,25 @@ const getInitialValuesFromEnv = (): SettingsState => ({
   gameCommentaryImageQuality:
     parseFloat(process.env.NEXT_PUBLIC_GAME_COMMENTARY_IMAGE_QUALITY || '') ||
     DEFAULT_GAME_COMMENTARY_CONFIG.gameCommentaryImageQuality,
-  gameCommentaryResizeWidth:
-    parseInt(process.env.NEXT_PUBLIC_GAME_COMMENTARY_RESIZE_WIDTH || '') ||
-    DEFAULT_GAME_COMMENTARY_CONFIG.gameCommentaryResizeWidth,
-  gameCommentarySaveToChat:
-    process.env.NEXT_PUBLIC_GAME_COMMENTARY_SAVE_TO_CHAT === 'true' ||
-    DEFAULT_GAME_COMMENTARY_CONFIG.gameCommentarySaveToChat,
-  gameCommentaryVideoDelay:
-    parseInt(process.env.NEXT_PUBLIC_GAME_COMMENTARY_VIDEO_DELAY || '') ||
-    DEFAULT_GAME_COMMENTARY_CONFIG.gameCommentaryVideoDelay,
+  gameCommentaryResizeWidth: parseEnvInt(
+    process.env.NEXT_PUBLIC_GAME_COMMENTARY_RESIZE_WIDTH,
+    DEFAULT_GAME_COMMENTARY_CONFIG.gameCommentaryResizeWidth
+  ),
+  gameCommentarySaveToChat: process.env.NEXT_PUBLIC_GAME_COMMENTARY_SAVE_TO_CHAT
+    ? process.env.NEXT_PUBLIC_GAME_COMMENTARY_SAVE_TO_CHAT === 'true'
+    : DEFAULT_GAME_COMMENTARY_CONFIG.gameCommentarySaveToChat,
+  gameCommentaryVideoDelay: parseEnvInt(
+    process.env.NEXT_PUBLIC_GAME_COMMENTARY_VIDEO_DELAY,
+    DEFAULT_GAME_COMMENTARY_CONFIG.gameCommentaryVideoDelay
+  ),
   gameCommentaryBackgroundAnalysisEnabled:
     process.env.NEXT_PUBLIC_GAME_COMMENTARY_BACKGROUND_ANALYSIS_ENABLED ===
       'true' ||
     DEFAULT_GAME_COMMENTARY_CONFIG.gameCommentaryBackgroundAnalysisEnabled,
-  gameCommentaryBackgroundAnalysisInterval:
-    parseInt(
-      process.env.NEXT_PUBLIC_GAME_COMMENTARY_BACKGROUND_ANALYSIS_INTERVAL || ''
-    ) ||
-    DEFAULT_GAME_COMMENTARY_CONFIG.gameCommentaryBackgroundAnalysisInterval,
+  gameCommentaryBackgroundAnalysisInterval: parseEnvInt(
+    process.env.NEXT_PUBLIC_GAME_COMMENTARY_BACKGROUND_ANALYSIS_INTERVAL,
+    DEFAULT_GAME_COMMENTARY_CONFIG.gameCommentaryBackgroundAnalysisInterval
+  ),
 
   // Live2D settings
   neutralEmotions: process.env.NEXT_PUBLIC_NEUTRAL_EMOTIONS?.split(',') || [],

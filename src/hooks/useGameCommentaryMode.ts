@@ -97,6 +97,13 @@ export function useGameCommentaryMode({
   isRunningRef.current = isRunning
   const stateRef = useRef<GameCommentaryState>(state)
   stateRef.current = state
+  // setStateは非同期（次のrenderまでstateRefが更新されない）ため、
+  // 発話開始直後にhomeStoreサブスクライバが同期発火すると古い状態を見てしまう。
+  // 状態変更は必ずこのヘルパー経由でrefへ即時反映する。
+  const applyState = useCallback((next: GameCommentaryState) => {
+    stateRef.current = next
+    setState(next)
+  }, [])
   const commentaryRequestTokenRef = useRef(0)
   const commentaryAbortControllerRef = useRef<AbortController | null>(null)
   const captureIntervalRef = useRef(gameCommentaryCaptureInterval)
@@ -229,7 +236,6 @@ export function useGameCommentaryMode({
     if (isBackgroundAnalysisInFlightRef.current) return
 
     const captureService = CaptureService.getInstance()
-    if (!captureService.isAvailable()) return
 
     const maxWidth =
       gameCommentaryResizeWidth > 0
@@ -242,9 +248,15 @@ export function useGameCommentaryMode({
       gameCommentaryImageQuality,
       GAME_COMMENTARY_BACKGROUND_ANALYSIS.IMAGE_QUALITY
     )
-    const imageData = captureService.captureFrame(maxWidth, quality)
+    const imageData = captureService.isAvailable()
+      ? captureService.captureFrame(maxWidth, quality)
+      : null
 
-    if (!imageData) return
+    if (!imageData) {
+      // キャプチャに一度失敗してもループを止めず、発話中は次の解析を予約し続ける
+      queueNextBackgroundAnalysisRef.current()
+      return
+    }
 
     isBackgroundAnalysisInFlightRef.current = true
     const generationAtStart = backgroundAnalysisGenerationRef.current
@@ -344,7 +356,7 @@ export function useGameCommentaryMode({
     }
 
     isProcessingRef.current = true
-    setState('capturing')
+    applyState('capturing')
     const requestToken = commentaryRequestTokenRef.current + 1
     commentaryRequestTokenRef.current = requestToken
 
@@ -357,7 +369,7 @@ export function useGameCommentaryMode({
     if (!imageData) {
       console.warn('ゲーム実況: キャプチャ取得失敗')
       isProcessingRef.current = false
-      setState('waiting')
+      applyState('waiting')
       scheduleNext()
       return
     }
@@ -371,15 +383,25 @@ export function useGameCommentaryMode({
       resetBackgroundSceneAnalyses()
 
       // chatLogから直近メッセージを取得（視聴者コメントとの文脈共有）
+      // maxPastMessagesが0以下なら履歴は参照しない。
+      // 画像などテキスト以外のcontentは空文字になるため除外する（空メッセージはAPIエラーの原因になる）
       const maxPastMessages = settingsStore.getState().maxPastMessages
       const chatLog = homeStore.getState().chatLog
-      const recentMessages = chatLog
-        .filter((m) => m.role === 'user' || m.role === 'assistant')
-        .slice(maxPastMessages > 0 ? -maxPastMessages : 0)
-        .map((m) => ({
-          role: m.role,
-          content: typeof m.content === 'string' ? m.content : '',
-        }))
+      const recentMessages =
+        maxPastMessages > 0
+          ? chatLog
+              .filter(
+                (m) =>
+                  (m.role === 'user' || m.role === 'assistant') &&
+                  typeof m.content === 'string' &&
+                  m.content !== ''
+              )
+              .slice(-maxPastMessages)
+              .map((m) => ({
+                role: m.role,
+                content: m.content as string,
+              }))
+          : []
 
       const result = await generateGameCommentary(
         commentaryHistoryRef.current,
@@ -394,7 +416,7 @@ export function useGameCommentaryMode({
           return
         }
         isProcessingRef.current = false
-        setState('waiting')
+        applyState('waiting')
         scheduleNext()
         return
       }
@@ -405,7 +427,7 @@ export function useGameCommentaryMode({
 
       if (!canSpeak()) {
         isProcessingRef.current = false
-        setState('waiting')
+        applyState('waiting')
         scheduleNext()
         return
       }
@@ -428,14 +450,14 @@ export function useGameCommentaryMode({
       }
 
       // 状態をspeakingに変更
-      setState('speaking')
+      applyState('speaking')
       callbackRefs.current.onCommentaryStart?.(result)
 
       // テキストを文節分割して順番に発話
       const sentences = splitSentence(result.text)
       if (sentences.length === 0) {
         isProcessingRef.current = false
-        setState('waiting')
+        applyState('waiting')
         scheduleNext()
         return
       }
@@ -463,7 +485,7 @@ export function useGameCommentaryMode({
                 isProcessingRef.current = false
                 callbackRefs.current.onCommentaryComplete?.()
                 if (isRunningRef.current) {
-                  setState('waiting')
+                  applyState('waiting')
                   scheduleNext()
                 }
               }
@@ -478,7 +500,7 @@ export function useGameCommentaryMode({
       console.error('ゲーム実況コメント生成エラー:', error)
       isProcessingRef.current = false
       if (isRunningRef.current) {
-        setState('waiting')
+        applyState('waiting')
         scheduleNext()
       }
     } finally {
@@ -487,6 +509,7 @@ export function useGameCommentaryMode({
       }
     }
   }, [
+    applyState,
     canSpeak,
     gameCommentaryResizeWidth,
     gameCommentaryImageQuality,
@@ -518,10 +541,11 @@ export function useGameCommentaryMode({
     invalidateActiveCommentary()
     SpeakQueue.stopSession(sessionIdRef.current)
     sessionIdRef.current = null
-    setState('waiting')
+    applyState('waiting')
     setSecondsUntilNextCapture(getEffectiveCaptureInterval())
     callbackRefs.current.onCommentaryInterrupted?.()
   }, [
+    applyState,
     clearBackgroundAnalysisTimer,
     clearTimers,
     getEffectiveCaptureInterval,
@@ -532,11 +556,11 @@ export function useGameCommentaryMode({
   // ----- 有効/無効の監視 -----
   useEffect(() => {
     if (isRunning) {
-      setState('waiting')
+      applyState('waiting')
       setSecondsUntilNextCapture(getEffectiveCaptureInterval())
       scheduleNext()
     } else {
-      setState('disabled')
+      applyState('disabled')
       clearTimers()
       clearBackgroundAnalysisTimer()
       SpeakQueue.stopSession(sessionIdRef.current)
@@ -552,6 +576,7 @@ export function useGameCommentaryMode({
     }
   }, [
     isRunning,
+    applyState,
     clearBackgroundAnalysisTimer,
     clearTimers,
     getEffectiveCaptureInterval,

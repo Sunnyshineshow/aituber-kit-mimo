@@ -161,6 +161,7 @@ async function flushAsync() {
 describe('useGameCommentaryMode', () => {
   beforeEach(() => {
     jest.clearAllMocks()
+    mockSpeakCharacter.mockImplementation(() => {})
     jest.useFakeTimers()
     homeSubscriber = undefined
     settingsSubscriber = undefined
@@ -329,6 +330,81 @@ describe('useGameCommentaryMode', () => {
     expect(result.current.state).toBe('waiting')
     expect(mockGenerateGameCommentary.mock.calls[0][4].signal.aborted).toBe(
       true
+    )
+  })
+
+  it('does not stop itself when its own speech flips isSpeaking during capturing', async () => {
+    // speakCharacter（実機ではSpeakQueue.checkSessionId）は呼び出しと同期的に
+    // isSpeaking: false→true を発火させる。これを自分への割り込みと誤検知しないこと。
+    mockSpeakCharacter.mockImplementation(() => {
+      if (!homeState.isSpeaking) {
+        const prevState = homeState
+        homeState = { ...homeState, isSpeaking: true }
+        homeSubscriber?.(homeState, prevState)
+      }
+    })
+
+    const deferred = createDeferred<{
+      text: string
+      emotion: string
+      sceneDescription: string
+    }>()
+    mockGenerateGameCommentary.mockReturnValueOnce(deferred.promise)
+
+    const { result } = renderHook(() => useGameCommentaryMode({}))
+
+    await act(async () => {
+      jest.advanceTimersByTime(5000)
+      await Promise.resolve()
+    })
+
+    // 生成中（capturing）のrenderを確実に挟み、stateRefを'capturing'に同期させる
+    await waitFor(() => {
+      expect(result.current.state).toBe('capturing')
+    })
+
+    await act(async () => {
+      deferred.resolve({
+        text: '実況テストです。',
+        emotion: 'neutral',
+        sceneDescription: 'テストシーン',
+      })
+      await deferred.promise
+      await Promise.resolve()
+    })
+
+    await waitFor(() => {
+      expect(result.current.state).toBe('speaking')
+    })
+
+    expect(mockSpeakCharacter).toHaveBeenCalled()
+    expect(mockStopSession).not.toHaveBeenCalled()
+  })
+
+  it('sends no chat context when maxPastMessages is zero', async () => {
+    setupSettingsState({ maxPastMessages: 0 })
+    setupHomeState({
+      chatLog: [
+        { id: '1', role: 'user', content: 'm1', timestamp: '2026-01-01' },
+        { id: '2', role: 'assistant', content: 'm2', timestamp: '2026-01-01' },
+      ],
+    })
+
+    renderHook(() => useGameCommentaryMode({}))
+
+    await act(async () => {
+      jest.advanceTimersByTime(5000)
+      await Promise.resolve()
+    })
+
+    await flushAsync()
+
+    expect(mockGenerateGameCommentary).toHaveBeenCalledWith(
+      expect.any(Array),
+      'data:image/jpeg;base64,test',
+      [],
+      [],
+      expect.objectContaining({ signal: expect.any(Object) })
     )
   })
 

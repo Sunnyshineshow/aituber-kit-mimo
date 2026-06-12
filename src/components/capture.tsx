@@ -50,17 +50,28 @@ const Capture = () => {
       }
 
       // CaptureServiceにキャプチャ関数を登録
-      CaptureService.getInstance().registerCaptureFunction(() => {
-        const video = videoRef.current
-        if (!video || video.readyState < 2) return null
-        const canvas = document.createElement('canvas')
-        canvas.width = video.videoWidth
-        canvas.height = video.videoHeight
-        const ctx = canvas.getContext('2d')
-        if (!ctx) return null
-        ctx.drawImage(video, 0, 0)
-        return canvas.toDataURL('image/jpeg', 0.9)
-      })
+      // リサイズはvideo要素から直接スケーリング描画する（Imageのデコード待ちが不要で同期的に完結する）
+      CaptureService.getInstance().registerCaptureFunction(
+        (maxWidth?: number, quality?: number) => {
+          const video = videoRef.current
+          if (!video || video.readyState < 2) return null
+          const sourceWidth = video.videoWidth
+          const sourceHeight = video.videoHeight
+          if (!sourceWidth || !sourceHeight) return null
+
+          const scale =
+            maxWidth && maxWidth > 0 && sourceWidth > maxWidth
+              ? maxWidth / sourceWidth
+              : 1
+          const canvas = document.createElement('canvas')
+          canvas.width = Math.round(sourceWidth * scale)
+          canvas.height = Math.round(sourceHeight * scale)
+          const ctx = canvas.getContext('2d')
+          if (!ctx) return null
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+          return canvas.toDataURL('image/jpeg', quality ?? 0.9)
+        }
+      )
 
       // track endedイベント監視（ブラウザ側で共有停止された時の検知）
       stream.getVideoTracks().forEach((track) => {
