@@ -659,9 +659,7 @@
     "Capturing": "キャプチャ中",
     "WaitingPrefix": "待機",
     "CaptureUnavailable": "キャプチャ停止",
-    "VideoDelay": "映像遅延（秒）",
-    "VideoDelayInfo": "画面共有の映像表示を指定秒数だけ遅延させます（{{min}}〜{{max}}秒）。AIの実況生成にかかる時間を補正し、音声と映像のタイミングを合わせます。0で無効。AIへのキャプチャ送信はリアルタイムのまま行われます。",
-    "VideoDelayOff": "OFF"
+    "AdvancedSettings": "詳細設定"
   },
   "KioskSettings": "デモ端末モード設定",
   "KioskModeEnabled": "デモ端末モード",

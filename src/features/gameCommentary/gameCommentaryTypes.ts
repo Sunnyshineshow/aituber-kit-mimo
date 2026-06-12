@@ -15,7 +15,6 @@ export interface GameCommentarySettings {
   gameCommentaryImageQuality: number // JPEG品質 (0.3-1.0)
   gameCommentaryResizeWidth: number // リサイズ幅px (0=なし)
   gameCommentarySaveToChat: boolean // chatLogにも保存するか（opt-in）
-  gameCommentaryVideoDelay: number // 映像遅延秒数 (0-10)
   gameCommentaryBackgroundAnalysisEnabled: boolean // 発話中の補助画像解析
   gameCommentaryBackgroundAnalysisInterval: number // 秒 (1-10)
 }
@@ -31,7 +30,6 @@ export const DEFAULT_GAME_COMMENTARY_CONFIG: GameCommentarySettings = {
   gameCommentaryImageQuality: 0.7,
   gameCommentaryResizeWidth: 1024,
   gameCommentarySaveToChat: true,
-  gameCommentaryVideoDelay: 0,
   gameCommentaryBackgroundAnalysisEnabled: false,
   gameCommentaryBackgroundAnalysisInterval: 2,
 }
@@ -42,17 +40,11 @@ export const GAME_COMMENTARY_INTERVAL = { MIN: 0, MAX: 20 }
 // Context count validation constants
 export const GAME_COMMENTARY_CONTEXT_COUNT = { MIN: 0, MAX: 20 }
 
-// Video delay validation constants
-export const GAME_COMMENTARY_VIDEO_DELAY = { MIN: 0, MAX: 10 }
-
 // Background analysis interval validation constants
 export const GAME_COMMENTARY_BACKGROUND_ANALYSIS_INTERVAL = {
   MIN: 1,
   MAX: 10,
 }
-
-// Internal delayed preview buffer width
-export const GAME_COMMENTARY_DELAY_BUFFER_WIDTH = 960
 
 // Background scene analysis constants
 export const GAME_COMMENTARY_BACKGROUND_ANALYSIS = {
@@ -74,15 +66,6 @@ export function clampContextCount(value: number): number {
     return GAME_COMMENTARY_CONTEXT_COUNT.MIN
   if (value > GAME_COMMENTARY_CONTEXT_COUNT.MAX)
     return GAME_COMMENTARY_CONTEXT_COUNT.MAX
-  return value
-}
-
-// Validate and clamp video delay value
-export function clampVideoDelay(value: number): number {
-  if (value < GAME_COMMENTARY_VIDEO_DELAY.MIN)
-    return GAME_COMMENTARY_VIDEO_DELAY.MIN
-  if (value > GAME_COMMENTARY_VIDEO_DELAY.MAX)
-    return GAME_COMMENTARY_VIDEO_DELAY.MAX
   return value
 }
 

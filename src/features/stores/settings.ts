@@ -817,10 +817,6 @@ const getInitialValuesFromEnv = (): SettingsState => ({
   gameCommentarySaveToChat: process.env.NEXT_PUBLIC_GAME_COMMENTARY_SAVE_TO_CHAT
     ? process.env.NEXT_PUBLIC_GAME_COMMENTARY_SAVE_TO_CHAT === 'true'
     : DEFAULT_GAME_COMMENTARY_CONFIG.gameCommentarySaveToChat,
-  gameCommentaryVideoDelay: parseEnvInt(
-    process.env.NEXT_PUBLIC_GAME_COMMENTARY_VIDEO_DELAY,
-    DEFAULT_GAME_COMMENTARY_CONFIG.gameCommentaryVideoDelay
-  ),
   gameCommentaryBackgroundAnalysisEnabled:
     process.env.NEXT_PUBLIC_GAME_COMMENTARY_BACKGROUND_ANALYSIS_ENABLED ===
       'true' ||
@@ -852,6 +848,7 @@ type PersistedSettingsState = Partial<SettingsState> & {
   presenceGreetingMessage?: string
   presenceDepartureMessage?: string
   gameCommentaryVideoBufferWidth?: number
+  gameCommentaryVideoDelay?: number
 }
 
 const migratePersistedSettings = (
@@ -905,10 +902,6 @@ const migratePersistedSettings = (
     migrated.gameCommentaryBackgroundAnalysisPromptTemplate =
       DEFAULT_GAME_COMMENTARY_CONFIG.gameCommentaryBackgroundAnalysisPromptTemplate
   }
-  if (migrated.gameCommentaryVideoDelay === undefined) {
-    migrated.gameCommentaryVideoDelay =
-      DEFAULT_GAME_COMMENTARY_CONFIG.gameCommentaryVideoDelay
-  }
   if (migrated.gameCommentaryBackgroundAnalysisEnabled === undefined) {
     migrated.gameCommentaryBackgroundAnalysisEnabled =
       DEFAULT_GAME_COMMENTARY_CONFIG.gameCommentaryBackgroundAnalysisEnabled
@@ -918,6 +911,7 @@ const migratePersistedSettings = (
       DEFAULT_GAME_COMMENTARY_CONFIG.gameCommentaryBackgroundAnalysisInterval
   }
   delete migrated.gameCommentaryVideoBufferWidth
+  delete migrated.gameCommentaryVideoDelay
 
   return migrated as Partial<SettingsState>
 }
@@ -1177,7 +1171,6 @@ const settingsStore = create<SettingsState>()(
         gameCommentaryImageQuality: state.gameCommentaryImageQuality,
         gameCommentaryResizeWidth: state.gameCommentaryResizeWidth,
         gameCommentarySaveToChat: state.gameCommentarySaveToChat,
-        gameCommentaryVideoDelay: state.gameCommentaryVideoDelay,
         gameCommentaryBackgroundAnalysisEnabled:
           state.gameCommentaryBackgroundAnalysisEnabled,
         gameCommentaryBackgroundAnalysisInterval:

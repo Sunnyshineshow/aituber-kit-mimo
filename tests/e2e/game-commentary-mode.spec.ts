@@ -27,9 +27,6 @@ test('can configure game commentary mode and start or stop capture-driven playba
   await setControlValue(page, 'game-commentary-capture-interval-input', '10')
   await expectPersistedSetting(page, 'gameCommentaryCaptureInterval', 10)
 
-  await setControlValue(page, 'game-commentary-video-delay-input', '3')
-  await expectPersistedSetting(page, 'gameCommentaryVideoDelay', 3)
-
   await setControlValue(page, 'game-commentary-image-quality-input', '0.8')
   await expectPersistedSetting(page, 'gameCommentaryImageQuality', 0.8)
 
@@ -52,6 +49,11 @@ test('can configure game commentary mode and start or stop capture-driven playba
 
   await page.getByTestId('game-commentary-save-to-chat-toggle').click()
   await expectPersistedSetting(page, 'gameCommentarySaveToChat', false)
+
+  await page.getByTestId('game-commentary-advanced-settings-toggle').click()
+  await expect(
+    page.getByTestId('game-commentary-background-analysis-toggle')
+  ).toBeVisible()
 
   await page.getByTestId('game-commentary-background-analysis-toggle').click()
   await expectPersistedSetting(

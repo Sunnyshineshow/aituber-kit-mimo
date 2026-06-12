@@ -44,7 +44,6 @@ const defaultSettingsState: PersistedSettings = {
   gameCommentaryImageQuality: 0.7,
   gameCommentaryResizeWidth: 1024,
   gameCommentarySaveToChat: true,
-  gameCommentaryVideoDelay: 0,
   gameCommentaryBackgroundAnalysisEnabled: false,
   gameCommentaryBackgroundAnalysisInterval: 2,
 }
