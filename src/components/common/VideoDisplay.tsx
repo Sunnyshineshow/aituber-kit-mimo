@@ -11,7 +11,10 @@ import settingsStore from '@/features/stores/settings'
 import { IconButton } from '../iconButton'
 import { useDraggable } from '@/hooks/useDraggable'
 import { useResizable } from '@/hooks/useResizable'
-import { fitDimensionsWithinBounds } from '@/utils/mediaDisplay'
+import {
+  fitDimensionsWithinBounds,
+  getTopRightAnchoredResizeOffset,
+} from '@/utils/mediaDisplay'
 
 interface VideoDisplayProps {
   videoRef: React.RefObject<HTMLVideoElement>
@@ -46,6 +49,11 @@ export const VideoDisplay = forwardRef<HTMLDivElement, VideoDisplayProps>(
     const hideVideoDisplay = settingsStore((s) => s.hideVideoDisplay)
     const backgroundVideoRef = useRef<HTMLVideoElement>(null)
     const containerRef = useRef<HTMLDivElement>(null)
+    const resizeStartPositionRef = useRef({ x: 0, y: 0 })
+    const [previewMaxSize, setPreviewMaxSize] = useState({
+      width: MINI_VIDEO_MAX_WIDTH,
+      height: MINI_VIDEO_MAX_HEIGHT,
+    })
     const [videoBounds, setVideoBounds] = useState({
       x: 0,
       y: 0,
@@ -53,20 +61,76 @@ export const VideoDisplay = forwardRef<HTMLDivElement, VideoDisplayProps>(
       height: 0,
     })
     const {
+      position: dragPosition,
       isMobile,
       handleMouseDown,
       resetPosition,
+      setPosition: setDragPosition,
       style: dragStyle,
     } = useDraggable()
+    const handleResize = useCallback(
+      ({
+        direction,
+        startSize,
+        size: nextSize,
+      }: {
+        direction: string
+        startSize: { width: number; height: number }
+        size: { width: number; height: number }
+      }) => {
+        const offset = getTopRightAnchoredResizeOffset(
+          direction,
+          startSize,
+          nextSize
+        )
+
+        setDragPosition({
+          x: resizeStartPositionRef.current.x + offset.x,
+          y: resizeStartPositionRef.current.y + offset.y,
+        })
+      },
+      [setDragPosition]
+    )
     const { size, isResizing, handleResizeStart, setSize } = useResizable({
       initialWidth: MINI_VIDEO_MAX_WIDTH,
       initialHeight: MINI_VIDEO_MAX_HEIGHT,
-      maxWidth: MINI_VIDEO_MAX_WIDTH,
-      maxHeight: MINI_VIDEO_MAX_HEIGHT,
+      maxWidth: previewMaxSize.width,
+      maxHeight: previewMaxSize.height,
       aspectRatio: true,
+      onResize: handleResize,
     })
     const showBackgroundVideo = useVideoAsBackground && !hideVideoDisplay
     const showFloatingPreview = !useVideoAsBackground && !hideVideoDisplay
+
+    const handleVideoResizeStart = useCallback(
+      (e: React.MouseEvent, direction: string) => {
+        resizeStartPositionRef.current = dragPosition
+        handleResizeStart(e, direction)
+      },
+      [dragPosition, handleResizeStart]
+    )
+
+    useEffect(() => {
+      const updatePreviewMaxSize = () => {
+        setPreviewMaxSize({
+          width: Math.max(
+            MINI_VIDEO_MAX_WIDTH,
+            Math.floor(window.innerWidth * 0.9)
+          ),
+          height: Math.max(
+            MINI_VIDEO_MAX_HEIGHT,
+            Math.floor(window.innerHeight * 0.8)
+          ),
+        })
+      }
+
+      updatePreviewMaxSize()
+      window.addEventListener('resize', updatePreviewMaxSize)
+
+      return () => {
+        window.removeEventListener('resize', updatePreviewMaxSize)
+      }
+    }, [])
 
     const syncSizeToVideo = useCallback(() => {
       const video = videoRef.current
@@ -76,11 +140,11 @@ export const VideoDisplay = forwardRef<HTMLDivElement, VideoDisplayProps>(
         fitDimensionsWithinBounds(
           video.videoWidth,
           video.videoHeight,
-          MINI_VIDEO_MAX_WIDTH,
-          MINI_VIDEO_MAX_HEIGHT
+          Math.min(MINI_VIDEO_MAX_WIDTH, previewMaxSize.width),
+          Math.min(MINI_VIDEO_MAX_HEIGHT, previewMaxSize.height)
         )
       )
-    }, [setSize, videoRef])
+    }, [previewMaxSize.height, previewMaxSize.width, setSize, videoRef])
 
     // Handle background video sync
     useEffect(() => {
@@ -166,12 +230,20 @@ export const VideoDisplay = forwardRef<HTMLDivElement, VideoDisplayProps>(
 
     // Calculate actual video bounds within container
     const updateVideoBounds = useCallback(() => {
-      if (!videoRef.current || !containerRef.current) return
-
-      const video = videoRef.current
-      if (video.videoHeight === 0 || video.videoWidth === 0) return
+      if (!containerRef.current) return
 
       const container = containerRef.current
+      const video = videoRef.current
+      if (!video || video.videoHeight === 0 || video.videoWidth === 0) {
+        setVideoBounds({
+          x: 0,
+          y: 0,
+          width: container.clientWidth,
+          height: container.clientHeight,
+        })
+        return
+      }
+
       const videoAspectRatio = video.videoWidth / video.videoHeight
       const containerAspectRatio =
         container.clientWidth / container.clientHeight
@@ -225,6 +297,16 @@ export const VideoDisplay = forwardRef<HTMLDivElement, VideoDisplayProps>(
       updateVideoBounds()
     }, [size, updateVideoBounds])
 
+    const resizeBounds =
+      videoBounds.width > 0 && videoBounds.height > 0
+        ? videoBounds
+        : {
+            x: 0,
+            y: 0,
+            width: size.width,
+            height: size.height,
+          }
+
     return (
       <>
         {showBackgroundVideo && (
@@ -273,77 +355,77 @@ export const VideoDisplay = forwardRef<HTMLDivElement, VideoDisplayProps>(
               }`}
             />
             {/* Resize handles */}
-            {showFloatingPreview && !isMobile && videoBounds.width > 0 && (
+            {showFloatingPreview && !isMobile && (
               <>
                 {/* Corner handles */}
                 <div
                   className="absolute w-3 h-3 cursor-nwse-resize"
                   style={{
-                    left: `${videoBounds.x}px`,
-                    top: `${videoBounds.y}px`,
+                    left: `${resizeBounds.x}px`,
+                    top: `${resizeBounds.y}px`,
                   }}
-                  onMouseDown={(e) => handleResizeStart(e, 'top-left')}
+                  onMouseDown={(e) => handleVideoResizeStart(e, 'top-left')}
                 />
                 <div
                   className="absolute w-3 h-3 cursor-nesw-resize"
                   style={{
-                    left: `${videoBounds.x + videoBounds.width - 12}px`,
-                    top: `${videoBounds.y}px`,
+                    left: `${resizeBounds.x + resizeBounds.width - 12}px`,
+                    top: `${resizeBounds.y}px`,
                   }}
-                  onMouseDown={(e) => handleResizeStart(e, 'top-right')}
+                  onMouseDown={(e) => handleVideoResizeStart(e, 'top-right')}
                 />
                 <div
                   className="absolute w-3 h-3 cursor-nesw-resize"
                   style={{
-                    left: `${videoBounds.x}px`,
-                    top: `${videoBounds.y + videoBounds.height - 12}px`,
+                    left: `${resizeBounds.x}px`,
+                    top: `${resizeBounds.y + resizeBounds.height - 12}px`,
                   }}
-                  onMouseDown={(e) => handleResizeStart(e, 'bottom-left')}
+                  onMouseDown={(e) => handleVideoResizeStart(e, 'bottom-left')}
                 />
                 <div
                   className="absolute w-3 h-3 cursor-nwse-resize"
                   style={{
-                    left: `${videoBounds.x + videoBounds.width - 12}px`,
-                    top: `${videoBounds.y + videoBounds.height - 12}px`,
+                    left: `${resizeBounds.x + resizeBounds.width - 12}px`,
+                    top: `${resizeBounds.y + resizeBounds.height - 12}px`,
                   }}
-                  onMouseDown={(e) => handleResizeStart(e, 'bottom-right')}
+                  onMouseDown={(e) => handleVideoResizeStart(e, 'bottom-right')}
                 />
                 {/* Edge handles */}
                 <div
                   className="absolute w-1/3 h-2 cursor-ns-resize"
                   style={{
-                    left: `${videoBounds.x + videoBounds.width / 2}px`,
-                    top: `${videoBounds.y}px`,
+                    left: `${resizeBounds.x + resizeBounds.width / 2}px`,
+                    top: `${resizeBounds.y}px`,
                     transform: 'translateX(-50%)',
                   }}
-                  onMouseDown={(e) => handleResizeStart(e, 'top')}
+                  onMouseDown={(e) => handleVideoResizeStart(e, 'top')}
                 />
                 <div
                   className="absolute w-1/3 h-2 cursor-ns-resize"
                   style={{
-                    left: `${videoBounds.x + videoBounds.width / 2}px`,
-                    top: `${videoBounds.y + videoBounds.height - 8}px`,
+                    left: `${resizeBounds.x + resizeBounds.width / 2}px`,
+                    top: `${resizeBounds.y + resizeBounds.height - 8}px`,
                     transform: 'translateX(-50%)',
                   }}
-                  onMouseDown={(e) => handleResizeStart(e, 'bottom')}
+                  onMouseDown={(e) => handleVideoResizeStart(e, 'bottom')}
                 />
                 <div
                   className="absolute w-2 h-1/3 cursor-ew-resize"
                   style={{
-                    left: `${videoBounds.x}px`,
-                    top: `${videoBounds.y + videoBounds.height / 2}px`,
+                    left: `${resizeBounds.x}px`,
+                    top: `${resizeBounds.y + resizeBounds.height / 2}px`,
                     transform: 'translateY(-50%)',
                   }}
-                  onMouseDown={(e) => handleResizeStart(e, 'left')}
+                  onMouseDown={(e) => handleVideoResizeStart(e, 'left')}
                 />
                 <div
                   className="absolute w-2 h-1/3 cursor-ew-resize"
                   style={{
-                    left: `${videoBounds.x + videoBounds.width - 8}px`,
-                    top: `${videoBounds.y + videoBounds.height / 2}px`,
+                    left: `${resizeBounds.x + resizeBounds.width - 8}px`,
+                    top: `${resizeBounds.y + resizeBounds.height / 2}px`,
                     transform: 'translateY(-50%)',
                   }}
-                  onMouseDown={(e) => handleResizeStart(e, 'right')}
+                  onMouseDown={(e) => handleVideoResizeStart(e, 'right')}
                 />
               </>
             )}

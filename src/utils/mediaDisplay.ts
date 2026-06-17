@@ -28,3 +28,12 @@ export const fitDimensionsWithinBounds = (
     height: Math.max(1, Math.round(maxWidth / aspectRatio)),
   }
 }
+
+export const getTopRightAnchoredResizeOffset = (
+  direction: string,
+  startSize: { width: number; height: number },
+  nextSize: { width: number; height: number }
+) => ({
+  x: direction.includes('right') ? nextSize.width - startSize.width : 0,
+  y: direction.includes('top') ? startSize.height - nextSize.height : 0,
+})
