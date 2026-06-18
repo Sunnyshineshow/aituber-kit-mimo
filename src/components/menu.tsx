@@ -11,7 +11,7 @@ import { IconButton } from './iconButton'
 import Settings from './settings'
 import { Webcam } from './webcam'
 import Slides from './slides'
-import Capture from './capture'
+import Capture, { setInitialCaptureStream } from './capture'
 import { isMultiModalAvailable } from '@/features/constants/aiModels'
 import { AIService } from '@/features/constants/settings'
 import { getLatestAssistantMessage } from '@/utils/assistantMessageUtils'
@@ -217,11 +217,28 @@ export const Menu = () => {
     }
   }, [gameCommentaryPlaying, showCapture])
 
-  const toggleCapture = useCallback(() => {
-    menuStore.setState(({ showCapture }) => ({ showCapture: !showCapture }))
-    menuStore.setState({ showWebcam: false }) // Captureを表示するときWebcamを非表示にする
-    if (!showCapture) {
-      homeStore.setState({ webcamStatus: false }) // Ensure webcam status is false when enabling capture
+  const toggleCapture = useCallback(async () => {
+    if (showCapture) {
+      menuStore.setState({ showCapture: false })
+      homeStore.setState({ captureStatus: false })
+      return
+    }
+
+    try {
+      if (!navigator.mediaDevices) {
+        throw new Error('Media Devices API non supported.')
+      }
+      const stream = await navigator.mediaDevices.getDisplayMedia({
+        video: true,
+      })
+      setInitialCaptureStream(stream)
+      menuStore.setState({ showCapture: true, showWebcam: false })
+      homeStore.setState({ webcamStatus: false })
+    } catch (error) {
+      console.error('Error capturing display:', error)
+      setShowPermissionModal(true)
+      menuStore.setState({ showCapture: false })
+      homeStore.setState({ captureStatus: false })
     }
   }, [showCapture])
 

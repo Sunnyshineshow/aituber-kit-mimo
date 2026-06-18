@@ -3,6 +3,18 @@ import homeStore from '@/features/stores/home'
 import CaptureService from '@/features/gameCommentary/captureService'
 import { VideoDisplay } from './common/VideoDisplay'
 
+let initialCaptureStream: MediaStream | null = null
+
+export const setInitialCaptureStream = (stream: MediaStream) => {
+  initialCaptureStream = stream
+}
+
+const consumeInitialCaptureStream = () => {
+  const stream = initialCaptureStream
+  initialCaptureStream = null
+  return stream
+}
+
 const Capture = () => {
   const videoRef = useRef<HTMLVideoElement>(null)
   const mediaStreamRef = useRef<MediaStream | null>(null)
@@ -43,11 +55,6 @@ const Capture = () => {
       setMediaStream(stream)
       captureStartedRef.current = true
       homeStore.setState({ captureStatus: true })
-
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream
-        await videoRef.current.play()
-      }
 
       // CaptureServiceにキャプチャ関数を登録
       // リサイズはvideo要素から直接スケーリング描画する（Imageのデコード待ちが不要で同期的に完結する）
@@ -105,10 +112,23 @@ const Capture = () => {
   useEffect(() => {
     // 初回のみ許可を要求
     if (!requestCapturePermissionAttempted.current && !permissionGranted) {
-      requestCapturePermission()
+      const stream = consumeInitialCaptureStream()
+      if (stream) {
+        setupStream(stream)
+          .then(() => {
+            setPermissionGranted(true)
+            setShowPermissionModal(false)
+          })
+          .catch((error) => {
+            console.error('Error capturing display:', error)
+            cleanupStream()
+          })
+      } else {
+        requestCapturePermission()
+      }
       requestCapturePermissionAttempted.current = true
     }
-  }, [permissionGranted, requestCapturePermission])
+  }, [cleanupStream, permissionGranted, requestCapturePermission, setupStream])
 
   const startCapture = async () => {
     // すでに画面共有中の場合は停止
