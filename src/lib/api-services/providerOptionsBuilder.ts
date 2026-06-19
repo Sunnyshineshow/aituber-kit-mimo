@@ -49,6 +49,17 @@ export function buildReasoningProviderOptions(
         },
       }
 
+    case 'fireworks':
+      return {
+        fireworks: {
+          thinking: {
+            type: 'enabled',
+            budgetTokens: reasoningTokenBudget,
+          },
+          reasoningHistory: 'interleaved',
+        },
+      }
+
     case 'google': {
       const isGoogle3Series = model.startsWith('gemini-3')
       if (isGoogle3Series) {
