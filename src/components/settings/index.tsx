@@ -734,7 +734,7 @@ const escapeRegExp = (value: string) =>
 const Footer = () => {
   return (
     <footer className="shrink-0 border-t border-gray-200 bg-[#413D43] py-1 text-center font-Montserrat text-xs text-theme">
-      powered by ChatVRM from Pixiv / ver. 2.43.0
+      powered by ChatVRM from Pixiv / ver. 2.45.0
     </footer>
   )
 }
