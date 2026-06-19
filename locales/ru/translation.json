@@ -688,5 +688,22 @@
   "MultiModalModeDescription": "Выберите, когда использовать мультимодальные функции.",
   "MultiModalModeAIDecide": "Принять решение с помощью ИИ",
   "MultiModalModeAlways": "Всегда использовать",
-  "MultiModalModeNever": "Не использовать"
+  "MultiModalModeNever": "Не использовать",
+  "ApiConsole": {
+    "title": "Консоль API",
+    "description": "На этом экране можно выполнять новые эндпоинты /api/v1 и старый /api/messages, сохраненный для совместимости.",
+    "v1Endpoints": "API v1",
+    "legacyEndpoints": "Устаревший API",
+    "apiKey": "Ключ API",
+    "apiKeyPlaceholder": "AITUBERKIT_API_KEY в .env.local",
+    "copyCurl": "Скопировать cURL",
+    "requestBody": "Тело запроса",
+    "copied": "Скопировано",
+    "clientIdRequired": "Введите Client ID.",
+    "apiKeyRequired": "Введите ключ API.",
+    "sending": "Отправка...",
+    "send": "Выполнить",
+    "response": "Ответ",
+    "noResponse": "Ответа пока нет."
+  }
 }

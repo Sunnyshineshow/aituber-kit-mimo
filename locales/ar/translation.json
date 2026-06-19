@@ -688,5 +688,22 @@
   "MultiModalModeDescription": "يرجى اختيار متى تريد استخدام وظيفة متعددة الوسائط.",
   "MultiModalModeAIDecide": "القرار بواسطة AI",
   "MultiModalModeAlways": "استخدام دائمًا",
-  "MultiModalModeNever": "عدم الاستخدام"
+  "MultiModalModeNever": "عدم الاستخدام",
+  "ApiConsole": {
+    "title": "وحدة تحكم API",
+    "description": "يمكنك من هذه الشاشة تشغيل نقاط النهاية الجديدة /api/v1 و /api/messages القديمة المحفوظة للتوافق.",
+    "v1Endpoints": "API v1",
+    "legacyEndpoints": "API القديم",
+    "apiKey": "مفتاح API",
+    "apiKeyPlaceholder": "AITUBERKIT_API_KEY في .env.local",
+    "copyCurl": "نسخ cURL",
+    "requestBody": "نص الطلب",
+    "copied": "تم النسخ",
+    "clientIdRequired": "أدخل Client ID.",
+    "apiKeyRequired": "أدخل مفتاح API.",
+    "sending": "جارٍ الإرسال...",
+    "send": "تشغيل",
+    "response": "الاستجابة",
+    "noResponse": "لا توجد استجابة بعد."
+  }
 }

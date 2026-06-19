@@ -688,5 +688,22 @@
   "MultiModalModeDescription": "कृपया चुनें कि मल्टीमॉडल फीचर कब उपयोग करना है।",
   "MultiModalModeAIDecide": "AI से निर्णय लें",
   "MultiModalModeAlways": "हमेशा उपयोग करें",
-  "MultiModalModeNever": "उपयोग न करें"
+  "MultiModalModeNever": "उपयोग न करें",
+  "ApiConsole": {
+    "title": "API कंसोल",
+    "description": "इस स्क्रीन से नए /api/v1 endpoints और compatibility के लिए रखे गए पुराने /api/messages चला सकते हैं।",
+    "v1Endpoints": "v1 API",
+    "legacyEndpoints": "Legacy API",
+    "apiKey": "API कुंजी",
+    "apiKeyPlaceholder": ".env.local में AITUBERKIT_API_KEY",
+    "copyCurl": "cURL कॉपी करें",
+    "requestBody": "Request body",
+    "copied": "कॉपी किया गया",
+    "clientIdRequired": "Client ID दर्ज करें।",
+    "apiKeyRequired": "API कुंजी दर्ज करें।",
+    "sending": "भेजा जा रहा है...",
+    "send": "चलाएँ",
+    "response": "Response",
+    "noResponse": "अभी कोई response नहीं है।"
+  }
 }

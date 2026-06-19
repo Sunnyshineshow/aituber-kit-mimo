@@ -8,6 +8,7 @@ import settingsStore from '@/features/stores/settings'
 import homeStore from '@/features/stores/home'
 import { Message } from '@/features/messages/messages'
 import { useRestrictedMode } from '@/hooks/useRestrictedMode'
+import { SpeakQueue } from '@/features/messages/speakQueue'
 
 class ReceivedMessage {
   timestamp: number
@@ -32,6 +33,13 @@ class ReceivedMessage {
     this.useCurrentSystemPrompt = useCurrentSystemPrompt
     this.image = image
   }
+}
+
+type ReceivedCommand = {
+  id: string
+  command: 'stop'
+  mode: 'speech' | 'queue' | 'all'
+  reason?: string
 }
 
 const MessageReceiver = () => {
@@ -188,10 +196,57 @@ const MessageReceiver = () => {
   useEffect(() => {
     if (!clientId || isRestrictedMode) return
 
+    const reportStatus = async () => {
+      const hs = homeStore.getState()
+      const ss = settingsStore.getState()
+
+      try {
+        await fetch(`/api/v1/client/status/?clientId=${clientId}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            connected: true,
+            isSpeaking: hs.isSpeaking,
+            chatProcessing: hs.chatProcessing,
+            messageReceiverEnabled: ss.messageReceiverEnabled,
+            modelType: ss.modelType,
+            aiService: ss.selectAIService,
+            voiceEngine: ss.selectVoice,
+            externalLinkageMode: ss.externalLinkageMode,
+          }),
+        })
+      } catch (error) {
+        console.error('Error reporting client status:', error)
+      }
+    }
+
+    const fetchCommands = async () => {
+      try {
+        const response = await fetch(
+          `/api/v1/client/commands/?clientId=${clientId}`
+        )
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
+        const data = await response.json()
+        const commands = (data.commands || []) as ReceivedCommand[]
+
+        if (commands.some((command) => command.command === 'stop')) {
+          SpeakQueue.stopAll()
+          homeStore.setState({ chatProcessing: false, isSpeaking: false })
+          await reportStatus()
+        }
+      } catch (error) {
+        console.error('Error fetching commands:', error)
+      }
+    }
+
     const fetchMessages = async () => {
       try {
         const response = await fetch(
-          `/api/messages?lastTimestamp=${lastTimestamp}&clientId=${clientId}`
+          `/api/messages/?lastTimestamp=${lastTimestamp}&clientId=${clientId}`
         )
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`)
@@ -209,9 +264,17 @@ const MessageReceiver = () => {
     }
 
     fetchMessages()
+    fetchCommands()
+    reportStatus()
     const intervalId = setInterval(fetchMessages, 1000)
+    const commandIntervalId = setInterval(fetchCommands, 1000)
+    const statusIntervalId = setInterval(reportStatus, 2000)
 
-    return () => clearInterval(intervalId)
+    return () => {
+      clearInterval(intervalId)
+      clearInterval(commandIntervalId)
+      clearInterval(statusIntervalId)
+    }
   }, [clientId, isRestrictedMode, lastTimestamp, speakMessage])
 
   return <></>

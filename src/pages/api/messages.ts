@@ -3,27 +3,13 @@ import {
   isRestrictedMode,
   createRestrictedModeErrorResponse,
 } from '@/utils/restrictedMode'
-
-type MessageType = 'direct_send' | 'ai_generate' | 'user_input'
-
-interface ReceivedMessage {
-  timestamp: number
-  message: string
-  type: MessageType
-  systemPrompt?: string
-  useCurrentSystemPrompt?: boolean
-  image?: string
-}
-
-interface MessageQueue {
-  messages: ReceivedMessage[]
-  lastAccessed: number
-}
-
-let messagesPerClient: { [clientId: string]: MessageQueue } = {}
-
-const CLIENT_TIMEOUT = 1000 * 60 * 5 // 5分
-const MAX_IMAGE_CHARS = 10_000_000 // 約7.5MBのbase64画像に相当
+import {
+  MessageType,
+  cleanupClientQueues,
+  dequeueMessages,
+  enqueueMessages,
+} from '@/features/api/messageGateway'
+import { normalizeImage } from '@/features/api/http'
 
 export const config = {
   api: {
@@ -61,71 +47,31 @@ const handler = (req: NextApiRequest, res: NextApiResponse) => {
       res.status(400).json({ error: 'useCurrentSystemPrompt is not a boolean' })
       return
     }
-    // nullをundefinedに正規化
-    const sanitizedImage =
-      image === null || image === undefined ? undefined : image
-    if (sanitizedImage !== undefined && typeof sanitizedImage !== 'string') {
-      res.status(400).json({ error: 'Image is not a string' })
-      return
-    }
-    if (
-      typeof sanitizedImage === 'string' &&
-      sanitizedImage.length > MAX_IMAGE_CHARS
-    ) {
-      res.status(413).json({ error: 'Image payload is too large' })
+    const imageResult = normalizeImage(image)
+    if (!imageResult.ok) {
+      res.status(imageResult.status).json({ error: imageResult.error })
       return
     }
 
-    // クライアントキューのクリーンアップ
     cleanupClientQueues()
 
-    // クライアントのキューが存在しない場合は作成
-    if (!messagesPerClient[clientId]) {
-      messagesPerClient[clientId] = { messages: [], lastAccessed: Date.now() }
-    }
-
-    // メッセージをクライアントのキューに追加
-    const timestamp = Date.now()
-    messages.forEach((message) => {
-      messagesPerClient[clientId].messages.push({
-        timestamp,
-        message,
-        type,
-        systemPrompt,
-        useCurrentSystemPrompt,
-        image: sanitizedImage,
-      })
+    enqueueMessages({
+      clientId,
+      messages,
+      type,
+      systemPrompt,
+      useCurrentSystemPrompt,
+      image: imageResult.image,
+      source: 'legacy',
     })
-    messagesPerClient[clientId].lastAccessed = timestamp
 
     res.status(201).json({ message: 'Successfully sent' })
   } else if (req.method === 'GET') {
-    // クライアントのキューが存在しない場合は作成
-    if (!messagesPerClient[clientId]) {
-      messagesPerClient[clientId] = { messages: [], lastAccessed: Date.now() }
-    }
-
-    // クライアントのキューから全てのメッセージを取得
-    const clientQueue = messagesPerClient[clientId]
-    const newMessages = clientQueue.messages
+    const newMessages = dequeueMessages(clientId)
 
     res.status(200).json({ messages: newMessages })
-
-    // キューをクリア
-    clientQueue.messages = []
-    clientQueue.lastAccessed = Date.now()
   } else {
     res.status(405).json({ error: 'Method not allowed' })
-  }
-}
-
-// 古いクライアントのキューを削除
-function cleanupClientQueues() {
-  const now = Date.now()
-  for (const clientId of Object.keys(messagesPerClient)) {
-    if (now - messagesPerClient[clientId].lastAccessed > CLIENT_TIMEOUT) {
-      delete messagesPerClient[clientId]
-    }
   }
 }
 

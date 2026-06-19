@@ -688,5 +688,22 @@
   "MultiModalModeDescription": "멀티모달 기능을 언제 사용할지 선택하세요.",
   "MultiModalModeAIDecide": "AI로 판단하기",
   "MultiModalModeAlways": "항상 사용하기",
-  "MultiModalModeNever": "사용하지 않음"
+  "MultiModalModeNever": "사용하지 않음",
+  "ApiConsole": {
+    "title": "API 콘솔",
+    "description": "이 화면에서 새로운 /api/v1 엔드포인트와 호환 유지용 기존 /api/messages를 실행할 수 있습니다.",
+    "v1Endpoints": "v1 API",
+    "legacyEndpoints": "레거시 API",
+    "apiKey": "API 키",
+    "apiKeyPlaceholder": ".env.local의 AITUBERKIT_API_KEY",
+    "copyCurl": "cURL 복사",
+    "requestBody": "요청 본문",
+    "copied": "복사했습니다",
+    "clientIdRequired": "Client ID를 입력하세요.",
+    "apiKeyRequired": "API 키를 입력하세요.",
+    "sending": "전송 중...",
+    "send": "실행",
+    "response": "응답",
+    "noResponse": "아직 응답이 없습니다."
+  }
 }
