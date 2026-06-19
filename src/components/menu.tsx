@@ -82,6 +82,7 @@ export const Menu = () => {
   const [chatLogMode, setChatLogMode] = useState<number>(
     CHAT_LOG_MODE.ASSISTANT
   )
+  const [showToolMenu, setShowToolMenu] = useState(false)
   const [showPermissionModal, setShowPermissionModal] = useState(false)
   const imageFileInputRef = useRef<HTMLInputElement>(null)
 
@@ -249,7 +250,7 @@ export const Menu = () => {
 
       <div className="absolute z-15 m-3 sm:m-6">
         <div
-          className="grid md:grid-flow-col gap-[8px] mb-10"
+          className="relative grid grid-flow-col gap-[8px] mb-10"
           style={{ width: 'max-content' }}
         >
           {effectiveShowControlPanel && (
@@ -260,6 +261,7 @@ export const Menu = () => {
                     iconName="24/Settings"
                     isProcessing={false}
                     onClick={() => setShowSettings(true)}
+                    aria-label={t('Settings')}
                     data-testid="open-settings-button"
                   ></IconButton>
                 </div>
@@ -274,96 +276,120 @@ export const Menu = () => {
                         : '24/Close'
                   }
                   label={t('ChatLog')}
+                  labelClassName="hidden sm:block"
                   isProcessing={false}
                   onClick={() => setChatLogMode((prev) => (prev + 1) % 3)}
+                  aria-label={t('ChatLog')}
                 />
               </div>
               <div className="order-3">
                 <IconButton
-                  iconName="screen-share"
+                  iconName={showToolMenu ? '24/Close' : '24/Menu'}
+                  label={t('Tools')}
+                  labelClassName="hidden sm:block"
                   isProcessing={false}
-                  onClick={toggleCapture}
-                  data-testid="capture-toggle-button"
+                  onClick={() => setShowToolMenu((prev) => !prev)}
+                  aria-label={t('Tools')}
+                  aria-expanded={showToolMenu}
+                  data-testid="main-tools-toggle-button"
                 />
               </div>
-              <div className="order-4">
-                <IconButton
-                  iconName="24/Camera"
-                  isProcessing={false}
-                  onClick={toggleWebcam}
-                />
-              </div>
-              {isMultiModalAvailable(
-                selectAIService as AIService,
-                selectAIModel,
-                enableMultiModal,
-                customModel
-              ) && (
-                <div className="order-4">
-                  <IconButton
-                    iconName="24/AddImage"
-                    isProcessing={false}
-                    onClick={() => imageFileInputRef.current?.click()}
+              {showToolMenu && (
+                <div
+                  className="absolute left-0 top-full z-20 mt-2 grid w-max min-w-[180px] max-w-[calc(100vw-24px)] gap-2 rounded-lg border border-gray-200 bg-white/95 p-2 shadow-xl backdrop-blur sm:min-w-[220px]"
+                  data-testid="main-tools-menu"
+                >
+                  <ToolMenuButton
+                    iconName="screen-share"
+                    label={t('ScreenShare')}
+                    active={showCapture}
+                    onClick={toggleCapture}
+                    data-testid="capture-toggle-button"
                   />
-                  <input
-                    type="file"
-                    className="hidden"
-                    accept="image/*"
-                    ref={imageFileInputRef}
-                    onChange={(e) => {
-                      const file = e.target.files?.[0]
-                      if (file) {
-                        const reader = new FileReader()
-                        reader.onload = (e) => {
-                          const imageUrl = e.target?.result as string
-                          homeStore.setState({ modalImage: imageUrl })
-                        }
-                        reader.readAsDataURL(file)
+                  <ToolMenuButton
+                    iconName="24/Camera"
+                    label={t('Camera')}
+                    active={showWebcam}
+                    onClick={toggleWebcam}
+                  />
+                  {isMultiModalAvailable(
+                    selectAIService as AIService,
+                    selectAIModel,
+                    enableMultiModal,
+                    customModel
+                  ) && (
+                    <>
+                      <ToolMenuButton
+                        iconName="24/AddImage"
+                        label={t('SelectImage')}
+                        onClick={() => imageFileInputRef.current?.click()}
+                      />
+                      <input
+                        type="file"
+                        className="hidden"
+                        accept="image/*"
+                        ref={imageFileInputRef}
+                        onChange={(e) => {
+                          const file = e.target.files?.[0]
+                          if (file) {
+                            const reader = new FileReader()
+                            reader.onload = (e) => {
+                              const imageUrl = e.target?.result as string
+                              homeStore.setState({ modalImage: imageUrl })
+                            }
+                            reader.readAsDataURL(file)
+                          }
+                        }}
+                      />
+                    </>
+                  )}
+                  {youtubeMode && (
+                    <ToolMenuButton
+                      iconName={youtubePlaying ? '24/PauseAlt' : '24/Video'}
+                      label={
+                        youtubePlaying ? t('PauseYoutube') : t('StartYoutube')
                       }
-                    }}
-                  />
-                </div>
-              )}
-              {youtubeMode && (
-                <div className="order-5">
-                  <IconButton
-                    iconName={youtubePlaying ? '24/PauseAlt' : '24/Video'}
-                    isProcessing={false}
-                    onClick={() =>
-                      settingsStore.setState({
-                        youtubePlaying: !youtubePlaying,
-                      })
-                    }
-                    aria-pressed={youtubePlaying}
-                    data-testid="youtube-play-toggle-button"
-                  />
-                </div>
-              )}
-              {gameCommentaryEnabled && (
-                <div className="order-5">
-                  <IconButton
-                    iconName={
-                      gameCommentaryPlaying ? '24/PauseAlt' : 'game-controller'
-                    }
-                    isProcessing={false}
-                    onClick={toggleGameCommentary}
-                    aria-pressed={gameCommentaryPlaying}
-                    data-testid="game-commentary-play-toggle-button"
-                  />
-                </div>
-              )}
-              {slideMode && (
-                <div className="order-5">
-                  <IconButton
-                    iconName="24/FrameEffect"
-                    isProcessing={false}
-                    onClick={() =>
-                      menuStore.setState({ slideVisible: !slideVisible })
-                    }
-                    disabled={slidePlaying}
-                    aria-pressed={slideVisible}
-                    data-testid="slide-visibility-toggle-button"
-                  />
+                      active={youtubePlaying}
+                      onClick={() =>
+                        settingsStore.setState({
+                          youtubePlaying: !youtubePlaying,
+                        })
+                      }
+                      aria-pressed={youtubePlaying}
+                      data-testid="youtube-play-toggle-button"
+                    />
+                  )}
+                  {gameCommentaryEnabled && (
+                    <ToolMenuButton
+                      iconName={
+                        gameCommentaryPlaying
+                          ? '24/PauseAlt'
+                          : 'game-controller'
+                      }
+                      label={
+                        gameCommentaryPlaying
+                          ? t('PauseGameCommentary')
+                          : t('StartGameCommentary')
+                      }
+                      active={gameCommentaryPlaying}
+                      onClick={toggleGameCommentary}
+                      aria-pressed={gameCommentaryPlaying}
+                      data-testid="game-commentary-play-toggle-button"
+                    />
+                  )}
+                  {slideMode && (
+                    <ToolMenuButton
+                      iconName="24/FrameEffect"
+                      label={slideVisible ? t('HideSlide') : t('ShowSlide')}
+                      active={slideVisible}
+                      onClick={() =>
+                        menuStore.setState({ slideVisible: !slideVisible })
+                      }
+                      disabled={slidePlaying}
+                      aria-pressed={slideVisible}
+                      data-testid="slide-visibility-toggle-button"
+                    />
+                  )}
                 </div>
               )}
             </>
@@ -430,3 +456,31 @@ export const Menu = () => {
     </>
   )
 }
+
+const ToolMenuButton = ({
+  active = false,
+  iconName,
+  label,
+  ...rest
+}: Omit<
+  React.ComponentProps<typeof IconButton>,
+  'backgroundColor' | 'iconColor' | 'isProcessing' | 'label'
+> & {
+  active?: boolean
+  label: string
+}) => (
+  <IconButton
+    {...rest}
+    aria-label={rest['aria-label'] ?? label}
+    iconName={iconName}
+    label={label}
+    isProcessing={false}
+    backgroundColor={
+      active
+        ? 'bg-primary hover:bg-primary-hover active:bg-primary-press'
+        : 'bg-white hover:bg-white-hover active:bg-gray-100 border border-gray-200'
+    }
+    iconColor={active ? 'text-theme' : 'text-text1'}
+    className={`w-full !justify-start rounded-lg ${rest.className ?? ''}`}
+  />
+)

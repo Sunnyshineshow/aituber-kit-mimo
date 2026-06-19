@@ -350,7 +350,7 @@ const ModelProvider = () => {
           onChange={(value) => handleAIServiceChange(value as AIService)}
         >
           <div className="relative inline-block min-w-[240px]">
-            <Listbox.Button className="w-full px-4 py-2 bg-white hover:bg-white-hover rounded-lg flex items-center cursor-pointer">
+            <Listbox.Button className="flex w-full cursor-pointer items-center rounded-lg border border-gray-300 bg-white px-4 py-2 shadow-sm transition hover:bg-white-hover focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20">
               <ServiceLogo service={state.selectAIService as any} />
               <span>{selectedServiceOption?.label}</span>
             </Listbox.Button>
@@ -531,6 +531,28 @@ const ModelProvider = () => {
               {t('CannotUseParameters')}
             </div>
           )}
+
+          <div className="border-t border-gray-300 pt-6 my-6">
+            <div className="my-4 text-xl font-bold">{t('MaxPastMessages')}</div>
+            <div className="my-2 text-sm whitespace-pre-wrap">
+              {t('ConversationHistoryInfo', { count: state.maxPastMessages })}
+            </div>
+            <div className="my-2">
+              <input
+                type="number"
+                min="1"
+                max="9999"
+                className="px-4 py-2 w-24 bg-white hover:bg-white-hover rounded-lg"
+                value={state.maxPastMessages}
+                onChange={(e) => {
+                  const value = parseInt(e.target.value)
+                  if (!Number.isNaN(value) && value >= 1 && value <= 9999) {
+                    settingsStore.setState({ maxPastMessages: value })
+                  }
+                }}
+              />
+            </div>
+          </div>
         </>
       )}
 
