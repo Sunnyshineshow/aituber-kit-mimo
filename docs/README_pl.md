@@ -88,6 +88,7 @@ Szczegółowe instrukcje użytkowania i konfiguracji można znaleźć w [dokumen
 - **Realtime API**: Rozmowy i wykonywanie funkcji z niskim opóźnieniem przy użyciu OpenAI Realtime API
 - **Tryb audio**: Naturalna konwersacja głosowa wykorzystująca OpenAI Audio API
 - **Tryb Reasoning**: Wyświetlanie procesu myślowego AI i konfiguracja parametrów wnioskowania
+- **Tryb komentarza do gry**: Okresowo analizuje zrzuty ekranu i pozwala postaci AI automatycznie generować oraz wypowiadać komentarze dopasowane do obrazu gry
 
 ### 5. Integracja i rozszerzenia
 
@@ -282,9 +283,6 @@ Twoje wsparcie znacząco przyczyni się do rozwoju i ulepszania AITuberKit.
 ### Współpracownicy (w kolejności wsparcia)
 
 <p>
-  <a href="https://github.com/morioki3" title="morioki3">
-    <img src="https://github.com/morioki3.png" width="40" height="40" alt="morioki3">
-  </a>
   <a href="https://github.com/hodachi-axcxept" title="hodachi-axcxept">
     <img src="https://github.com/hodachi-axcxept.png" width="40" height="40" alt="hodachi-axcxept">
   </a>
@@ -381,9 +379,6 @@ Twoje wsparcie znacząco przyczyni się do rozwoju i ulepszania AITuberKit.
   <a href="https://github.com/schroneko" title="schroneko">
     <img src="https://github.com/schroneko.png" width="40" height="40" alt="schroneko">
   </a>
-  <a href="https://github.com/ParachutePenguin" title="ParachutePenguin">
-    <img src="https://github.com/ParachutePenguin.png" width="40" height="40" alt="ParachutePenguin">
-  </a>
   <a href="https://github.com/eruma" title="eruma">
     <img src="https://github.com/eruma.png" width="40" height="40" alt="eruma">
   </a>
@@ -398,6 +393,9 @@ Twoje wsparcie znacząco przyczyni się do rozwoju i ulepszania AITuberKit.
   </a>
   <a href="https://github.com/sa1p" title="sa1p">
     <img src="https://github.com/sa1p.png" width="40" height="40" alt="sa1p">
+  </a>
+  <a href="https://github.com/HarukiExplorer" title="HarukiExplorer">
+    <img src="https://github.com/HarukiExplorer.png" width="40" height="40" alt="HarukiExplorer">
   </a>
 </p>
 

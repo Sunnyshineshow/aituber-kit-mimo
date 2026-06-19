@@ -88,6 +88,7 @@ AITuberKitは、誰でも簡単にAIキャラクターとチャットできるWe
 - **Realtime API**: OpenAIのRealtime APIを使用した低遅延対話と関数実行
 - **オーディオモード**: OpenAIのAudio API機能を活用した自然な音声対話
 - **Reasoningモード**: AIの思考プロセスを表示し、推論パラメータを設定可能
+- **ゲーム実況モード**: 画面キャプチャを定期的に解析し、AIキャラクターがゲーム画面に合わせた実況コメントを自動生成・発話
 
 ### 5. 連携・拡張
 
@@ -282,9 +283,6 @@ npm run deploy:cloudflare
 ### 協力者の皆様（ご支援いただいた順）
 
 <p>
-  <a href="https://github.com/morioki3" title="morioki3">
-    <img src="https://github.com/morioki3.png" width="40" height="40" alt="morioki3">
-  </a>
   <a href="https://github.com/hodachi-axcxept" title="hodachi-axcxept">
     <img src="https://github.com/hodachi-axcxept.png" width="40" height="40" alt="hodachi-axcxept">
   </a>
@@ -381,9 +379,6 @@ npm run deploy:cloudflare
   <a href="https://github.com/schroneko" title="schroneko">
     <img src="https://github.com/schroneko.png" width="40" height="40" alt="schroneko">
   </a>
-  <a href="https://github.com/ParachutePenguin" title="ParachutePenguin">
-    <img src="https://github.com/ParachutePenguin.png" width="40" height="40" alt="ParachutePenguin">
-  </a>
   <a href="https://github.com/eruma" title="eruma">
     <img src="https://github.com/eruma.png" width="40" height="40" alt="eruma">
   </a>
@@ -398,6 +393,9 @@ npm run deploy:cloudflare
   </a>
   <a href="https://github.com/sa1p" title="sa1p">
     <img src="https://github.com/sa1p.png" width="40" height="40" alt="sa1p">
+  </a>
+  <a href="https://github.com/HarukiExplorer" title="HarukiExplorer">
+    <img src="https://github.com/HarukiExplorer.png" width="40" height="40" alt="HarukiExplorer">
   </a>
 </p>
 
