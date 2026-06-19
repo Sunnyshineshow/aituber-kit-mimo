@@ -42,7 +42,7 @@ const languageOptions: { value: Language; label: string }[] = [
 
 const QuickStart = () => {
   const { t } = useTranslation()
-  const isJa = t('OtherSettings') === 'その他'
+  const isJa = i18n.language === 'ja'
   const modelState = useModelProviderState()
   const { handleAIServiceChange, updateMultiModalModeForModel } =
     useAIServiceHandlers()

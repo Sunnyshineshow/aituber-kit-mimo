@@ -13,6 +13,7 @@ import {
   isMultiModalModel,
   isMultiModalModelWithToggle,
   isMultiModalAvailable,
+  isReasoningModel,
   isSearchGroundingModel,
   googleSearchGroundingModels,
   openAIRealtimeModels,
@@ -279,6 +280,17 @@ describe('aiModels', () => {
     it('should return false for non-Google services', () => {
       expect(isSearchGroundingModel('openai', 'gemini-1.5-flash')).toBe(false)
       expect(isSearchGroundingModel('anthropic', 'claude-opus-4-5')).toBe(false)
+    })
+  })
+
+  describe('isReasoningModel', () => {
+    it('should treat Fireworks thinking models as reasoning models', () => {
+      expect(
+        isReasoningModel(
+          'fireworks',
+          'accounts/fireworks/models/kimi-k2-thinking'
+        )
+      ).toBe(true)
     })
   })
 

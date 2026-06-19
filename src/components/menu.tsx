@@ -477,8 +477,8 @@ const ToolMenuButton = ({
     isProcessing={false}
     backgroundColor={
       active
-        ? 'bg-primary hover:bg-primary-hover active:bg-primary-press'
-        : 'theme-surface-control border'
+        ? 'bg-primary hover:bg-primary-hover active:bg-primary-press disabled:bg-primary-disabled disabled:cursor-not-allowed'
+        : 'theme-surface-control border disabled:cursor-not-allowed disabled:opacity-50'
     }
     iconColor={active ? 'text-theme' : 'text-text1'}
     className={`w-full !justify-start rounded-lg ${rest.className ?? ''}`}

@@ -358,7 +358,11 @@ const modelDefinitions: Record<AIService, ModelInfo[]> = {
     { name: 'accounts/fireworks/models/qwq-32b' },
     { name: 'accounts/fireworks/models/yi-large' },
     { name: 'accounts/fireworks/models/kimi-k2-instruct' },
-    { name: 'accounts/fireworks/models/kimi-k2-thinking' },
+    {
+      name: 'accounts/fireworks/models/kimi-k2-thinking',
+      reasoningEfforts: [],
+      reasoningTokenBudget: true,
+    },
     {
       name: 'accounts/fireworks/models/kimi-k2p5',
       reasoningEfforts: [],

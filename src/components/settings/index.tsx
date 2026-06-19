@@ -39,11 +39,11 @@ const Settings = (props: Props) => {
 export default Settings
 
 const Header = ({ onClickClose }: Pick<Props, 'onClickClose'>) => {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const selectAIService = settingsStore((s) => s.selectAIService)
   const selectVoice = settingsStore((s) => s.selectVoice)
   const youtubeMode = settingsStore((s) => s.youtubeMode)
-  const isJa = t('OtherSettings') === 'その他'
+  const isJa = i18n.language === 'ja'
 
   return (
     <header className="grid shrink-0 grid-cols-[auto_1fr] items-center gap-3 border-b border-gray-200 bg-white/85 px-3 py-3 sm:grid-cols-[auto_auto_1fr_auto] sm:px-4">
@@ -51,13 +51,14 @@ const Header = ({ onClickClose }: Pick<Props, 'onClickClose'>) => {
         <IconButton
           iconName="24/Close"
           isProcessing={false}
+          aria-label={isJa ? '設定を閉じる' : 'Close settings'}
           onClick={onClickClose}
           data-testid="close-settings-button"
         ></IconButton>
       </div>
       <div className="min-w-0">
         <h1 className="text-lg font-bold leading-tight text-text1">
-          {t('OtherSettings') === 'その他' ? '設定' : 'Settings'}
+          {isJa ? '設定' : 'Settings'}
         </h1>
         <div className="text-xs text-gray-500">AITuberKit</div>
       </div>
@@ -147,8 +148,9 @@ type TabGroup = {
 }
 
 const SettingsSearch = () => {
-  const { t } = useTranslation()
+  const { i18n } = useTranslation()
   const searchQuery = menuStore((state) => state.settingsSearchQuery)
+  const searchLabel = i18n.language === 'ja' ? '設定を検索' : 'Search settings'
 
   return (
     <label className="relative block">
@@ -157,13 +159,9 @@ const SettingsSearch = () => {
       </span>
       <input
         className="h-10 w-full rounded-lg border border-gray-200 bg-white px-9 text-sm text-text1 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
-        placeholder={
-          t('OtherSettings') === 'その他' ? '設定を検索' : 'Search settings'
-        }
+        placeholder={searchLabel}
         value={searchQuery}
-        aria-label={
-          t('OtherSettings') === 'その他' ? '設定を検索' : 'Search settings'
-        }
+        aria-label={searchLabel}
         data-testid="settings-search-input"
         onChange={(event) =>
           menuStore.setState({
@@ -205,14 +203,17 @@ const StatusChip = ({
   )
 }
 
-const getTabGroups = (t: (key: string) => string): TabGroup[] => [
+const getTabGroups = (
+  t: (key: string) => string,
+  isJa: boolean
+): TabGroup[] => [
   {
     key: 'start',
-    label: t('OtherSettings') === 'その他' ? 'はじめに' : 'Start',
+    label: isJa ? 'はじめに' : 'Start',
     tabs: [
       {
         key: 'quickStart',
-        label: t('OtherSettings') === 'その他' ? 'かんたん設定' : 'Easy setup',
+        label: isJa ? 'かんたん設定' : 'Easy setup',
         keywords: [
           'start',
           'easy',
@@ -255,7 +256,7 @@ const getTabGroups = (t: (key: string) => string): TabGroup[] => [
   },
   {
     key: 'conversation',
-    label: t('OtherSettings') === 'その他' ? '会話' : 'Conversation',
+    label: isJa ? '会話' : 'Conversation',
     tabs: [
       {
         key: 'ai',
@@ -301,7 +302,7 @@ const getTabGroups = (t: (key: string) => string): TabGroup[] => [
   },
   {
     key: 'voiceInput',
-    label: t('OtherSettings') === 'その他' ? '声・入力' : 'Voice & Input',
+    label: isJa ? '声・入力' : 'Voice & Input',
     tabs: [
       {
         key: 'voice',
@@ -326,7 +327,7 @@ const getTabGroups = (t: (key: string) => string): TabGroup[] => [
   },
   {
     key: 'streaming',
-    label: t('OtherSettings') === 'その他' ? '配信・表示' : 'Streaming & View',
+    label: isJa ? '配信・表示' : 'Streaming & View',
     tabs: [
       {
         key: 'youtube',
@@ -352,7 +353,7 @@ const getTabGroups = (t: (key: string) => string): TabGroup[] => [
   },
   {
     key: 'automation',
-    label: t('OtherSettings') === 'その他' ? '自動化' : 'Automation',
+    label: isJa ? '自動化' : 'Automation',
     tabs: [
       {
         key: 'presence',
@@ -380,20 +381,16 @@ const getTabGroups = (t: (key: string) => string): TabGroup[] => [
   },
   {
     key: 'system',
-    label: t('OtherSettings') === 'その他' ? '詳細設定' : 'Advanced',
+    label: isJa ? '詳細設定' : 'Advanced',
     tabs: [
       {
         key: 'based',
-        label:
-          t('OtherSettings') === 'その他'
-            ? '表示・基本設定'
-            : 'Display & Basics',
+        label: isJa ? '表示・基本設定' : 'Display & Basics',
         keywords: ['language', 'theme', 'background', '言語', 'テーマ', '背景'],
       },
       {
         key: 'other',
-        label:
-          t('OtherSettings') === 'その他' ? 'その他・詳細' : 'Other Advanced',
+        label: isJa ? 'その他・詳細' : 'Other Advanced',
         keywords: ['system', 'debug', 'other', 'その他', 'システム', '詳細'],
       },
       {
@@ -406,12 +403,13 @@ const getTabGroups = (t: (key: string) => string): TabGroup[] => [
 ]
 
 const Main = () => {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const activeTab = menuStore((state) => state.activeSettingsTab)
   const searchQuery = menuStore((state) => state.settingsSearchQuery)
   const [activeMobileGroup, setActiveMobileGroup] = useState('start')
   const contentScrollRef = useRef<HTMLElement>(null)
   const settingsPanelRef = useRef<HTMLDivElement>(null)
+  const isJa = i18n.language === 'ja'
 
   const setActiveTab = (tab: TabKey) => {
     menuStore.setState({ activeSettingsTab: tab })
@@ -425,7 +423,7 @@ const Main = () => {
     }
   }
 
-  const groups = useMemo(() => getTabGroups(t), [t])
+  const groups = useMemo(() => getTabGroups(t, isJa), [t, isJa])
   const tabs = groups.flatMap((group) => group.tabs)
   const normalizedSearchQuery = searchQuery.trim().toLowerCase()
   const visibleGroups = useMemo(() => {
@@ -596,7 +594,7 @@ const Main = () => {
                 <div className="text-2xl font-bold">{currentTab?.label}</div>
               </div>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-600">
-                {t('OtherSettings') === 'その他'
+                {isJa
                   ? '関連する設定だけをまとめて表示します。左のカテゴリまたは検索から目的の項目を選んでください。'
                   : 'Choose a category or search to find related settings quickly.'}
               </p>
