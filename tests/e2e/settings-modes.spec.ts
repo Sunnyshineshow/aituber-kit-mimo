@@ -4,6 +4,7 @@ import {
   expectPersistedSetting,
   gotoHome,
   openSettings,
+  openSettingsTab,
   prepareApp,
   readPersistedSetting,
 } from './helpers/app'
@@ -83,7 +84,7 @@ test('can edit settings tabs and keep idle and presence form state when the pane
   await gotoHome(page)
   await openSettings(page)
 
-  await page.getByTestId('settings-tab-idle').click()
+  await openSettingsTab(page, 'idle')
   await expect(
     page.getByRole('heading', { name: 'Idle Mode Settings' })
   ).toBeVisible()
@@ -110,7 +111,7 @@ test('can edit settings tabs and keep idle and presence form state when the pane
     'Say one short idle line without contacting an external service.'
   )
 
-  await page.getByTestId('settings-tab-presence').click()
+  await openSettingsTab(page, 'presence')
   await expect(
     page.getByRole('heading', { name: 'Presence Detection Settings' })
   ).toBeVisible()
@@ -134,7 +135,7 @@ test('can edit settings tabs and keep idle and presence form state when the pane
   await closeSettings(page)
   await openSettings(page)
 
-  await page.getByTestId('settings-tab-idle').click()
+  await openSettingsTab(page, 'idle')
   await expect(switchAfter(page, 'Idle Mode')).toHaveAttribute(
     'aria-checked',
     'true'
@@ -145,7 +146,7 @@ test('can edit settings tabs and keep idle and presence form state when the pane
     'Say one short idle line without contacting an external service.'
   )
 
-  await page.getByTestId('settings-tab-presence').click()
+  await openSettingsTab(page, 'presence')
   await panel(page)
     .getByRole('button', { name: /Timing Settings/ })
     .click()
@@ -166,11 +167,11 @@ test('enforces mode exclusions for real-time API and audio modes from settings U
   await gotoHome(page)
   await openSettings(page)
 
-  await page.getByTestId('settings-tab-idle').click()
+  await openSettingsTab(page, 'idle')
   await switchAfter(page, 'Idle Mode').click()
   await expectPersistedSetting(page, 'idleModeEnabled', true)
 
-  await page.getByTestId('settings-tab-speechInput').click()
+  await openSettingsTab(page, 'speechInput')
   await setNativeInputValue(
     page.getByTestId('initial-speech-timeout-input'),
     '8'
@@ -189,7 +190,7 @@ test('enforces mode exclusions for real-time API and audio modes from settings U
   await clickElement(page.getByTestId('continuous-mic-listening-toggle'))
   await expectPersistedSetting(page, 'continuousMicListeningMode', true)
 
-  await page.getByTestId('settings-tab-ai').click()
+  await openSettingsTab(page, 'ai')
   await clickElement(page.getByTestId('realtime-api-mode-toggle'))
   await expectPersistedSetting(page, 'realtimeAPIMode', true)
   await expectPersistedSetting(page, 'audioMode', false)
@@ -221,7 +222,7 @@ test('enforces mode exclusions for real-time API and audio modes from settings U
     .poll(() => readPersistedSetting<string>(page, 'selectAIModel'))
     .not.toBe('tts-1')
 
-  await page.getByTestId('settings-tab-idle').click()
+  await openSettingsTab(page, 'idle')
   await switchAfter(page, 'Idle Mode').click()
   await expectPersistedSetting(page, 'idleModeEnabled', true)
 
