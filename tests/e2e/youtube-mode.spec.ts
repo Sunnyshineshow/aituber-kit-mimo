@@ -5,6 +5,7 @@ import {
   gotoHome,
   openSettings,
   openSettingsTab,
+  openToolsMenu,
   prepareApp,
 } from './helpers/app'
 
@@ -42,6 +43,7 @@ test('can configure YouTube mode and start or stop polling without API keys', as
   await page.getByTestId('youtube-live-id-input').fill('')
 
   await closeSettings(page)
+  await openToolsMenu(page)
 
   await expect(page.getByTestId('youtube-play-toggle-button')).toBeVisible()
   await page.getByTestId('youtube-play-toggle-button').click()

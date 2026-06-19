@@ -529,39 +529,66 @@ export async function closeSettings(page: Page) {
 export async function openSettingsTab(page: Page, tab: string) {
   const tabTestId = `settings-tab-${tab}`
   let tabButton = page.getByTestId(tabTestId).filter({ visible: true }).first()
-  let openedFromMobileDropdown = false
 
   if (!(await tabButton.isVisible().catch(() => false))) {
-    await openMobileSettingsTabDropdown(page)
+    await openMobileSettingsTabGroup(page, tab)
     tabButton = page.getByTestId(tabTestId).filter({ visible: true }).first()
-    openedFromMobileDropdown = true
   }
 
   await expect(tabButton).toBeVisible()
   await tabButton.evaluate((element) => {
     ;(element as HTMLElement).click()
   })
-  if (openedFromMobileDropdown) {
-    await expect(page.getByTestId('settings-panel')).toBeVisible()
-    return
-  }
 
-  await expect(tabButton).toHaveClass(/bg-primary/)
+  await expect(page.getByTestId('settings-panel')).toBeVisible()
+  if (await tabButton.isVisible().catch(() => false)) {
+    await expect(tabButton).toHaveClass(/bg-primary/)
+  }
 }
 
-export async function openMobileSettingsTabDropdown(page: Page) {
-  const dropdownButton = page
-    .getByTestId('settings-panel')
-    .locator(
-      'xpath=./preceding-sibling::div[contains(concat(" ", normalize-space(@class), " "), " md:hidden ")][1]'
-    )
-    .getByRole('button')
+async function openMobileSettingsTabGroup(page: Page, tab: string) {
+  const tabGroup = settingsTabGroups[tab]
+  if (!tabGroup) {
+    throw new Error(`Unknown settings tab group mapping for tab: ${tab}`)
+  }
+
+  const groupButton = page
+    .getByTestId(`settings-group-${tabGroup}`)
+    .filter({ visible: true })
     .first()
 
-  await expect(dropdownButton).toBeVisible()
-  await dropdownButton.evaluate((element) => {
+  await expect(groupButton).toBeVisible()
+  await groupButton.evaluate((element) => {
     ;(element as HTMLElement).click()
   })
+}
+
+export async function openToolsMenu(page: Page) {
+  const toolsToggle = page.getByTestId('main-tools-toggle-button')
+  await expect(toolsToggle).toBeVisible()
+  await toolsToggle.evaluate((element) => {
+    ;(element as HTMLElement).click()
+  })
+  await expect(page.getByTestId('main-tools-menu')).toBeVisible()
+}
+
+const settingsTabGroups: Record<string, string> = {
+  quickStart: 'start',
+  character: 'start',
+  ai: 'conversation',
+  memory: 'conversation',
+  voice: 'voiceInput',
+  speechInput: 'voiceInput',
+  youtube: 'streaming',
+  gameCommentary: 'streaming',
+  slide: 'streaming',
+  images: 'streaming',
+  presence: 'automation',
+  idle: 'automation',
+  kiosk: 'automation',
+  based: 'system',
+  other: 'system',
+  description: 'system',
 }
 
 export async function readPersistedSetting<T = PersistedValue>(

@@ -1445,10 +1445,10 @@ const Character = () => {
                       })
                     }
                   }}
-                  className={`px-4 py-2 rounded-md text-sm ${
+                  className={`rounded-md border px-4 py-2 text-sm shadow-sm transition ${
                     isSelected
-                      ? 'bg-primary text-theme'
-                      : 'bg-surface1 hover:bg-surface1-hover text-gray-800 bg-white'
+                      ? 'border-primary bg-primary text-theme'
+                      : 'border-gray-200 bg-white text-gray-800 hover:border-primary/60 hover:bg-white-hover'
                   }`}
                 >
                   {customName}

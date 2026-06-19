@@ -10,6 +10,81 @@ body {
 }
 
 @layer components {
+  .theme-surface-popover {
+    border-color: color-mix(in srgb, var(--color-primary) 18%, transparent);
+    background-color: color-mix(
+      in srgb,
+      var(--color-text-base) 94%,
+      transparent
+    );
+  }
+
+  .theme-surface-control {
+    border-color: color-mix(in srgb, var(--color-primary) 18%, transparent);
+    background-color: var(--color-text-base);
+  }
+
+  .theme-surface-control:hover {
+    background-color: color-mix(
+      in srgb,
+      var(--color-primary) 8%,
+      var(--color-text-base)
+    );
+  }
+
+  .theme-surface-control:active {
+    background-color: color-mix(
+      in srgb,
+      var(--color-primary) 14%,
+      var(--color-text-base)
+    );
+  }
+
+  [data-testid='settings-panel'] input:not([type]),
+  [data-testid='settings-panel'] input[type='text'],
+  [data-testid='settings-panel'] input[type='password'],
+  [data-testid='settings-panel'] input[type='number'],
+  [data-testid='settings-panel'] input[type='url'],
+  [data-testid='settings-panel'] input[type='email'],
+  [data-testid='settings-panel'] textarea,
+  [data-testid='settings-panel'] select {
+    @apply !border shadow-sm outline-none transition;
+
+    border-color: color-mix(
+      in srgb,
+      var(--color-primary) 24%,
+      var(--color-text-base)
+    ) !important;
+    background-color: var(--color-text-base);
+  }
+
+  [data-testid='settings-panel'] input:not([type]):focus,
+  [data-testid='settings-panel'] input[type='text']:focus,
+  [data-testid='settings-panel'] input[type='password']:focus,
+  [data-testid='settings-panel'] input[type='number']:focus,
+  [data-testid='settings-panel'] input[type='url']:focus,
+  [data-testid='settings-panel'] input[type='email']:focus,
+  [data-testid='settings-panel'] textarea:focus,
+  [data-testid='settings-panel'] select:focus {
+    @apply !border-primary;
+
+    box-shadow: 0 0 0 2px
+      color-mix(in srgb, var(--color-primary) 20%, transparent);
+  }
+
+  .settings-search-highlight {
+    border-radius: 0.25rem;
+    background: color-mix(
+      in srgb,
+      var(--color-secondary) 34%,
+      var(--color-text-base)
+    );
+    box-shadow: 0 0 0 1px
+      color-mix(in srgb, var(--color-secondary) 70%, transparent);
+    color: inherit;
+    padding: 0 0.125rem;
+  }
+
   .input-range {
     -webkit-appearance: none;
     appearance: none;

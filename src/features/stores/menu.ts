@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 
 type SettingsTabKey =
+  | 'quickStart'
   | 'description'
   | 'based'
   | 'character'
@@ -23,6 +24,7 @@ interface MenuState {
   bgFileInput: HTMLInputElement | null
   slideVisible: boolean
   activeSettingsTab: SettingsTabKey
+  settingsSearchQuery: string
 }
 
 const menuStore = create<MenuState>((set, get) => ({
@@ -31,7 +33,8 @@ const menuStore = create<MenuState>((set, get) => ({
   fileInput: null,
   bgFileInput: null,
   slideVisible: false,
-  activeSettingsTab: 'description',
+  activeSettingsTab: 'quickStart',
+  settingsSearchQuery: '',
 }))
 
 export default menuStore

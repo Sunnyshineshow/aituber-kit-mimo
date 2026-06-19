@@ -6,6 +6,7 @@ import {
   gotoHome,
   openSettings,
   openSettingsTab,
+  openToolsMenu,
   prepareApp,
 } from './helpers/app'
 
@@ -102,6 +103,7 @@ test('can enable slide mode, persist the selected deck, and navigate rendered sl
     '0'
   )
 
+  await openToolsMenu(page)
   await clickElementByTestId(page, 'slide-visibility-toggle-button')
   await expect(page.getByTestId('slide-mode-viewer')).toBeHidden()
   await clickElementByTestId(page, 'slide-visibility-toggle-button')

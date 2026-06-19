@@ -4,6 +4,8 @@ import {
   expectPersistedSetting,
   gotoHome,
   openSettings,
+  openSettingsTab,
+  openToolsMenu,
   prepareApp,
   setControlValue,
 } from './helpers/app'
@@ -18,7 +20,7 @@ test('can configure game commentary mode and start or stop capture-driven playba
   await gotoHome(page)
   await openSettings(page)
 
-  await page.getByTestId('settings-tab-gameCommentary').click()
+  await openSettingsTab(page, 'gameCommentary')
   await expect(page.getByTestId('game-commentary-enabled-toggle')).toBeVisible()
 
   await page.getByTestId('game-commentary-enabled-toggle').click()
@@ -79,6 +81,7 @@ test('can configure game commentary mode and start or stop capture-driven playba
   )
 
   await closeSettings(page)
+  await openToolsMenu(page)
 
   await expect(
     page.getByTestId('game-commentary-play-toggle-button')
