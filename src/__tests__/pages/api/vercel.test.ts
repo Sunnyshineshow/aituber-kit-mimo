@@ -159,7 +159,7 @@ describe('/api/ai/vercel handler', () => {
         messages: [],
         apiKey: '',
         aiService: 'google',
-        model: 'gemini-1.5-pro',
+        model: 'gemini-2.5-pro',
         stream: true,
         temperature: 0.8,
         maxTokens: 500,
@@ -178,7 +178,7 @@ describe('/api/ai/vercel handler', () => {
       resourceName: '',
     })
     expect(mockStreamAiText).toHaveBeenCalledWith({
-      model: 'gemini-1.5-pro',
+      model: 'gemini-2.5-pro',
       registry: mockRegistry,
       service: 'google',
       messages: [{ role: 'user', content: 'hello' }],
@@ -188,6 +188,7 @@ describe('/api/ai/vercel handler', () => {
         useSearchGrounding: true,
         dynamicRetrievalConfig: { dynamicThreshold: 0.42 },
       },
+      providerOptions: undefined,
     })
   })
 

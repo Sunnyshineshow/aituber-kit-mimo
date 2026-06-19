@@ -27,6 +27,21 @@ interface ModelInfo {
 const modelDefinitions: Record<AIService, ModelInfo[]> = {
   openai: [
     {
+      name: 'gpt-5.4-pro',
+      multiModal: true,
+      reasoningEfforts: ['minimal', 'low', 'medium', 'high'],
+    },
+    {
+      name: 'gpt-5.4',
+      multiModal: true,
+      reasoningEfforts: ['minimal', 'low', 'medium', 'high'],
+    },
+    {
+      name: 'gpt-5.3-chat-latest',
+      multiModal: true,
+      reasoningEfforts: ['minimal', 'low', 'medium', 'high'],
+    },
+    {
       name: 'gpt-5.2-pro',
       multiModal: true,
       reasoningEfforts: ['minimal', 'low', 'medium', 'high'],
@@ -99,6 +114,19 @@ const modelDefinitions: Record<AIService, ModelInfo[]> = {
   ],
   anthropic: [
     {
+      name: 'claude-opus-4-6',
+      multiModal: true,
+      reasoningEfforts: [],
+      reasoningTokenBudget: true,
+    },
+    {
+      name: 'claude-sonnet-4-6',
+      multiModal: true,
+      isDefault: true,
+      reasoningEfforts: [],
+      reasoningTokenBudget: true,
+    },
+    {
       name: 'claude-opus-4-5',
       multiModal: true,
       reasoningEfforts: ['low', 'medium', 'high'],
@@ -119,7 +147,6 @@ const modelDefinitions: Record<AIService, ModelInfo[]> = {
     {
       name: 'claude-sonnet-4-5',
       multiModal: true,
-      isDefault: true,
       reasoningEfforts: [],
       reasoningTokenBudget: true,
     },
@@ -135,19 +162,37 @@ const modelDefinitions: Record<AIService, ModelInfo[]> = {
       reasoningEfforts: [],
       reasoningTokenBudget: true,
     },
-    {
-      name: 'claude-3-7-sonnet-latest',
-      multiModal: true,
-      reasoningEfforts: [],
-      reasoningTokenBudget: true,
-    },
-    { name: 'claude-3-5-haiku-latest', multiModal: true },
   ],
   google: [
+    {
+      name: 'gemini-3.1-pro-preview',
+      multiModal: true,
+      reasoningEfforts: ['low', 'medium', 'high'],
+    },
+    {
+      name: 'gemini-3.1-flash-image-preview',
+      multiModal: true,
+      reasoningEfforts: ['minimal', 'low', 'medium', 'high'],
+    },
+    {
+      name: 'gemini-3.1-flash-lite-preview',
+      multiModal: true,
+      reasoningEfforts: ['minimal', 'low', 'medium', 'high'],
+    },
     {
       name: 'gemini-3-pro-preview',
       multiModal: true,
       reasoningEfforts: ['low', 'high'],
+    },
+    {
+      name: 'gemini-3-pro-image-preview',
+      multiModal: true,
+      reasoningEfforts: ['low', 'high'],
+    },
+    {
+      name: 'gemini-3-flash-preview',
+      multiModal: true,
+      reasoningEfforts: ['minimal', 'low', 'medium', 'high'],
     },
     {
       name: 'gemini-2.5-pro',
@@ -175,15 +220,15 @@ const modelDefinitions: Record<AIService, ModelInfo[]> = {
       reasoningTokenBudget: true,
     },
     { name: 'gemini-2.0-flash', multiModal: true },
-    { name: 'gemini-1.5-pro', multiModal: true },
-    { name: 'gemini-1.5-pro-latest', multiModal: true },
-    { name: 'gemini-1.5-flash', multiModal: true },
-    { name: 'gemini-1.5-flash-latest', multiModal: true },
-    { name: 'gemini-1.5-flash-8b', multiModal: true },
-    { name: 'gemini-1.5-flash-8b-latest', multiModal: true },
   ],
   azure: [],
   xai: [
+    { name: 'grok-4-1', multiModal: true, reasoningEfforts: ['low', 'high'] },
+    {
+      name: 'grok-4-1-fast-reasoning',
+      reasoningEfforts: ['low', 'high'],
+    },
+    { name: 'grok-4-1-fast-non-reasoning' },
     { name: 'grok-4-fast-non-reasoning' },
     { name: 'grok-4-fast-reasoning', reasoningEfforts: ['low', 'high'] },
     { name: 'grok-code-fast-1' },
@@ -193,19 +238,19 @@ const modelDefinitions: Record<AIService, ModelInfo[]> = {
       isDefault: true,
       reasoningEfforts: ['low', 'high'],
     },
+    {
+      name: 'grok-4-0709',
+      multiModal: true,
+      reasoningEfforts: ['low', 'high'],
+    },
+    {
+      name: 'grok-4-latest',
+      multiModal: true,
+      reasoningEfforts: ['low', 'high'],
+    },
     { name: 'grok-3', multiModal: true, reasoningEfforts: ['low', 'high'] },
     {
       name: 'grok-3-latest',
-      multiModal: true,
-      reasoningEfforts: ['low', 'high'],
-    },
-    {
-      name: 'grok-3-fast',
-      multiModal: true,
-      reasoningEfforts: ['low', 'high'],
-    },
-    {
-      name: 'grok-3-fast-latest',
       multiModal: true,
       reasoningEfforts: ['low', 'high'],
     },
@@ -219,24 +264,6 @@ const modelDefinitions: Record<AIService, ModelInfo[]> = {
       multiModal: true,
       reasoningEfforts: ['low', 'high'],
     },
-    {
-      name: 'grok-3-mini-fast',
-      multiModal: true,
-      reasoningEfforts: ['low', 'high'],
-    },
-    {
-      name: 'grok-3-mini-fast-latest',
-      multiModal: true,
-      reasoningEfforts: ['low', 'high'],
-    },
-    { name: 'grok-2', multiModal: true },
-    { name: 'grok-2-latest', multiModal: true },
-    { name: 'grok-2-1212', multiModal: true },
-    { name: 'grok-2-vision', multiModal: true },
-    { name: 'grok-2-vision-latest', multiModal: true },
-    { name: 'grok-2-vision-1212', multiModal: true },
-    { name: 'grok-beta', multiModal: true },
-    { name: 'grok-vision-beta', multiModal: true },
   ],
   groq: [
     { name: 'gemma2-9b-it' },
@@ -282,16 +309,19 @@ const modelDefinitions: Record<AIService, ModelInfo[]> = {
     { name: 'command-light-nightly' },
   ],
   mistralai: [
+    { name: 'pixtral-large-latest', multiModal: true },
     { name: 'mistral-large-latest', isDefault: true },
     { name: 'mistral-medium-latest' },
+    { name: 'mistral-medium-2508' },
     { name: 'mistral-medium-2505' },
     { name: 'mistral-small-latest' },
-    { name: 'pixtral-large-latest', multiModal: true },
-    { name: 'pixtral-12b-2409', multiModal: true },
+    { name: 'magistral-small-2507' },
+    { name: 'magistral-medium-2507' },
     { name: 'magistral-small-2506' },
     { name: 'magistral-medium-2506' },
     { name: 'ministral-3b-latest' },
     { name: 'ministral-8b-latest' },
+    { name: 'pixtral-12b-2409', multiModal: true },
     { name: 'open-mistral-7b' },
     { name: 'open-mixtral-8x7b' },
     { name: 'open-mixtral-8x22b' },
@@ -328,6 +358,13 @@ const modelDefinitions: Record<AIService, ModelInfo[]> = {
     { name: 'accounts/fireworks/models/qwq-32b' },
     { name: 'accounts/fireworks/models/yi-large' },
     { name: 'accounts/fireworks/models/kimi-k2-instruct' },
+    { name: 'accounts/fireworks/models/kimi-k2-thinking' },
+    {
+      name: 'accounts/fireworks/models/kimi-k2p5',
+      reasoningEfforts: [],
+      reasoningTokenBudget: true,
+    },
+    { name: 'accounts/fireworks/models/minimax-m2' },
   ],
   deepseek: [{ name: 'deepseek-chat' }, { name: 'deepseek-reasoner' }],
   openrouter: [],
@@ -539,12 +576,17 @@ export function isMultiModalAvailable(
 }
 
 export const googleSearchGroundingModels = [
-  'gemini-1.5-flash-latest',
-  'gemini-1.5-pro-latest',
-  'gemini-1.5-flash-8b-latest',
-  'gemini-1.5-flash',
-  'gemini-1.5-pro',
-  'gemini-1.5-flash-8b',
+  'gemini-3.1-pro-preview',
+  'gemini-3.1-flash-image-preview',
+  'gemini-3.1-flash-lite-preview',
+  'gemini-3-pro-preview',
+  'gemini-3-pro-image-preview',
+  'gemini-3-flash-preview',
+  'gemini-2.5-pro',
+  'gemini-2.5-flash',
+  'gemini-2.5-flash-lite',
+  'gemini-2.5-flash-lite-preview-06-17',
+  'gemini-2.0-flash',
 ] as const
 
 /**

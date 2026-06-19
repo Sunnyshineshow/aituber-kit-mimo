@@ -81,8 +81,8 @@ describe('aiModels', () => {
       expect(getDefaultModel('openai')).toBe('gpt-4.1-mini')
     })
 
-    it('should return claude-sonnet-4-5 for anthropic', () => {
-      expect(getDefaultModel('anthropic')).toBe('claude-sonnet-4-5')
+    it('should return claude-sonnet-4-6 for anthropic', () => {
+      expect(getDefaultModel('anthropic')).toBe('claude-sonnet-4-6')
     })
 
     it('should return gemini-2.5-flash for google', () => {
@@ -132,6 +132,7 @@ describe('aiModels', () => {
     it('should return only multimodal models for openai', () => {
       const models = getMultiModalModels('openai')
       expect(models.length).toBeGreaterThan(0)
+      expect(models).toContain('gpt-5.4')
       expect(models).toContain('gpt-4o')
       expect(models).toContain('gpt-4.1')
     })
@@ -272,8 +273,7 @@ describe('aiModels', () => {
     })
 
     it('should return false for Google non-grounding models', () => {
-      expect(isSearchGroundingModel('google', 'gemini-2.5-flash')).toBe(false)
-      expect(isSearchGroundingModel('google', 'gemini-2.0-flash')).toBe(false)
+      expect(isSearchGroundingModel('google', 'gemini-unknown')).toBe(false)
     })
 
     it('should return false for non-Google services', () => {

@@ -296,10 +296,9 @@ describe('排他エンジン (computeExclusions)', () => {
       const prev = createBaseState({
         selectAIService: 'google',
         useSearchGrounding: true,
-        selectAIModel: 'gemini-1.5-flash',
+        selectAIModel: 'gemini-2.5-flash',
       })
-      // Gemini 2.5系はSearchGrounding非対応
-      const incoming = { selectAIModel: 'gemini-2.5-flash' }
+      const incoming = { selectAIModel: 'gemini-unknown' }
       const { corrections } = computeExclusions(incoming, prev)
 
       expect(corrections.useSearchGrounding).toBe(false)
@@ -309,9 +308,9 @@ describe('排他エンジン (computeExclusions)', () => {
       const prev = createBaseState({
         selectAIService: 'google',
         useSearchGrounding: true,
-        selectAIModel: 'gemini-2.5-flash',
+        selectAIModel: 'gemini-2.0-flash',
       })
-      const incoming = { selectAIModel: 'gemini-1.5-flash' }
+      const incoming = { selectAIModel: 'gemini-2.5-flash' }
       const { corrections } = computeExclusions(incoming, prev)
 
       expect(corrections.useSearchGrounding).toBeUndefined()
