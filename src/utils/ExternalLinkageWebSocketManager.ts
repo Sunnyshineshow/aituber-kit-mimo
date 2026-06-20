@@ -68,7 +68,15 @@ export class ExternalLinkageWebSocketManager {
 
   private handleMessage = async (event: MessageEvent) => {
     console.log('External linkage WebSocket received message:', event)
-    await this.handlers.onMessage(event)
+    try {
+      await this.handlers.onMessage(event)
+    } catch (error) {
+      console.error('External linkage WebSocket message handler error:', error)
+      this.updateStatus('error', {
+        lastError: this.t('Toasts.WebSocketConnectionError'),
+      })
+      this.handlers.onError(event)
+    }
   }
 
   private handleError = (event: Event) => {
@@ -100,6 +108,7 @@ export class ExternalLinkageWebSocketManager {
   }
 
   public connect() {
+    this.disconnect()
     this.removeToast()
     this.updateStatus('connecting')
     toastStore.getState().addToast({
@@ -124,6 +133,13 @@ export class ExternalLinkageWebSocketManager {
     this.ws.addEventListener('close', this.handleClose)
   }
 
+  private detachSocket(ws: WebSocket) {
+    ws.removeEventListener('open', this.handleOpen)
+    ws.removeEventListener('message', this.handleMessage)
+    ws.removeEventListener('error', this.handleError)
+    ws.removeEventListener('close', this.handleClose)
+  }
+
   public removeToast() {
     toastStore
       .getState()
@@ -140,9 +156,11 @@ export class ExternalLinkageWebSocketManager {
   }
 
   public disconnect() {
-    if (this.ws) {
-      this.ws.close()
-    }
+    if (!this.ws) return
+    const ws = this.ws
+    this.ws = null
+    this.detachSocket(ws)
+    ws.close()
   }
 
   public reconnect(): boolean {

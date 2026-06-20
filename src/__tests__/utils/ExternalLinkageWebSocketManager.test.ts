@@ -26,6 +26,12 @@ class MockWebSocket {
     this.listeners[event].push(fn)
   }
 
+  removeEventListener(event: string, fn: Function) {
+    this.listeners[event] = (this.listeners[event] || []).filter(
+      (listener) => listener !== fn
+    )
+  }
+
   close() {
     this.readyState = MockWebSocket.CLOSED
   }
@@ -83,6 +89,41 @@ describe('ExternalLinkageWebSocketManager', () => {
     expect(mockWs.listeners.message).toHaveLength(1)
     expect(mockWs.listeners.error).toHaveLength(1)
     expect(mockWs.listeners.close).toHaveLength(1)
+  })
+
+  it('catches async message handler failures', async () => {
+    handlers.onMessage.mockRejectedValueOnce(new Error('bad payload'))
+    const manager = new ExternalLinkageWebSocketManager(
+      mockT,
+      handlers,
+      mockConnectWebsocket,
+      { onStatusChange: mockStatusChange }
+    )
+    manager.connect()
+
+    mockWs.trigger('message', { data: 'bad' } as MessageEvent)
+    await Promise.resolve()
+
+    expect(mockStatusChange).toHaveBeenCalledWith('error', {
+      lastError: 'Toasts.WebSocketConnectionError',
+    })
+    expect(handlers.onError).toHaveBeenCalled()
+  })
+
+  it('detaches old socket listeners when disconnecting', () => {
+    const manager = new ExternalLinkageWebSocketManager(
+      mockT,
+      handlers,
+      mockConnectWebsocket,
+      { onStatusChange: mockStatusChange }
+    )
+    manager.connect()
+    manager.disconnect()
+
+    expect(mockWs.listeners.open).toHaveLength(0)
+    expect(mockWs.listeners.message).toHaveLength(0)
+    expect(mockWs.listeners.error).toHaveLength(0)
+    expect(mockWs.listeners.close).toHaveLength(0)
   })
 
   it('updates status and shows toast on open', () => {

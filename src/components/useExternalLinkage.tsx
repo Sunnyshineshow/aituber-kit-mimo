@@ -98,7 +98,14 @@ const useExternalLinkage = ({ handleReceiveTextFromWs }: Params) => {
       externalLinkageWebSocketStore.getState().resetReconnectState()
     }
     const handleMessage = async (event: MessageEvent) => {
-      const jsonData = JSON.parse(event.data)
+      let jsonData: unknown
+      try {
+        jsonData = JSON.parse(event.data)
+      } catch (error) {
+        console.error('Failed to parse external linkage message:', error)
+        return
+      }
+
       const controlEvent = normalizeExternalLinkageControlEvent(jsonData)
       if (controlEvent) {
         if (controlEvent.type === 'session.ready') {

@@ -114,7 +114,6 @@ const externalLinkageWebSocketStore = create<ExternalLinkageWebSocketState>(
     reconnect: () => {
       const { wsManager } = get()
       if (!wsManager) return false
-      set((state) => ({ reconnectCount: state.reconnectCount + 1 }))
       return wsManager.reconnect()
     },
     send: (data) => {

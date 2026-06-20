@@ -2,52 +2,52 @@ import {
   handleSendChatFn,
   handleReceiveTextFromWsFn,
   processAIResponse,
-} from '../../../features/chat/handlers'
-import { getAIChatResponseStream } from '../../../features/chat/aiChatFactory'
-import { speakCharacter } from '../../../features/messages/speakCharacter'
-import homeStore from '../../../features/stores/home'
-import settingsStore from '../../../features/stores/settings'
-import slideStore from '../../../features/stores/slide'
-import externalLinkageWebSocketStore from '../../../features/stores/externalLinkageWebSocketStore'
-import toastStore from '../../../features/stores/toast'
+} from '@/features/chat/handlers'
+import { getAIChatResponseStream } from '@/features/chat/aiChatFactory'
+import { speakCharacter } from '@/features/messages/speakCharacter'
+import homeStore from '@/features/stores/home'
+import settingsStore from '@/features/stores/settings'
+import slideStore from '@/features/stores/slide'
+import externalLinkageWebSocketStore from '@/features/stores/externalLinkageWebSocketStore'
+import toastStore from '@/features/stores/toast'
 import i18next from 'i18next'
-import { Message } from '../../../features/messages/messages'
+import { Message } from '@/features/messages/messages'
 
-jest.mock('../../../features/chat/aiChatFactory', () => ({
+jest.mock('@/features/chat/aiChatFactory', () => ({
   getAIChatResponseStream: jest.fn(),
 }))
 
-jest.mock('../../../features/messages/speakCharacter', () => ({
+jest.mock('@/features/messages/speakCharacter', () => ({
   speakCharacter: jest.fn(),
 }))
 
-jest.mock('../../../components/slides', () => ({
+jest.mock('@/components/slides', () => ({
   goToSlide: jest.fn(),
 }))
 
-jest.mock('../../../features/stores/home', () => ({
+jest.mock('@/features/stores/home', () => ({
   getState: jest.fn(),
   setState: jest.fn(),
   upsertMessage: jest.fn(),
 }))
 
-jest.mock('../../../features/stores/settings', () => ({
+jest.mock('@/features/stores/settings', () => ({
   getState: jest.fn(),
 }))
 
-jest.mock('../../../features/stores/slide', () => ({
+jest.mock('@/features/stores/slide', () => ({
   getState: jest.fn(),
 }))
 
-jest.mock('../../../features/stores/websocketStore', () => ({
+jest.mock('@/features/stores/websocketStore', () => ({
   getState: jest.fn(),
 }))
 
-jest.mock('../../../features/stores/externalLinkageWebSocketStore', () => ({
+jest.mock('@/features/stores/externalLinkageWebSocketStore', () => ({
   getState: jest.fn(),
 }))
 
-jest.mock('../../../features/stores/toast', () => ({
+jest.mock('@/features/stores/toast', () => ({
   getState: jest.fn(),
 }))
 

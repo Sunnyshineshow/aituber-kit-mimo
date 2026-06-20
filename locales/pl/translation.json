@@ -688,22 +688,5 @@
   "MultiModalModeDescription": "Wybierz, kiedy używać funkcji multimodalnych.",
   "MultiModalModeAIDecide": "Decyzja podejmowana przez AI",
   "MultiModalModeAlways": "Zawsze używaj",
-  "MultiModalModeNever": "Nie używaj",
-  "ApiConsole": {
-    "title": "Konsola API",
-    "description": "Na tym ekranie możesz uruchamiać nowe endpointy /api/v1 oraz starsze /api/messages zachowane dla zgodności.",
-    "v1Endpoints": "API v1",
-    "legacyEndpoints": "Starsze API",
-    "apiKey": "Klucz API",
-    "apiKeyPlaceholder": "AITUBERKIT_API_KEY w .env.local",
-    "copyCurl": "Kopiuj cURL",
-    "requestBody": "Treść żądania",
-    "copied": "Skopiowano",
-    "clientIdRequired": "Wpisz Client ID.",
-    "apiKeyRequired": "Wpisz klucz API.",
-    "sending": "Wysyłanie...",
-    "send": "Uruchom",
-    "response": "Odpowiedź",
-    "noResponse": "Brak odpowiedzi."
-  }
+  "MultiModalModeNever": "Nie używaj"
 }

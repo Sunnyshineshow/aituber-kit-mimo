@@ -73,7 +73,7 @@ describe('externalLinkageWebSocketStore', () => {
     expect(externalLinkageWebSocketStore.getState().status).toBe('idle')
   })
 
-  it('increments reconnect count when reconnecting', () => {
+  it('reconnects through the manager without incrementing scheduled retry count', () => {
     externalLinkageWebSocketStore
       .getState()
       .initializeWebSocket(mockT, mockHandlers, mockConnectWebsocket)
@@ -82,7 +82,7 @@ describe('externalLinkageWebSocketStore', () => {
 
     expect(result).toBe(true)
     expect(mockReconnect).toHaveBeenCalledTimes(1)
-    expect(externalLinkageWebSocketStore.getState().reconnectCount).toBe(1)
+    expect(externalLinkageWebSocketStore.getState().reconnectCount).toBe(0)
   })
 
   it('tracks v2 protocol capabilities', () => {
