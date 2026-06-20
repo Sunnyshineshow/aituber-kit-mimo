@@ -17,6 +17,11 @@ import {
 const HEARTBEAT_INTERVAL_MS = 15000
 const HEARTBEAT_TIMEOUT_MS = 45000
 
+const isExternalLinkageObject = (
+  data: unknown
+): data is { version?: unknown; type?: unknown } =>
+  typeof data === 'object' && data !== null
+
 ///取得したコメントをストックするリストの作成（receivedMessages）
 interface Params {
   handleReceiveTextFromWs: (
@@ -139,7 +144,11 @@ const useExternalLinkage = ({ handleReceiveTextFromWs }: Params) => {
           }
         }
       }
-      if (jsonData?.version === '2' && jsonData?.type === 'session.ready') {
+      if (
+        isExternalLinkageObject(jsonData) &&
+        jsonData.version === '2' &&
+        jsonData.type === 'session.ready'
+      ) {
         return
       }
       const message = normalizeExternalLinkageIncomingMessage(jsonData)
