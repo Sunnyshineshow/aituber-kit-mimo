@@ -281,8 +281,8 @@
     "CustomAPIError": "カスタムAPIでエラーが発生しました",
     "InvalidJSON": "JSON形式が正しくありません"
   },
-  "MessageReceiver": "外部からの指示を受け付ける",
-  "MessageReceiverDescription": "APIを利用してAIキャラの発言を外部から指示することができます。",
+  "MessageReceiver": "外部からのAPI操作を有効にする",
+  "MessageReceiverDescription": "API経由で、AIキャラの発話・会話入力・停止などを実行できるようにします。",
   "ClientID": "Client ID",
   "OpenSendMessagePage": "API Consoleを開く",
   "RealtimeAPIMode": "リアルタイムAPIモード",
