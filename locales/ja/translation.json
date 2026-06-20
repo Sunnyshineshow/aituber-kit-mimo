@@ -695,7 +695,7 @@
   "DemoModeLogNotice": "このアプリでは会話ログがサーバーに保存されるようになっています。ログは一部加工した上で公開される可能性があります。",
   "ApiConsole": {
     "title": "API Console",
-    "description": "新しい /api/v1 エンドポイントと互換維持用の旧 /api/messages を、この画面から実行できます。",
+    "description": "用途別の /api/v1 エンドポイントと互換維持用の旧 /api/messages を、この画面から実行できます。",
     "v1Endpoints": "v1 API",
     "legacyEndpoints": "Legacy API",
     "apiKey": "API キー",
