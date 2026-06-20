@@ -60,13 +60,21 @@ describe('/api/v1 external API', () => {
   beforeEach(() => {
     jest.resetModules()
     process.env.AITUBERKIT_API_KEY = 'test-api-key'
-    process.env.NEXT_PUBLIC_AITUBERKIT_API_KEY = originalPublicApiKey
+    delete process.env.NEXT_PUBLIC_AITUBERKIT_API_KEY
     require('@/features/api/messageGateway').__resetMessageGatewayForTests()
   })
 
   afterAll(() => {
-    process.env.AITUBERKIT_API_KEY = originalApiKey
-    process.env.NEXT_PUBLIC_AITUBERKIT_API_KEY = originalPublicApiKey
+    if (originalApiKey === undefined) {
+      delete process.env.AITUBERKIT_API_KEY
+    } else {
+      process.env.AITUBERKIT_API_KEY = originalApiKey
+    }
+    if (originalPublicApiKey === undefined) {
+      delete process.env.NEXT_PUBLIC_AITUBERKIT_API_KEY
+    } else {
+      process.env.NEXT_PUBLIC_AITUBERKIT_API_KEY = originalPublicApiKey
+    }
   })
 
   it('requires bearer authentication for v1 endpoints', () => {
@@ -89,28 +97,43 @@ describe('/api/v1 external API', () => {
     })
   })
 
-  it('does not use NEXT_PUBLIC variables as the server API key', () => {
-    process.env.AITUBERKIT_API_KEY = ''
-    process.env.NEXT_PUBLIC_AITUBERKIT_API_KEY = 'public-api-key'
+  it('does not accept public env keys or query string API keys for v1 authentication', () => {
+    delete process.env.AITUBERKIT_API_KEY
+    process.env.NEXT_PUBLIC_AITUBERKIT_API_KEY = 'public-key'
     jest.resetModules()
     const speak = require('@/pages/api/v1/speak').default
-    const res = createMockRes()
 
+    const publicEnvRes = createMockRes()
     speak(
       createMockReq({
         method: 'POST',
-        headers: { authorization: 'Bearer public-api-key' },
+        headers: { authorization: 'Bearer public-key' },
         query: { clientId: 'client1' },
         body: { text: 'hello' },
       }),
-      res
+      publicEnvRes
     )
 
-    expect(res._status).toBe(503)
-    expect(res._json).toEqual({
+    expect(publicEnvRes._status).toBe(503)
+    expect(publicEnvRes._json).toEqual({
       error: 'AITuberKit API key is not configured',
       code: 'API_KEY_NOT_CONFIGURED',
     })
+
+    process.env.AITUBERKIT_API_KEY = 'test-api-key'
+    jest.resetModules()
+    const secureSpeak = require('@/pages/api/v1/speak').default
+    const queryKeyRes = createMockRes()
+    secureSpeak(
+      createMockReq({
+        method: 'POST',
+        query: { clientId: 'client1', apiKey: 'test-api-key' },
+        body: { text: 'hello' },
+      }),
+      queryKeyRes
+    )
+
+    expect(queryKeyRes._status).toBe(401)
   })
 
   it('queues speak requests as direct_send messages for the existing receiver', () => {
@@ -265,6 +288,54 @@ describe('/api/v1 external API', () => {
         command: 'stop',
         mode: 'all',
         reason: 'test',
+      })
+    )
+  })
+
+  it('does not create queues for unknown clients during polling', () => {
+    const messages = require('@/pages/api/messages').default
+    const commands = require('@/pages/api/v1/client/commands').default
+    const status = require('@/pages/api/v1/status').default
+
+    const messagesRes = createMockRes()
+    messages(
+      createMockReq({
+        method: 'GET',
+        query: { clientId: 'unknown-client' },
+      }),
+      messagesRes
+    )
+    expect(messagesRes._status).toBe(200)
+    expect(messagesRes._json).toEqual({ messages: [] })
+
+    const commandsRes = createMockRes()
+    commands(
+      createMockReq({
+        method: 'GET',
+        query: { clientId: 'unknown-client' },
+      }),
+      commandsRes
+    )
+    expect(commandsRes._status).toBe(200)
+    expect(commandsRes._json).toEqual({ commands: [] })
+
+    const statusRes = createMockRes()
+    status(
+      createMockReq({
+        method: 'GET',
+        headers: { authorization: 'Bearer test-api-key' },
+        query: { clientId: 'unknown-client' },
+      }),
+      statusRes
+    )
+
+    expect(statusRes._json).toEqual(
+      expect.objectContaining({
+        queue: {
+          messageCount: 0,
+          commandCount: 0,
+          lastAccessed: null,
+        },
       })
     )
   })

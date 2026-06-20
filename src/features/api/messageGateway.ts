@@ -114,6 +114,9 @@ const getOrCreateQueue = (clientId: string): ClientQueue => {
   return state.queuesPerClient[clientId]
 }
 
+const getQueueIfExists = (clientId: string): ClientQueue | null =>
+  getGatewayState().queuesPerClient[clientId] ?? null
+
 export const emitApiEvent = (
   clientId: string,
   type: ApiEvent['type'],
@@ -212,7 +215,9 @@ export const enqueueMessages = ({
 }
 
 export const dequeueMessages = (clientId: string): QueuedMessage[] => {
-  const queue = getOrCreateQueue(clientId)
+  const queue = getQueueIfExists(clientId)
+  if (!queue) return []
+
   const messages = queue.messages
 
   queue.messages = []
@@ -249,7 +254,9 @@ export const enqueueStopCommand = (
 }
 
 export const dequeueCommands = (clientId: string): QueuedCommand[] => {
-  const queue = getOrCreateQueue(clientId)
+  const queue = getQueueIfExists(clientId)
+  if (!queue) return []
+
   const commands = queue.commands
 
   queue.commands = []
@@ -286,12 +293,12 @@ export const getClientStatus = (clientId: string): ClientStatus | null =>
   getGatewayState().statusesPerClient[clientId] ?? null
 
 export const getClientQueueSummary = (clientId: string) => {
-  const queue = getOrCreateQueue(clientId)
+  const queue = getQueueIfExists(clientId)
 
   return {
-    messageCount: queue.messages.length,
-    commandCount: queue.commands.length,
-    lastAccessed: queue.lastAccessed,
+    messageCount: queue?.messages.length ?? 0,
+    commandCount: queue?.commands.length ?? 0,
+    lastAccessed: queue?.lastAccessed ?? null,
   }
 }
 

@@ -2,48 +2,52 @@ import {
   handleSendChatFn,
   handleReceiveTextFromWsFn,
   processAIResponse,
-} from '../../../features/chat/handlers'
-import { getAIChatResponseStream } from '../../../features/chat/aiChatFactory'
-import { speakCharacter } from '../../../features/messages/speakCharacter'
-import homeStore from '../../../features/stores/home'
-import settingsStore from '../../../features/stores/settings'
-import slideStore from '../../../features/stores/slide'
-import webSocketStore from '../../../features/stores/websocketStore'
-import toastStore from '../../../features/stores/toast'
+} from '@/features/chat/handlers'
+import { getAIChatResponseStream } from '@/features/chat/aiChatFactory'
+import { speakCharacter } from '@/features/messages/speakCharacter'
+import homeStore from '@/features/stores/home'
+import settingsStore from '@/features/stores/settings'
+import slideStore from '@/features/stores/slide'
+import externalLinkageWebSocketStore from '@/features/stores/externalLinkageWebSocketStore'
+import toastStore from '@/features/stores/toast'
 import i18next from 'i18next'
-import { Message } from '../../../features/messages/messages'
+import { Message } from '@/features/messages/messages'
 
-jest.mock('../../../features/chat/aiChatFactory', () => ({
+jest.mock('@/features/chat/aiChatFactory', () => ({
   getAIChatResponseStream: jest.fn(),
 }))
 
-jest.mock('../../../features/messages/speakCharacter', () => ({
+jest.mock('@/features/messages/speakCharacter', () => ({
   speakCharacter: jest.fn(),
 }))
 
-jest.mock('../../../components/slides', () => ({
+jest.mock('@/components/slides', () => ({
   goToSlide: jest.fn(),
 }))
 
-jest.mock('../../../features/stores/home', () => ({
+jest.mock('@/features/stores/home', () => ({
   getState: jest.fn(),
   setState: jest.fn(),
   upsertMessage: jest.fn(),
 }))
 
-jest.mock('../../../features/stores/settings', () => ({
+jest.mock('@/features/stores/settings', () => ({
   getState: jest.fn(),
 }))
 
-jest.mock('../../../features/stores/slide', () => ({
+jest.mock('@/features/stores/slide', () => ({
   getState: jest.fn(),
 }))
 
-jest.mock('../../../features/stores/websocketStore', () => ({
+jest.mock('@/features/stores/websocketStore', () => ({
   getState: jest.fn(),
 }))
 
-jest.mock('../../../features/stores/toast', () => ({
+jest.mock('@/features/stores/externalLinkageWebSocketStore', () => ({
+  getState: jest.fn(),
+}))
+
+jest.mock('@/features/stores/toast', () => ({
   getState: jest.fn(),
 }))
 
@@ -72,8 +76,9 @@ describe('handlers', () => {
       const mockWsManager = {
         websocket: mockWebSocket,
       }
-      ;(webSocketStore.getState as jest.Mock).mockReturnValue({
+      ;(externalLinkageWebSocketStore.getState as jest.Mock).mockReturnValue({
         wsManager: mockWsManager,
+        protocolVersion: 'legacy',
       })
       ;(settingsStore.getState as jest.Mock).mockReturnValue({
         externalLinkageMode: true,
@@ -107,8 +112,9 @@ describe('handlers', () => {
       const mockWsManager = {
         websocket: mockWebSocket,
       }
-      ;(webSocketStore.getState as jest.Mock).mockReturnValue({
+      ;(externalLinkageWebSocketStore.getState as jest.Mock).mockReturnValue({
         wsManager: mockWsManager,
+        protocolVersion: 'legacy',
       })
       ;(settingsStore.getState as jest.Mock).mockReturnValue({
         externalLinkageMode: true,
@@ -150,8 +156,9 @@ describe('handlers', () => {
       const mockWsManager = {
         websocket: mockWebSocket,
       }
-      ;(webSocketStore.getState as jest.Mock).mockReturnValue({
+      ;(externalLinkageWebSocketStore.getState as jest.Mock).mockReturnValue({
         wsManager: mockWsManager,
+        protocolVersion: 'legacy',
       })
       ;(settingsStore.getState as jest.Mock).mockReturnValue({
         externalLinkageMode: true,
@@ -172,6 +179,38 @@ describe('handlers', () => {
       expect(homeStore.setState).toHaveBeenCalledWith({
         chatProcessing: false,
       })
+    })
+
+    it('externalLinkageModeがtrueでv2接続済みの場合、v2イベントで送信する', async () => {
+      const mockWebSocket = {
+        readyState: WebSocket.OPEN,
+        send: jest.fn(),
+      }
+      const mockStartRequest = jest.fn()
+      ;(externalLinkageWebSocketStore.getState as jest.Mock).mockReturnValue({
+        wsManager: {
+          websocket: mockWebSocket,
+        },
+        protocolVersion: '2',
+        startRequest: mockStartRequest,
+      })
+      ;(settingsStore.getState as jest.Mock).mockReturnValue({
+        externalLinkageMode: true,
+      })
+      ;(homeStore.getState as jest.Mock).mockReturnValue({
+        chatLog: [],
+        modalImage: '',
+        upsertMessage: jest.fn(),
+      })
+
+      const handleSendChat = handleSendChatFn()
+      await handleSendChat('v2メッセージ')
+
+      const sent = JSON.parse(mockWebSocket.send.mock.calls[0][0])
+      expect(sent.version).toBe('2')
+      expect(sent.type).toBe('chat.message')
+      expect(sent.payload.text).toBe('v2メッセージ')
+      expect(mockStartRequest).toHaveBeenCalledWith(sent.id)
     })
 
     it('通常モードの場合、AIチャットレスポンスを処理する', async () => {
@@ -253,7 +292,7 @@ describe('handlers', () => {
         chatLog: [],
         upsertMessage: mockUpsertMessage,
       })
-      ;(webSocketStore.getState as jest.Mock).mockReturnValue({
+      ;(externalLinkageWebSocketStore.getState as jest.Mock).mockReturnValue({
         wsManager: mockWsManager,
       })
 
@@ -290,7 +329,7 @@ describe('handlers', () => {
         chatLog: [],
         upsertMessage: mockUpsertMessage,
       })
-      ;(webSocketStore.getState as jest.Mock).mockReturnValue({
+      ;(externalLinkageWebSocketStore.getState as jest.Mock).mockReturnValue({
         wsManager: mockWsManager,
       })
 
@@ -327,7 +366,7 @@ describe('handlers', () => {
         ],
         upsertMessage: mockUpsertMessage,
       })
-      ;(webSocketStore.getState as jest.Mock).mockReturnValue({
+      ;(externalLinkageWebSocketStore.getState as jest.Mock).mockReturnValue({
         wsManager: mockWsManager,
       })
 
@@ -344,6 +383,70 @@ describe('handlers', () => {
           ],
         })
       )
+    })
+
+    it('v2外部連携で発話ライフサイクルイベントを送信する', async () => {
+      const mockUpsertMessage = jest.fn()
+      const mockSend = jest.fn()
+      const mockWsManager = {
+        textBlockStarted: false,
+        setTextBlockStarted: jest.fn(),
+      }
+      ;(settingsStore.getState as jest.Mock).mockReturnValue({
+        externalLinkageMode: true,
+      })
+      ;(homeStore.getState as jest.Mock).mockReturnValue({
+        chatLog: [],
+        upsertMessage: mockUpsertMessage,
+      })
+      ;(externalLinkageWebSocketStore.getState as jest.Mock).mockReturnValue({
+        wsManager: mockWsManager,
+        protocolVersion: '2',
+        send: mockSend,
+      })
+      ;(speakCharacter as jest.Mock).mockImplementation(
+        (_sessionId, _talk, onStart, onComplete) => {
+          onStart?.()
+          onComplete?.()
+        }
+      )
+
+      const handleReceiveTextFromWs = handleReceiveTextFromWsFn()
+      await handleReceiveTextFromWs(
+        'テスト応答',
+        'assistant',
+        'happy',
+        '',
+        undefined,
+        'msg_request'
+      )
+      await handleReceiveTextFromWs(
+        '',
+        'assistant',
+        'neutral',
+        'end',
+        undefined,
+        'msg_request'
+      )
+
+      const sentTypes = mockSend.mock.calls.map(
+        ([data]) => JSON.parse(data).type
+      )
+      expect(sentTypes).toEqual(
+        expect.arrayContaining([
+          'character.message.received',
+          'character.message.rendered',
+          'character.speech.start',
+          'character.speech.done',
+          'character.response.done',
+        ])
+      )
+
+      const responseDone = mockSend.mock.calls
+        .map(([data]) => JSON.parse(data))
+        .find((event) => event.type === 'character.response.done')
+      expect(responseDone.requestId).toBe('msg_request')
+      expect(responseDone.payload.speechSegmentCount).toBe(1)
     })
   })
 

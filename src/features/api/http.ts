@@ -10,11 +10,6 @@ export const getBearerToken = (req: NextApiRequest): string => {
     return authorization.slice('Bearer '.length).trim()
   }
 
-  const queryApiKey = req.query.apiKey
-  if (typeof queryApiKey === 'string') {
-    return queryApiKey
-  }
-
   const headerApiKey = req.headers['x-aituberkit-api-key']
   if (typeof headerApiKey === 'string') {
     return headerApiKey
