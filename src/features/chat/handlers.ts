@@ -67,7 +67,9 @@ const sendExternalLinkageLifecycleEvent = (
   if (state.protocolVersion !== '2') return
 
   state.send(
-    JSON.stringify(createExternalLinkageLifecycleEvent(type, requestId, payload))
+    JSON.stringify(
+      createExternalLinkageLifecycleEvent(type, requestId, payload)
+    )
   )
 }
 

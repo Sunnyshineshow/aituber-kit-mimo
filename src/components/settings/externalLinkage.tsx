@@ -48,8 +48,7 @@ const ExternalLinkage = () => {
   const protocolVersionLabel = t(
     `ExternalLinkageProtocolVersion_${protocolVersion}`,
     {
-      defaultValue:
-        protocolVersion === '2' ? 'v2' : 'legacy (v1 compatible)',
+      defaultValue: protocolVersion === '2' ? 'v2' : 'legacy (v1 compatible)',
     }
   )
 
