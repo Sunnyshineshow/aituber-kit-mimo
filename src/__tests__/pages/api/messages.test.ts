@@ -43,6 +43,7 @@ describe('/api/messages', () => {
   beforeEach(() => {
     jest.resetModules()
 
+    require('@/features/api/messageGateway').__resetMessageGatewayForTests()
     handler = require('@/pages/api/messages').default
   })
 

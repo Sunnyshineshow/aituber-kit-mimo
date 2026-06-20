@@ -281,10 +281,10 @@
     "CustomAPIError": "カスタムAPIでエラーが発生しました",
     "InvalidJSON": "JSON形式が正しくありません"
   },
-  "MessageReceiver": "外部からの指示を受け付ける",
-  "MessageReceiverDescription": "APIを利用してAIキャラの発言を外部から指示することができます。",
+  "MessageReceiver": "外部からのAPI操作を有効にする",
+  "MessageReceiverDescription": "API経由で、AIキャラの発話・会話入力・停止などを実行できるようにします。",
   "ClientID": "Client ID",
-  "OpenSendMessagePage": "メッセージ送信ページを開く",
+  "OpenSendMessagePage": "API Consoleを開く",
   "RealtimeAPIMode": "リアルタイムAPIモード",
   "RealtimeAPIModeContentType": "送信タイプ",
   "RealtimeAPIModeVoice": "ボイスタイプ",
@@ -692,5 +692,22 @@
   "DemoModeLocalTTSNotice": "デモ版ではローカルサーバーを使用するTTSは利用できません",
   "DemoModeAppNotice": "これはAITuberKitのデモアプリです。",
   "DemoModeLimitedFeaturesNotice": "デモ版のため、一部の機能が制限されています。",
-  "DemoModeLogNotice": "このアプリでは会話ログがサーバーに保存されるようになっています。ログは一部加工した上で公開される可能性があります。"
+  "DemoModeLogNotice": "このアプリでは会話ログがサーバーに保存されるようになっています。ログは一部加工した上で公開される可能性があります。",
+  "ApiConsole": {
+    "title": "API Console",
+    "description": "用途別の /api/v1 エンドポイントと互換維持用の旧 /api/messages を、この画面から実行できます。",
+    "v1Endpoints": "v1 API",
+    "legacyEndpoints": "Legacy API",
+    "apiKey": "API キー",
+    "apiKeyPlaceholder": ".env.local の AITUBERKIT_API_KEY",
+    "copyCurl": "cURLをコピー",
+    "requestBody": "リクエスト本文",
+    "copied": "コピーしました",
+    "clientIdRequired": "Client ID を入力してください。",
+    "apiKeyRequired": "API キーを入力してください。",
+    "sending": "送信中...",
+    "send": "実行",
+    "response": "レスポンス",
+    "noResponse": "まだレスポンスはありません。"
+  }
 }

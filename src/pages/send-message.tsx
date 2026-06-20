@@ -1,40 +1,338 @@
-import { useState, useRef, KeyboardEvent, useEffect } from 'react'
-import { IconButton } from '@/components/iconButton'
+import { useEffect, useMemo, useState } from 'react'
 import settingsStore from '@/features/stores/settings'
 import { useTranslation } from 'react-i18next'
+import {
+  BoltIcon,
+  CheckCircleIcon,
+  ChevronDownIcon,
+  ClipboardDocumentIcon,
+  CodeBracketSquareIcon,
+  CommandLineIcon,
+  KeyIcon,
+  PaperAirplaneIcon,
+  PlayIcon,
+  ServerStackIcon,
+  ShieldCheckIcon,
+} from '@heroicons/react/24/outline'
 
-type SendType = 'direct_send' | 'ai_generate' | 'user_input'
+type EndpointId =
+  | 'speak'
+  | 'chat'
+  | 'stop'
+  | 'status'
+  | 'events'
+  | 'legacy_direct'
+  | 'legacy_ai'
+  | 'legacy_user'
 
-interface RequestBody {
-  messages: string[]
-  systemPrompt?: string
-  useCurrentSystemPrompt: boolean
-  image?: string
+type CodeSampleId = 'curl' | 'node' | 'python'
+
+type EndpointDefinition = {
+  id: EndpointId
+  group: 'v1' | 'legacy'
+  label: string
+  method: 'GET' | 'POST'
+  path: string
+  description: string
+  requiresApiKey: boolean
+  defaultBody?: Record<string, unknown>
+  fields: Array<{
+    name: string
+    type: string
+    required?: boolean
+    description: string
+  }>
 }
 
+const endpoints: EndpointDefinition[] = [
+  {
+    id: 'speak',
+    group: 'v1',
+    label: 'Speak',
+    method: 'POST',
+    path: '/api/v1/speak/',
+    description: 'テキストをそのままキャラクターに発話させます。',
+    requiresApiKey: true,
+    defaultBody: {
+      text: 'こんにちは。外部APIからの発話テストです。',
+      emotion: 'neutral',
+      priority: 'normal',
+      interrupt: false,
+    },
+    fields: [
+      {
+        name: 'text',
+        type: 'string',
+        required: true,
+        description: '発話させる本文です。messages の代わりに指定できます。',
+      },
+      {
+        name: 'messages',
+        type: 'string[]',
+        description: '複数文をまとめてキューに入れる場合に使います。',
+      },
+      {
+        name: 'emotion',
+        type: 'string',
+        description: '発話時の表情・感情指定です。未指定なら通常状態です。',
+      },
+      {
+        name: 'priority',
+        type: '"normal" | "high"',
+        description: 'high の場合は通常より前にキューへ入れます。',
+      },
+      {
+        name: 'interrupt',
+        type: 'boolean',
+        description:
+          'true の場合、現在の発話/待機キューを止めてからこの発話を入れます。',
+      },
+    ],
+  },
+  {
+    id: 'chat',
+    group: 'v1',
+    label: 'Chat',
+    method: 'POST',
+    path: '/api/v1/chat/',
+    description: 'AITuberKitの入力欄に送った場合と同じ会話処理に流します。',
+    requiresApiKey: true,
+    defaultBody: {
+      text: '今日の配信で一言あいさつしてください。',
+      mode: 'user_input',
+      interrupt: false,
+    },
+    fields: [
+      {
+        name: 'text',
+        type: 'string',
+        required: true,
+        description:
+          'キャラクターへ渡す入力文です。messages の代わりに指定できます。',
+      },
+      {
+        name: 'messages',
+        type: 'string[]',
+        description: '複数の入力文をまとめて送る場合に使います。',
+      },
+      {
+        name: 'mode',
+        type: '"user_input" | "ai_generate"',
+        description:
+          'user_input は通常入力欄と同じ送信フロー、ai_generate は外部API互換のAI生成フローです。',
+      },
+      {
+        name: 'systemPrompt',
+        type: 'string',
+        description:
+          'mode が ai_generate で useCurrentSystemPrompt=false のときに使うシステムプロンプトです。',
+      },
+      {
+        name: 'useCurrentSystemPrompt',
+        type: 'boolean',
+        description:
+          'mode が ai_generate のとき、現在のキャラクター設定のシステムプロンプトを使うかどうかです。既定値は true です。',
+      },
+      {
+        name: 'image',
+        type: 'string',
+        description:
+          'data URL などの画像文字列です。画像付き入力として処理します。',
+      },
+      {
+        name: 'priority',
+        type: '"normal" | "high"',
+        description: 'high の場合は通常より前にキューへ入れます。',
+      },
+      {
+        name: 'interrupt',
+        type: 'boolean',
+        description:
+          'true の場合、現在の発話/待機キューを止めてからこの入力を入れます。',
+      },
+    ],
+  },
+  {
+    id: 'stop',
+    group: 'v1',
+    label: 'Stop',
+    method: 'POST',
+    path: '/api/v1/stop/',
+    description: '現在の発話と待機中の制御を停止します。',
+    requiresApiKey: true,
+    defaultBody: {
+      mode: 'all',
+      reason: 'manual_api_console',
+    },
+    fields: [
+      {
+        name: 'mode',
+        type: '"speech" | "queue" | "all"',
+        description:
+          '停止範囲です。speech は現在の発話、queue は待機キュー、all は両方を止めます。未指定時は all です。',
+      },
+      {
+        name: 'reason',
+        type: 'string',
+        description: '停止理由のメモです。イベントログ確認用に残せます。',
+      },
+    ],
+  },
+  {
+    id: 'status',
+    group: 'v1',
+    label: 'Status',
+    method: 'GET',
+    path: '/api/v1/status/',
+    description: '接続中クライアントの状態とキュー件数を取得します。',
+    requiresApiKey: true,
+    fields: [
+      {
+        name: 'clientId',
+        type: 'query string',
+        required: true,
+        description: '状態を取得する Message Receiver の Client ID です。',
+      },
+    ],
+  },
+  {
+    id: 'events',
+    group: 'v1',
+    label: 'Events Snapshot',
+    method: 'GET',
+    path: '/api/v1/events/',
+    description: '直近のAPIイベントを取得します。SSE接続の確認にも使えます。',
+    requiresApiKey: true,
+    fields: [
+      {
+        name: 'clientId',
+        type: 'query string',
+        description: '指定した Client ID のイベントだけに絞り込めます。',
+      },
+      {
+        name: 'snapshot',
+        type: 'query boolean',
+        description:
+          'true の場合は直近イベントをJSONで返します。未指定の場合はSSE接続になります。',
+      },
+    ],
+  },
+  {
+    id: 'legacy_direct',
+    group: 'legacy',
+    label: 'Legacy Direct Send',
+    method: 'POST',
+    path: '/api/messages/',
+    description: '旧API: そのまま発話させる direct_send です。',
+    requiresApiKey: false,
+    defaultBody: {
+      messages: ['こんにちは、今日もいい天気ですね。'],
+    },
+    fields: [
+      {
+        name: 'messages',
+        type: 'string[]',
+        required: true,
+        description: 'そのまま発話させる本文の配列です。',
+      },
+    ],
+  },
+  {
+    id: 'legacy_ai',
+    group: 'legacy',
+    label: 'Legacy AI Generate',
+    method: 'POST',
+    path: '/api/messages/',
+    description: '旧API: AIで回答を生成してから発話させます。',
+    requiresApiKey: false,
+    defaultBody: {
+      systemPrompt: 'You are a helpful assistant.',
+      useCurrentSystemPrompt: false,
+      messages: ['この画像について説明してください。'],
+      image: 'data:image/png;base64,...',
+    },
+    fields: [
+      {
+        name: 'messages',
+        type: 'string[]',
+        required: true,
+        description: 'AIへ渡すユーザー入力の配列です。',
+      },
+      {
+        name: 'systemPrompt',
+        type: 'string',
+        description:
+          'useCurrentSystemPrompt=false のときに使うシステムプロンプトです。',
+      },
+      {
+        name: 'useCurrentSystemPrompt',
+        type: 'boolean',
+        description:
+          '現在のキャラクター設定のシステムプロンプトを使うかどうかです。',
+      },
+      {
+        name: 'image',
+        type: 'string',
+        description: 'data URL などの画像文字列です。',
+      },
+    ],
+  },
+  {
+    id: 'legacy_user',
+    group: 'legacy',
+    label: 'Legacy User Input',
+    method: 'POST',
+    path: '/api/messages/',
+    description: '旧API: 通常のユーザー入力として処理します。',
+    requiresApiKey: false,
+    defaultBody: {
+      messages: ['こんにちは。'],
+    },
+    fields: [
+      {
+        name: 'messages',
+        type: 'string[]',
+        required: true,
+        description: '通常のユーザー入力として処理する本文の配列です。',
+      },
+    ],
+  },
+]
+
+const legacyTypeByEndpoint: Partial<Record<EndpointId, string>> = {
+  legacy_direct: 'direct_send',
+  legacy_ai: 'ai_generate',
+  legacy_user: 'user_input',
+}
+
+const codeSampleTabs: Array<{ id: CodeSampleId; label: string }> = [
+  { id: 'curl', label: 'cURL' },
+  { id: 'node', label: 'Node.js' },
+  { id: 'python', label: 'Python' },
+]
+
+const stringifyBody = (body?: Record<string, unknown>) =>
+  body ? JSON.stringify(body, null, 2) : ''
+
 const SendMessage = () => {
-  const [directMessages, setDirectMessages] = useState(Array(1).fill(''))
-  const [aiMessages, setAiMessages] = useState(Array(1).fill(''))
-  const [directFieldCount, setDirectFieldCount] = useState(1)
-  const [aiFieldCount, setAiFieldCount] = useState(1)
-  const [userInputMessages, setUserInputMessages] = useState(Array(1).fill(''))
-  const [userInputFieldCount, setUserInputFieldCount] = useState(1)
-  const [clientId, setClientId] = useState('')
-  const [directResponse, setDirectResponse] = useState('')
-  const [aiResponse, setAiResponse] = useState('')
-  const [userInputResponse, setUserInputResponse] = useState('')
-  const [copySuccess, setCopySuccess] = useState<string>('')
-  const [popupPosition, setPopupPosition] = useState<{
-    x: number
-    y: number
-  } | null>(null)
-  const [systemPrompt, setSystemPrompt] = useState('')
-  const [useCurrentSystemPrompt, setUseCurrentSystemPrompt] = useState(false)
-  const [baseUrl, setBaseUrl] = useState('')
-  const [activeTab, setActiveTab] = useState<SendType>('direct_send')
-  const [attachedImage, setAttachedImage] = useState('')
-  const fileInputRef = useRef<HTMLInputElement>(null)
   const { t } = useTranslation()
+  const [selectedId, setSelectedId] = useState<EndpointId>('speak')
+  const [clientId, setClientId] = useState('')
+  const [apiKey, setApiKey] = useState('')
+  const [baseUrl, setBaseUrl] = useState('')
+  const [requestBody, setRequestBody] = useState(
+    stringifyBody(endpoints[0].defaultBody)
+  )
+  const [responseText, setResponseText] = useState('')
+  const [isSending, setIsSending] = useState(false)
+  const [copyStatus, setCopyStatus] = useState('')
+  const [selectedSample, setSelectedSample] = useState<CodeSampleId>('curl')
+  const [endpointsOpen, setEndpointsOpen] = useState(false)
+
+  const selectedEndpoint = useMemo(
+    () => endpoints.find((endpoint) => endpoint.id === selectedId)!,
+    [selectedId]
+  )
 
   useEffect(() => {
     const storedClientId = settingsStore.getState().clientId
@@ -47,581 +345,534 @@ const SendMessage = () => {
     setBaseUrl(window.location.origin)
   }, [])
 
-  const handleSubmit = async (
-    e?: React.FormEvent,
-    type: SendType = 'direct_send'
-  ) => {
-    e?.preventDefault()
-    const messages = (() => {
-      switch (type) {
-        case 'direct_send':
-          return directMessages
-        case 'ai_generate':
-          return aiMessages
-        case 'user_input':
-          return userInputMessages
-        default:
-          return directMessages
-      }
-    })()
-    if (!messages.some((msg) => msg.trim()) || !clientId.trim()) return
+  const buildUrl = () => {
+    const url = new URL(
+      selectedEndpoint.path,
+      baseUrl || 'http://localhost:3000'
+    )
 
-    const url = new URL('/api/messages', window.location.origin)
-    url.searchParams.append('clientId', clientId.trim())
-    url.searchParams.append('type', type)
-
-    const body: RequestBody = {
-      messages: messages.filter((msg) => msg.trim()),
-      useCurrentSystemPrompt: useCurrentSystemPrompt,
-      ...(useCurrentSystemPrompt ? {} : { systemPrompt: systemPrompt }),
-      ...(attachedImage && type !== 'direct_send'
-        ? { image: attachedImage }
-        : {}),
+    if (clientId) {
+      url.searchParams.set('clientId', clientId)
     }
 
+    const legacyType = legacyTypeByEndpoint[selectedEndpoint.id]
+    if (legacyType) {
+      url.searchParams.set('type', legacyType)
+    }
+
+    if (selectedEndpoint.id === 'events') {
+      url.searchParams.set('snapshot', 'true')
+    }
+
+    return url
+  }
+
+  const parseBody = () => {
+    if (selectedEndpoint.method === 'GET' || !requestBody.trim()) {
+      return undefined
+    }
+
+    return JSON.parse(requestBody)
+  }
+
+  const buildCurlSample = () => {
+    const url = buildUrl().toString()
+    const headers =
+      selectedEndpoint.method === 'POST'
+        ? ['-H "Content-Type: application/json"']
+        : []
+
+    if (selectedEndpoint.requiresApiKey) {
+      headers.push('-H "Authorization: Bearer YOUR_API_KEY"')
+    }
+
+    const body =
+      selectedEndpoint.method === 'POST' && requestBody.trim()
+        ? ` \\\n  -d '${requestBody.replace(/\n/g, '')}'`
+        : ''
+
+    return `curl -X ${selectedEndpoint.method}${
+      headers.length ? ` \\\n  ${headers.join(' \\\n  ')}` : ''
+    }${body} \\\n  '${url}'`
+  }
+
+  const buildNodeSample = () => {
+    const url = buildUrl().toString()
+    const headers = [
+      ...(selectedEndpoint.method === 'POST'
+        ? [`'Content-Type': 'application/json'`]
+        : []),
+      ...(selectedEndpoint.requiresApiKey
+        ? [`Authorization: 'Bearer YOUR_API_KEY'`]
+        : []),
+    ]
+    const body = requestBody.trim() || '{}'
+    const requestOptions = [
+      `method: '${selectedEndpoint.method}'`,
+      `headers: {${headers.length ? `\n    ${headers.join(',\n    ')}\n  ` : ''}}`,
+      ...(selectedEndpoint.method === 'POST'
+        ? [`body: JSON.stringify(${body})`]
+        : []),
+    ]
+
+    return `const url = '${url}'
+
+const response = await fetch(url, {
+  ${requestOptions.join(',\n  ')}
+})
+
+console.log(response.status)
+console.log(await response.json())`
+  }
+
+  const buildPythonSample = () => {
+    const url = buildUrl().toString()
+    const headers = [
+      ...(selectedEndpoint.method === 'POST'
+        ? [`'Content-Type': 'application/json'`]
+        : []),
+      ...(selectedEndpoint.requiresApiKey
+        ? [`'Authorization': 'Bearer YOUR_API_KEY'`]
+        : []),
+    ]
+    const body = requestBody.trim() || '{}'
+    const requestArgs = [
+      `'${selectedEndpoint.method}'`,
+      'url',
+      ...(headers.length ? ['headers=headers'] : []),
+      ...(selectedEndpoint.method === 'POST' ? ['json=payload'] : []),
+    ]
+
+    return `${selectedEndpoint.method === 'POST' ? 'import json\n' : ''}import requests
+
+url = '${url}'
+${headers.length ? `headers = {\n    ${headers.join(',\n    ')}\n}\n` : ''}${
+      selectedEndpoint.method === 'POST'
+        ? `payload = json.loads(${JSON.stringify(body)})\n`
+        : ''
+    }
+response = requests.request(${requestArgs.join(', ')})
+
+print(response.status_code)
+print(response.json())`
+  }
+
+  const getSelectedCodeSample = () => {
+    if (selectedSample === 'node') return buildNodeSample()
+    if (selectedSample === 'python') return buildPythonSample()
+    return buildCurlSample()
+  }
+
+  const copyToClipboard = async (text: string) => {
+    await navigator.clipboard.writeText(text)
+    setCopyStatus(t('ApiConsole.copied'))
+    setTimeout(() => setCopyStatus(''), 1600)
+  }
+
+  const handleEndpointChange = (endpoint: EndpointDefinition) => {
+    setSelectedId(endpoint.id)
+    setRequestBody(stringifyBody(endpoint.defaultBody))
+    setResponseText('')
+    if (window.innerWidth < 1024) {
+      setEndpointsOpen(false)
+    }
+  }
+
+  const handleSubmit = async () => {
+    if (!clientId.trim()) {
+      setResponseText(t('ApiConsole.clientIdRequired'))
+      return
+    }
+
+    if (selectedEndpoint.requiresApiKey && !apiKey.trim()) {
+      setResponseText(t('ApiConsole.apiKeyRequired'))
+      return
+    }
+
+    setIsSending(true)
+    setResponseText('')
+
     try {
-      const res = await fetch(url, {
-        method: 'POST',
+      const body = parseBody()
+      const res = await fetch(buildUrl(), {
+        method: selectedEndpoint.method,
         headers: {
-          'Content-Type': 'application/json',
+          ...(selectedEndpoint.method === 'POST'
+            ? { 'Content-Type': 'application/json' }
+            : {}),
+          ...(selectedEndpoint.requiresApiKey
+            ? { Authorization: `Bearer ${apiKey.trim()}` }
+            : {}),
         },
-        body: JSON.stringify(body),
+        ...(body ? { body: JSON.stringify(body) } : {}),
       })
 
-      if (!res.ok) {
-        throw new Error(`HTTP error! status: ${res.status}`)
-      }
+      const contentType = res.headers.get('content-type') || ''
+      const payload = contentType.includes('application/json')
+        ? await res.json()
+        : await res.text()
 
-      const contentType = res.headers.get('content-type')
-      if (!contentType || !contentType.includes('application/json')) {
-        throw new Error("Oops! We haven't received a JSON response")
-      }
-
-      const data = await res.json()
-      switch (type) {
-        case 'direct_send':
-          setDirectResponse(JSON.stringify(data, null, 2))
-          setDirectMessages(Array(1).fill(''))
-          setDirectFieldCount(1)
-          break
-        case 'ai_generate':
-          setAiResponse(JSON.stringify(data, null, 2))
-          setAiMessages(Array(1).fill(''))
-          setAiFieldCount(1)
-          setAttachedImage('')
-          break
-        case 'user_input':
-          setUserInputResponse(JSON.stringify(data, null, 2))
-          setUserInputMessages(Array(1).fill(''))
-          setUserInputFieldCount(1)
-          setAttachedImage('')
-          break
-      }
+      setResponseText(
+        JSON.stringify(
+          {
+            status: res.status,
+            ok: res.ok,
+            body: payload,
+          },
+          null,
+          2
+        )
+      )
     } catch (error) {
-      console.error('Error:', error)
-      const errorMessage = `エラーが発生しました: ${error instanceof Error ? error.message : String(error)}`
-      switch (type) {
-        case 'direct_send':
-          setDirectResponse(errorMessage)
-          break
-        case 'ai_generate':
-          setAiResponse(errorMessage)
-          break
-        case 'user_input':
-          setUserInputResponse(errorMessage)
-          break
-      }
+      setResponseText(
+        JSON.stringify(
+          {
+            error: error instanceof Error ? error.message : String(error),
+          },
+          null,
+          2
+        )
+      )
+    } finally {
+      setIsSending(false)
     }
-  }
-
-  const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
-      e.preventDefault()
-
-      const formType = (e.target as HTMLTextAreaElement).getAttribute(
-        'data-form-type'
-      ) as SendType
-      handleSubmit(undefined, formType)
-    }
-  }
-
-  const addNewField = (type: SendType) => {
-    if (type === 'direct_send') {
-      setDirectFieldCount((prev) => prev + 1)
-    } else if (type === 'ai_generate') {
-      setAiFieldCount((prev) => prev + 1)
-    } else if (type === 'user_input') {
-      setUserInputFieldCount((prev) => prev + 1)
-    }
-  }
-
-  const removeField = (index: number, type: SendType) => {
-    if (type === 'direct_send') {
-      if (directFieldCount <= 1) return
-      setDirectFieldCount((prev) => prev - 1)
-      setDirectMessages((prev) => prev.filter((_, i) => i !== index))
-    } else if (type === 'ai_generate') {
-      if (aiFieldCount <= 1) return
-      setAiFieldCount((prev) => prev - 1)
-      setAiMessages((prev) => prev.filter((_, i) => i !== index))
-    } else if (type === 'user_input') {
-      if (userInputFieldCount <= 1) return
-      setUserInputFieldCount((prev) => prev - 1)
-      setUserInputMessages((prev) => prev.filter((_, i) => i !== index))
-    }
-  }
-
-  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-
-    if (!file.type.startsWith('image/')) return
-
-    const reader = new FileReader()
-    reader.onload = () => {
-      const result = reader.result as string
-      setAttachedImage(result)
-    }
-    reader.readAsDataURL(file)
-
-    // 同じファイルを再選択できるようにリセット
-    e.target.value = ''
-  }
-
-  const copyToClipboard = async (text: string, event: React.MouseEvent) => {
-    try {
-      await navigator.clipboard.writeText(text)
-      const rect = (event.target as HTMLElement).getBoundingClientRect()
-      setPopupPosition({ x: rect.right, y: rect.top })
-      setCopySuccess(`Copied!`)
-      setTimeout(() => {
-        setCopySuccess('')
-        setPopupPosition(null)
-      }, 2000)
-    } catch (err) {
-      console.error('Failed to copy text: ', err)
-    }
-  }
-
-  // タブに対応するレスポンスを取得
-  const getActiveResponse = () => {
-    switch (activeTab) {
-      case 'direct_send':
-        return directResponse
-      case 'ai_generate':
-        return aiResponse
-      case 'user_input':
-        return userInputResponse
-      default:
-        return ''
-    }
-  }
-
-  // タブに対応するCURL例を取得
-  const getTabCurlSample = () => {
-    switch (activeTab) {
-      case 'direct_send':
-        return `curl -X POST -H "Content-Type: application/json" -d '{"messages": ["こんにちは、今日もいい天気ですね。", "今日の予定を教えてください。"]}' '${baseUrl}/api/messages/?clientId=${clientId}&type=direct_send'`
-      case 'ai_generate':
-        return `curl -X POST -H "Content-Type: application/json" -d '{"systemPrompt": "You are a helpful assistant.", "useCurrentSystemPrompt": false, "messages": ["この画像について説明してください。"], "image": "data:image/png;base64,..."}' '${baseUrl}/api/messages/?clientId=${clientId}&type=ai_generate'`
-      case 'user_input':
-        return `curl -X POST -H "Content-Type: application/json" -d '{"messages": ["この画像について教えてください。"], "image": "data:image/png;base64,..."}' '${baseUrl}/api/messages/?clientId=${clientId}&type=user_input'`
-      default:
-        return ''
-    }
-  }
-
-  // タブの説明を取得
-  const getTabDescription = () => {
-    switch (activeTab) {
-      case 'direct_send':
-        return t('SendMessage.directSendDescription')
-      case 'ai_generate':
-        return t('SendMessage.aiGenerateDescription')
-      case 'user_input':
-        return t('SendMessage.userInputDescription')
-      default:
-        return ''
-    }
-  }
-
-  // タブのタイトルを取得
-  const getTabTitle = () => {
-    switch (activeTab) {
-      case 'direct_send':
-        return t('SendMessage.directSendTitle')
-      case 'ai_generate':
-        return t('SendMessage.aiGenerateTitle')
-      case 'user_input':
-        return t('SendMessage.userInputTitle')
-      default:
-        return ''
-    }
-  }
-
-  // 送信ボタンの無効化条件
-  const isSendButtonDisabled = () => {
-    const messages = (() => {
-      switch (activeTab) {
-        case 'direct_send':
-          return directMessages
-        case 'ai_generate':
-          return aiMessages
-        case 'user_input':
-          return userInputMessages
-        default:
-          return []
-      }
-    })()
-    return !messages.some((msg) => msg.trim()) || !clientId.trim()
-  }
-
-  // タブの切り替え
-  const handleTabChange = (tab: SendType) => {
-    setActiveTab(tab)
-  }
-
-  // メッセージフィールドのレンダリング
-  const renderMessageFields = () => {
-    let messages: string[] = []
-    let fieldCount = 0
-    let setMessages: React.Dispatch<React.SetStateAction<string[]>> = () => {}
-
-    switch (activeTab) {
-      case 'direct_send':
-        messages = directMessages
-        fieldCount = directFieldCount
-        setMessages = setDirectMessages
-        break
-      case 'ai_generate':
-        messages = aiMessages
-        fieldCount = aiFieldCount
-        setMessages = setAiMessages
-        break
-      case 'user_input':
-        messages = userInputMessages
-        fieldCount = userInputFieldCount
-        setMessages = setUserInputMessages
-        break
-    }
-
-    return (
-      <div className="space-y-4">
-        {[...Array(fieldCount)].map((_, index) => (
-          <div key={index} className="flex gap-4">
-            <textarea
-              value={messages[index] || ''}
-              data-form-type={activeTab}
-              onChange={(e) => {
-                const newMessages = [...messages]
-                newMessages[index] = e.target.value
-                setMessages(newMessages)
-              }}
-              onKeyDown={(e) => handleKeyDown(e)}
-              className="border border-slate-200 hover:border-indigo-400 hover:bg-indigo-50 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 focus:bg-white rounded-xl w-full px-4 font-medium transition-all duration-200"
-              rows={2}
-              style={{
-                lineHeight: '1.5',
-                padding: '12px 16px',
-                resize: 'vertical',
-              }}
-              placeholder={'Enter your message...'}
-            />
-            {fieldCount > 1 && (
-              <IconButton
-                iconName="24/Subtract"
-                onClick={() => removeField(index, activeTab)}
-                className="min-w-[44px] w-[44px] h-[44px] shrink-0 ml-2 rounded-full bg-red-100 hover:bg-red-200 text-red-700 border border-red-300 shadow-sm transition-colors duration-200"
-                isProcessing={false}
-              />
-            )}
-          </div>
-        ))}
-      </div>
-    )
   }
 
   return (
-    <div className="flex flex-col items-center text-theme-default min-h-screen bg-theme py-8">
-      <div className="w-full max-w-4xl px-4 md:px-8">
-        <h1 className="text-3xl font-bold mb-8 text-center">
-          {t('SendMessage.title')}
-        </h1>
-
-        {/* Client ID セクション */}
-        <div className="mb-8 bg-white rounded-xl p-6 shadow-md">
-          <div className="font-bold mb-3 flex justify-between items-center">
-            <span className="text-lg">Client ID</span>
-            <button
-              type="button"
-              onClick={(e) => copyToClipboard(clientId, e)}
-              className="px-3 py-1.5 text-sm bg-indigo-50 hover:bg-indigo-100 rounded-lg text-indigo-700 transition-colors duration-200"
-            >
-              Copy
-            </button>
+    <div className="min-h-screen bg-[#f5f7fb] text-slate-900">
+      <header className="border-b border-slate-200 bg-slate-950 text-white">
+        <div className="mx-auto flex w-full max-w-7xl flex-col gap-5 px-4 py-6 md:px-8">
+          <div className="flex flex-col gap-4">
+            <div className="max-w-3xl">
+              <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-cyan-400/30 bg-cyan-400/10 px-3 py-1 text-xs font-bold uppercase text-cyan-100">
+                <CommandLineIcon className="h-4 w-4" aria-hidden="true" />
+                External API
+              </div>
+              <h1 className="text-3xl font-bold tracking-normal md:text-4xl">
+                {t('ApiConsole.title')}
+              </h1>
+              <p className="mt-2 text-sm leading-6 text-slate-300 md:text-base">
+                {t('ApiConsole.description')}
+              </p>
+            </div>
           </div>
-          <input
-            type="text"
-            value={clientId}
-            onChange={(e) => setClientId(e.target.value)}
-            className="bg-slate-50 hover:bg-slate-100 focus:bg-white focus:ring-2 focus:ring-indigo-300 focus:outline-none rounded-xl w-full px-4 py-3 font-medium transition-all duration-200"
-            disabled={!!settingsStore.getState().clientId}
-          />
         </div>
+      </header>
 
-        {/* タブナビゲーション */}
-        <div className="mb-6 bg-white rounded-xl p-6 shadow-md">
-          <div className="flex flex-col md:flex-row md:justify-between border-b border-gray-200 mb-6">
-            <button
-              className={`flex items-center mb-2 md:mb-0 px-4 py-2 font-medium text-sm rounded-t-lg transition-colors duration-200 ${
-                activeTab === 'direct_send'
-                  ? 'bg-indigo-100 text-indigo-700 border-b-2 border-indigo-500 shadow-sm'
-                  : 'text-gray-500 hover:text-indigo-500 hover:bg-indigo-50'
-              }`}
-              onClick={() => handleTabChange('direct_send')}
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5 mr-2"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
-                />
-              </svg>
-              {t('SendMessage.directSendTitle')}
-            </button>
-            <button
-              className={`flex items-center mb-2 md:mb-0 px-4 py-2 font-medium text-sm rounded-t-lg transition-colors duration-200 ${
-                activeTab === 'ai_generate'
-                  ? 'bg-indigo-100 text-indigo-700 border-b-2 border-indigo-500 shadow-sm'
-                  : 'text-gray-500 hover:text-indigo-500 hover:bg-indigo-50'
-              }`}
-              onClick={() => handleTabChange('ai_generate')}
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5 mr-2"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                />
-              </svg>
-              {t('SendMessage.aiGenerateTitle')}
-            </button>
-            <button
-              className={`flex items-center px-4 py-2 font-medium text-sm rounded-t-lg transition-colors duration-200 ${
-                activeTab === 'user_input'
-                  ? 'bg-indigo-100 text-indigo-700 border-b-2 border-indigo-500 shadow-sm'
-                  : 'text-gray-500 hover:text-indigo-500 hover:bg-indigo-50'
-              }`}
-              onClick={() => handleTabChange('user_input')}
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5 mr-2"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                />
-              </svg>
-              {t('SendMessage.userInputTitle')}
-            </button>
-          </div>
-
-          <h2 className="text-xl font-bold mb-4">{getTabTitle()}</h2>
-
-          <p className="mb-6 whitespace-pre-line">{getTabDescription()}</p>
-
-          {/* CURL サンプル */}
-          <div className="mb-6">
-            <div className="text-primary font-bold mb-2 flex justify-between items-center">
-              <span className="text-sm text-gray-600">Curl Sample</span>
+      <main className="mx-auto grid w-full max-w-7xl gap-5 px-4 py-5 md:px-8 lg:grid-cols-[300px_minmax(0,1fr)]">
+        <aside className="lg:sticky lg:top-5 lg:self-start">
+          <nav className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+            <div className="border-b border-slate-200">
               <button
                 type="button"
-                onClick={(e) => copyToClipboard(getTabCurlSample(), e)}
-                className="px-2 py-1 text-xs bg-indigo-50 hover:bg-indigo-100 rounded-lg text-indigo-700 transition-colors duration-200"
+                onClick={() => setEndpointsOpen((open) => !open)}
+                className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left lg:cursor-default"
+                aria-expanded={endpointsOpen}
               >
-                Copy
+                <span className="flex min-w-0 items-center gap-2 text-sm font-bold">
+                  <ServerStackIcon className="h-5 w-5 shrink-0 text-slate-500" />
+                  <span>Endpoints</span>
+                  <span className="min-w-0 truncate rounded-md bg-slate-100 px-2 py-1 text-xs font-bold text-slate-600 lg:hidden">
+                    {selectedEndpoint.method} {selectedEndpoint.label}
+                  </span>
+                </span>
+                <ChevronDownIcon
+                  className={`h-5 w-5 shrink-0 text-slate-500 transition lg:hidden ${
+                    endpointsOpen ? 'rotate-180' : ''
+                  }`}
+                  aria-hidden="true"
+                />
               </button>
             </div>
-            <pre className="bg-gray-900 text-gray-100 rounded-xl w-full p-4 text-sm font-mono whitespace-pre-wrap break-words overflow-auto max-h-40">
-              <code>{getTabCurlSample()}</code>
-            </pre>
-          </div>
+            <div className={`${endpointsOpen ? 'block' : 'hidden'} lg:block`}>
+              {(['v1', 'legacy'] as const).map((group) => (
+                <div
+                  key={group}
+                  className="border-b border-slate-100 p-3 last:border-b-0"
+                >
+                  <div className="mb-2 text-xs font-bold uppercase text-slate-500">
+                    {group === 'v1'
+                      ? t('ApiConsole.v1Endpoints')
+                      : t('ApiConsole.legacyEndpoints')}
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    {endpoints
+                      .filter((endpoint) => endpoint.group === group)
+                      .map((endpoint) => (
+                        <button
+                          key={endpoint.id}
+                          type="button"
+                          onClick={() => handleEndpointChange(endpoint)}
+                          className={`group flex w-full items-center gap-3 rounded-lg border px-3 py-2.5 text-left text-sm transition ${
+                            selectedId === endpoint.id
+                              ? 'border-slate-900 bg-slate-900 text-white shadow-sm'
+                              : 'border-transparent bg-transparent text-slate-700 hover:border-slate-200 hover:bg-slate-50'
+                          }`}
+                        >
+                          <span
+                            className={`inline-flex w-12 justify-center rounded-md px-2 py-1 text-[11px] font-bold ${
+                              endpoint.method === 'GET'
+                                ? selectedId === endpoint.id
+                                  ? 'bg-emerald-400/20 text-emerald-100'
+                                  : 'bg-emerald-50 text-emerald-700'
+                                : selectedId === endpoint.id
+                                  ? 'bg-cyan-400/20 text-cyan-100'
+                                  : 'bg-cyan-50 text-cyan-700'
+                            }`}
+                          >
+                            {endpoint.method}
+                          </span>
+                          <span className="min-w-0 flex-1 truncate font-bold">
+                            {endpoint.label}
+                          </span>
+                        </button>
+                      ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </nav>
+        </aside>
 
-          {/* System Prompt (AI Generate タブのみ) */}
-          {activeTab === 'ai_generate' && (
-            <div className="mb-6">
-              <div className="font-bold mb-2">System Prompt</div>
-              <textarea
-                value={systemPrompt}
-                onChange={(e) => setSystemPrompt(e.target.value)}
-                className={`${
-                  useCurrentSystemPrompt
-                    ? 'bg-slate-100 text-gray-500 border-slate-200 cursor-not-allowed'
-                    : 'bg-white border-indigo-200 hover:border-indigo-400 hover:bg-indigo-50'
-                } border rounded-xl w-full px-4 py-3 font-medium transition-all duration-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 focus:bg-white`}
-                rows={2}
-                style={{
-                  lineHeight: '1.5',
-                  resize: 'vertical',
-                }}
-                disabled={useCurrentSystemPrompt}
-                placeholder="Enter system prompt here..."
+        <div className="grid min-w-0 gap-5">
+          <section className="grid gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm md:grid-cols-2">
+            <label
+              className={`flex flex-col gap-2 text-sm font-bold ${
+                selectedEndpoint.requiresApiKey ? '' : 'md:col-span-2'
+              }`}
+            >
+              <span className="flex items-center gap-2">
+                <ShieldCheckIcon className="h-5 w-5 text-slate-500" />
+                {t('ClientID')}
+              </span>
+              <input
+                type="text"
+                value={clientId}
+                onChange={(event) => setClientId(event.target.value)}
+                className="h-11 rounded-lg border border-slate-300 bg-white px-3 font-normal outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
               />
-              <div className="flex items-center mt-4">
-                <label className="inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={useCurrentSystemPrompt}
-                    onChange={() =>
-                      setUseCurrentSystemPrompt(!useCurrentSystemPrompt)
-                    }
-                    className="sr-only peer"
-                  />
-                  <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
-                  <span className="ms-3 text-sm font-medium text-gray-700">
-                    {t('SendMessage.useCurrentSystemPrompt')}
-                  </span>
-                </label>
+            </label>
+            {selectedEndpoint.requiresApiKey && (
+              <label className="flex flex-col gap-2 text-sm font-bold">
+                <span className="flex items-center gap-2">
+                  <KeyIcon className="h-5 w-5 text-slate-500" />
+                  {t('ApiConsole.apiKey')}
+                </span>
+                <input
+                  type="password"
+                  value={apiKey}
+                  onChange={(event) => setApiKey(event.target.value)}
+                  className="h-11 rounded-lg border border-slate-300 bg-white px-3 font-normal outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
+                  placeholder={t('ApiConsole.apiKeyPlaceholder')}
+                />
+              </label>
+            )}
+          </section>
+
+          <section className="grid min-w-0 grid-cols-1 items-start gap-5 xl:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)]">
+            <div className="min-w-0 rounded-lg border border-slate-200 bg-white shadow-sm">
+              <div className="border-b border-slate-200 p-4">
+                <div>
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="rounded-md bg-slate-950 px-2.5 py-1 text-xs font-bold text-white">
+                        {selectedEndpoint.method}
+                      </span>
+                      <span className="rounded-md bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-600">
+                        {selectedEndpoint.requiresApiKey
+                          ? 'API Key'
+                          : 'No Auth'}
+                      </span>
+                      <h2 className="text-xl font-bold text-slate-950">
+                        {selectedEndpoint.label}
+                      </h2>
+                    </div>
+                    <p className="mt-2 text-sm leading-6 text-slate-600">
+                      {selectedEndpoint.description}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid min-w-0 gap-4 p-4">
+                <div className="min-w-0">
+                  <div className="mb-2 flex items-center gap-2 text-sm font-bold text-slate-700">
+                    <BoltIcon className="h-5 w-5 text-slate-500" />
+                    Endpoint URL
+                  </div>
+                  <div className="min-w-0 overflow-auto rounded-lg bg-slate-950 px-3 py-3 font-mono text-xs text-slate-100">
+                    {buildUrl().toString()}
+                  </div>
+                </div>
+
+                <div className="min-w-0">
+                  <div className="mb-2 flex items-center gap-2 text-sm font-bold text-slate-700">
+                    <CodeBracketSquareIcon className="h-5 w-5 text-slate-500" />
+                    Parameters
+                  </div>
+                  <div className="overflow-hidden rounded-lg border border-slate-200">
+                    {selectedEndpoint.fields.map((field) => (
+                      <div
+                        key={field.name}
+                        className="grid gap-2 border-b border-slate-200 bg-white p-3 last:border-b-0 md:grid-cols-[180px_minmax(0,1fr)]"
+                      >
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <code className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-xs font-bold text-slate-900">
+                              {field.name}
+                            </code>
+                            {field.required && (
+                              <span className="rounded-full bg-rose-50 px-2 py-0.5 text-[11px] font-bold text-rose-700">
+                                required
+                              </span>
+                            )}
+                          </div>
+                          <div className="mt-1 font-mono text-xs text-slate-500">
+                            {field.type}
+                          </div>
+                        </div>
+                        <p className="min-w-0 text-sm leading-6 text-slate-700">
+                          {field.description}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {selectedEndpoint.method === 'POST' && (
+                  <div className="grid min-w-0 gap-3">
+                    {selectedEndpoint.id === 'chat' && (
+                      <div className="rounded-lg border border-cyan-200 bg-cyan-50 p-3 text-sm leading-6 text-slate-700">
+                        <div className="mb-1 font-bold text-slate-900">
+                          mode
+                        </div>
+                        <div>
+                          <code className="rounded bg-white px-1.5 py-0.5 font-mono text-xs text-cyan-800">
+                            user_input
+                          </code>
+                          :
+                          画面下の入力欄から送ったのと同じ扱いです。現在のキャラクター設定、チャット履歴、通常の送信フローを使います。
+                        </div>
+                        <div>
+                          <code className="rounded bg-white px-1.5 py-0.5 font-mono text-xs text-cyan-800">
+                            ai_generate
+                          </code>
+                          : 外部API側でAI生成を明示する互換モードです。
+                          <code className="mx-1 rounded bg-white px-1.5 py-0.5 font-mono text-xs text-cyan-800">
+                            systemPrompt
+                          </code>
+                          や
+                          <code className="mx-1 rounded bg-white px-1.5 py-0.5 font-mono text-xs text-cyan-800">
+                            useCurrentSystemPrompt
+                          </code>
+                          を指定でき、旧APIの
+                          <code className="mx-1 rounded bg-white px-1.5 py-0.5 font-mono text-xs text-cyan-800">
+                            type=ai_generate
+                          </code>
+                          に相当します。
+                        </div>
+                      </div>
+                    )}
+                    <label className="flex min-w-0 flex-col gap-2 text-sm font-bold text-slate-700">
+                      <span className="flex items-center gap-2">
+                        <CodeBracketSquareIcon className="h-5 w-5 text-slate-500" />
+                        {t('ApiConsole.requestBody')}
+                      </span>
+                      <textarea
+                        value={requestBody}
+                        onChange={(event) => setRequestBody(event.target.value)}
+                        className="min-h-[260px] w-full min-w-0 rounded-lg border border-slate-300 bg-slate-50 p-3 font-mono text-sm font-normal leading-6 text-slate-900 outline-none transition focus:border-slate-900 focus:bg-white focus:ring-2 focus:ring-slate-900/10"
+                        spellCheck={false}
+                      />
+                    </label>
+                  </div>
+                )}
               </div>
             </div>
-          )}
 
-          {/* メッセージフォーム */}
-          <form onSubmit={(e) => handleSubmit(e, activeTab)}>
-            <div className="mb-6">
-              <div className="font-bold mb-3">Messages</div>
-              {renderMessageFields()}
-
-              {/* 画像添付 (ai_generate / user_input のみ) */}
-              {activeTab !== 'direct_send' && (
-                <div className="mt-4">
-                  <div className="font-bold mb-2">
-                    {t('SendMessage.imageLabel')}
+            <div className="grid min-w-0 content-start gap-5">
+              <div className="min-w-0 rounded-lg border border-slate-200 bg-white shadow-sm">
+                <div className="flex flex-col gap-3 border-b border-slate-200 px-4 py-3">
+                  <div className="flex items-center gap-3">
+                    <h2 className="flex items-center gap-2 text-lg font-bold text-slate-950">
+                      <CommandLineIcon className="h-5 w-5 text-slate-500" />
+                      実行コード
+                    </h2>
                   </div>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageSelect}
-                    className="hidden"
-                  />
-                  {attachedImage ? (
-                    <div className="flex items-start gap-3">
-                      <div className="relative inline-block">
-                        {/* eslint-disable-next-line @next/next/no-img-element -- base64データURLのためnext/Image不適 */}
-                        <img
-                          src={attachedImage}
-                          alt="attached"
-                          className="max-h-32 rounded-lg border border-slate-200"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setAttachedImage('')}
-                          className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs font-bold shadow-md transition-colors duration-200"
-                        >
-                          x
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
+                  <div className="flex flex-wrap gap-1 rounded-lg bg-slate-100 p-1">
+                    {codeSampleTabs.map((sample) => (
+                      <button
+                        key={sample.id}
+                        type="button"
+                        onClick={() => setSelectedSample(sample.id)}
+                        className={`rounded-md px-3 py-1.5 text-sm font-bold transition ${
+                          selectedSample === sample.id
+                            ? 'bg-white text-slate-950 shadow-sm'
+                            : 'text-slate-600 hover:text-slate-950'
+                        }`}
+                      >
+                        {sample.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="grid min-w-0 gap-4 p-4">
+                  <div className="relative min-w-0">
                     <button
                       type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="flex items-center gap-2 px-4 py-2 border border-dashed border-slate-300 hover:border-indigo-400 hover:bg-indigo-50 rounded-xl text-sm text-gray-600 transition-colors duration-200"
+                      onClick={() => copyToClipboard(getSelectedCodeSample())}
+                      aria-label="コードをコピー"
+                      title="コードをコピー"
+                      className="absolute right-2 top-2 z-10 inline-flex h-8 w-8 items-center justify-center rounded-md border border-white/10 bg-white/10 text-slate-200 transition hover:bg-white/20 hover:text-white"
                     >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-5 w-5"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                        />
-                      </svg>
-                      {t('SendMessage.selectImage')}
+                      <ClipboardDocumentIcon className="h-5 w-5" />
                     </button>
-                  )}
+                    {copyStatus && (
+                      <span className="absolute right-12 top-2 z-10 inline-flex h-8 items-center gap-1 rounded-md bg-emerald-400/15 px-2 text-xs font-bold text-emerald-100">
+                        <CheckCircleIcon className="h-4 w-4" />
+                        {copyStatus}
+                      </span>
+                    )}
+                    <pre className="max-h-64 min-w-0 overflow-auto rounded-lg bg-slate-950 p-3 pr-12 text-xs leading-5 text-slate-100">
+                      <code>{getSelectedCodeSample()}</code>
+                    </pre>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleSubmit}
+                    disabled={isSending}
+                    className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-slate-950 px-4 text-sm font-bold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {isSending ? (
+                      <BoltIcon className="h-5 w-5 animate-pulse" />
+                    ) : (
+                      <PlayIcon className="h-5 w-5" />
+                    )}
+                    {isSending ? t('ApiConsole.sending') : t('ApiConsole.send')}
+                  </button>
                 </div>
-              )}
+              </div>
 
-              <div className="flex justify-between mt-4">
-                <IconButton
-                  iconName="24/Add"
-                  onClick={() => addNewField(activeTab)}
-                  className="rounded-full bg-indigo-100 hover:bg-indigo-200 text-indigo-700 border border-indigo-300 shadow-sm transition-colors duration-200 min-w-[44px] w-[44px] h-[44px]"
-                  isProcessing={false}
-                />
-                <IconButton
-                  iconName="24/Send"
-                  className="bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 disabled:bg-indigo-300 w-[120px] flex items-center justify-center text-theme rounded-xl transition-colors duration-200"
-                  disabled={isSendButtonDisabled()}
-                  type="submit"
-                  isProcessing={false}
-                />
+              <div className="min-w-0 rounded-lg border border-slate-200 bg-white shadow-sm">
+                <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
+                  <h2 className="flex items-center gap-2 text-lg font-bold text-slate-950">
+                    <PaperAirplaneIcon className="h-5 w-5 text-slate-500" />
+                    {t('ApiConsole.response')}
+                  </h2>
+                  <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-500">
+                    JSON
+                  </span>
+                </div>
+                <div className="p-4">
+                  <pre className="min-h-[220px] overflow-auto rounded-lg bg-slate-950 p-4 text-sm leading-6 text-slate-100">
+                    <code>{responseText || t('ApiConsole.noResponse')}</code>
+                  </pre>
+                </div>
               </div>
             </div>
-          </form>
-
-          {/* レスポンス表示 */}
-          {getActiveResponse() && (
-            <div className="mt-6 w-full">
-              <div className="font-bold mb-3 flex justify-between items-center">
-                <span>Response</span>
-                <button
-                  type="button"
-                  onClick={(e) => copyToClipboard(getActiveResponse(), e)}
-                  className="px-2 py-1 text-xs bg-indigo-50 hover:bg-indigo-100 rounded-lg text-indigo-700 transition-colors duration-200"
-                >
-                  Copy
-                </button>
-              </div>
-              <div className="w-full bg-slate-50 rounded-xl p-4">
-                <pre className="bg-gray-900 text-gray-100 p-4 rounded-xl overflow-auto max-h-60 text-sm font-mono">
-                  {getActiveResponse()}
-                </pre>
-              </div>
-            </div>
-          )}
+          </section>
         </div>
-      </div>
-
-      {/* コピー成功ポップアップ */}
-      {copySuccess && popupPosition && (
-        <div
-          className="fixed bg-black text-theme px-2 py-1 rounded-md text-sm shadow-lg z-50 opacity-90"
-          style={{
-            left: `${popupPosition.x + 8}px`,
-            top: `${popupPosition.y}px`,
-          }}
-        >
-          {copySuccess}
-        </div>
-      )}
+      </main>
     </div>
   )
 }
