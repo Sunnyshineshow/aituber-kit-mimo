@@ -688,22 +688,5 @@
   "MultiModalModeDescription": "โปรดเลือกเมื่อใดที่จะใช้ฟังก์ชันมัลติโมดอล",
   "MultiModalModeAIDecide": "ตัดสินใจด้วย AI",
   "MultiModalModeAlways": "ใช้เสมอ",
-  "MultiModalModeNever": "ไม่ใช้",
-  "ApiConsole": {
-    "title": "คอนโซล API",
-    "description": "เรียกใช้ endpoint ใหม่ /api/v1 และ /api/messages เดิมที่คงไว้เพื่อความเข้ากันได้จากหน้าจอนี้",
-    "v1Endpoints": "API v1",
-    "legacyEndpoints": "API เดิม",
-    "apiKey": "คีย์ API",
-    "apiKeyPlaceholder": "AITUBERKIT_API_KEY ใน .env.local",
-    "copyCurl": "คัดลอก cURL",
-    "requestBody": "เนื้อหาคำขอ",
-    "copied": "คัดลอกแล้ว",
-    "clientIdRequired": "กรุณาป้อน Client ID",
-    "apiKeyRequired": "กรุณาป้อนคีย์ API",
-    "sending": "กำลังส่ง...",
-    "send": "เรียกใช้",
-    "response": "การตอบกลับ",
-    "noResponse": "ยังไม่มีการตอบกลับ"
-  }
+  "MultiModalModeNever": "ไม่ใช้"
 }

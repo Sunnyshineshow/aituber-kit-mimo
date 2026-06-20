@@ -2,10 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next'
 
 export const MAX_IMAGE_CHARS = 10_000_000
 
-export const getApiKey = () =>
-  process.env.AITUBERKIT_API_KEY ||
-  process.env.NEXT_PUBLIC_AITUBERKIT_API_KEY ||
-  ''
+export const getApiKey = () => process.env.AITUBERKIT_API_KEY || ''
 
 export const getBearerToken = (req: NextApiRequest): string => {
   const authorization = req.headers.authorization

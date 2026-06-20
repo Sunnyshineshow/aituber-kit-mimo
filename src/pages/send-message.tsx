@@ -343,16 +343,7 @@ const SendMessage = () => {
 
   useEffect(() => {
     setBaseUrl(window.location.origin)
-    setApiKey(window.sessionStorage.getItem('aituberkit-api-key') || '')
   }, [])
-
-  useEffect(() => {
-    if (apiKey) {
-      window.sessionStorage.setItem('aituberkit-api-key', apiKey)
-    } else {
-      window.sessionStorage.removeItem('aituberkit-api-key')
-    }
-  }, [apiKey])
 
   const buildUrl = () => {
     const url = new URL(

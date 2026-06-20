@@ -47,17 +47,7 @@ export class SpeakQueue {
     return SpeakQueue._instance
   }
 
-  /**
-   * すべての発話を停止し、キューをクリアします。
-   * Stop ボタンから呼び出されます。
-   */
-  public static stopAll() {
-    const instance = SpeakQueue.getInstance()
-    instance.stopped = true
-    // 発話キューの処理状態をリセットして次回の再生を可能にする
-    instance.isProcessing = false
-    SpeakQueue.stopTokenCounter++
-    instance.clearQueue()
+  private static stopCurrentModelSpeaking() {
     const hs = homeStore.getState()
     const ss = settingsStore.getState()
     if (ss.modelType === 'live2d') {
@@ -70,6 +60,34 @@ export class SpeakQueue {
         hs.viewer.model?.poseManager?.resetToIdle(hs.viewer.model)
       }
     }
+  }
+
+  /**
+   * 現在の発話だけを停止し、待機キューは残します。
+   */
+  public static stopCurrentSpeech() {
+    SpeakQueue.stopCurrentModelSpeaking()
+  }
+
+  /**
+   * 待機キューだけをクリアし、現在の発話は継続します。
+   */
+  public static stopQueue() {
+    SpeakQueue.getInstance().clearQueue()
+  }
+
+  /**
+   * すべての発話を停止し、キューをクリアします。
+   * Stop ボタンから呼び出されます。
+   */
+  public static stopAll() {
+    const instance = SpeakQueue.getInstance()
+    instance.stopped = true
+    // 発話キューの処理状態をリセットして次回の再生を可能にする
+    instance.isProcessing = false
+    SpeakQueue.stopTokenCounter++
+    instance.clearQueue()
+    SpeakQueue.stopCurrentModelSpeaking()
     homeStore.setState({ isSpeaking: false })
   }
 

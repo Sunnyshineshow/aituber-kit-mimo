@@ -688,22 +688,5 @@
   "MultiModalModeDescription": "请选择何时使用多模态功能。",
   "MultiModalModeAIDecide": "用AI判断",
   "MultiModalModeAlways": "始终使用",
-  "MultiModalModeNever": "不使用",
-  "ApiConsole": {
-    "title": "API 控制台",
-    "description": "可在此页面执行新的 /api/v1 端点以及保持兼容的旧版 /api/messages。",
-    "v1Endpoints": "v1 API",
-    "legacyEndpoints": "旧版 API",
-    "apiKey": "API 密钥",
-    "apiKeyPlaceholder": ".env.local 中的 AITUBERKIT_API_KEY",
-    "copyCurl": "复制 cURL",
-    "requestBody": "请求正文",
-    "copied": "已复制",
-    "clientIdRequired": "请输入 Client ID。",
-    "apiKeyRequired": "请输入 API 密钥。",
-    "sending": "正在发送...",
-    "send": "执行",
-    "response": "响应",
-    "noResponse": "尚无响应。"
-  }
+  "MultiModalModeNever": "不使用"
 }

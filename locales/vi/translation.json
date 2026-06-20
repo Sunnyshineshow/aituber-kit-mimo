@@ -688,22 +688,5 @@
   "MultiModalModeDescription": "Vui lòng chọn khi nào sử dụng chức năng đa phương thức.",
   "MultiModalModeAIDecide": "Phán đoán bằng AI",
   "MultiModalModeAlways": "Luôn sử dụng",
-  "MultiModalModeNever": "Không sử dụng",
-  "ApiConsole": {
-    "title": "Bảng điều khiển API",
-    "description": "Chạy các endpoint /api/v1 mới và /api/messages cũ được giữ để tương thích ngay từ màn hình này.",
-    "v1Endpoints": "API v1",
-    "legacyEndpoints": "API cũ",
-    "apiKey": "Khóa API",
-    "apiKeyPlaceholder": "AITUBERKIT_API_KEY trong .env.local",
-    "copyCurl": "Sao chép cURL",
-    "requestBody": "Nội dung yêu cầu",
-    "copied": "Đã sao chép",
-    "clientIdRequired": "Vui lòng nhập Client ID.",
-    "apiKeyRequired": "Vui lòng nhập khóa API.",
-    "sending": "Đang gửi...",
-    "send": "Chạy",
-    "response": "Phản hồi",
-    "noResponse": "Chưa có phản hồi."
-  }
+  "MultiModalModeNever": "Không sử dụng"
 }

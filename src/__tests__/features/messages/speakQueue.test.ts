@@ -237,6 +237,34 @@ describe('SpeakQueue', () => {
     })
   })
 
+  describe('stopCurrentSpeech', () => {
+    it('should stop the current VRM speech without marking the queue as stopped', () => {
+      const queue = SpeakQueue.getInstance()
+      const initialToken = SpeakQueue.currentStopToken
+
+      SpeakQueue.stopCurrentSpeech()
+
+      expect(mockModelStopSpeaking).toHaveBeenCalled()
+      expect(SpeakQueue.currentStopToken).toBe(initialToken)
+      expect(queue.isStopped()).toBe(false)
+    })
+  })
+
+  describe('stopQueue', () => {
+    it('should clear queued tasks without stopping current speech', () => {
+      const queue = SpeakQueue.getInstance()
+      ;(queue as unknown as { queue: ReturnType<typeof createTask>[] }).queue =
+        [createTask('session1')]
+
+      SpeakQueue.stopQueue()
+
+      expect(
+        (queue as unknown as { queue: ReturnType<typeof createTask>[] }).queue
+      ).toEqual([])
+      expect(mockModelStopSpeaking).not.toHaveBeenCalled()
+    })
+  })
+
   describe('stopSession', () => {
     it('should stop the current session and increment stop token', () => {
       const queue = SpeakQueue.getInstance()

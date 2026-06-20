@@ -232,10 +232,22 @@ const MessageReceiver = () => {
         }
         const data = await response.json()
         const commands = (data.commands || []) as ReceivedCommand[]
+        const stopCommands = commands.filter(
+          (command) => command.command === 'stop'
+        )
 
-        if (commands.some((command) => command.command === 'stop')) {
-          SpeakQueue.stopAll()
-          homeStore.setState({ chatProcessing: false, isSpeaking: false })
+        for (const command of stopCommands) {
+          if (command.mode === 'speech') {
+            SpeakQueue.stopCurrentSpeech()
+          } else if (command.mode === 'queue') {
+            SpeakQueue.stopQueue()
+          } else {
+            SpeakQueue.stopAll()
+            homeStore.setState({ chatProcessing: false, isSpeaking: false })
+          }
+        }
+
+        if (stopCommands.length > 0) {
           await reportStatus()
         }
       } catch (error) {
@@ -263,12 +275,46 @@ const MessageReceiver = () => {
       }
     }
 
-    fetchMessages()
-    fetchCommands()
-    reportStatus()
-    const intervalId = setInterval(fetchMessages, 1000)
-    const commandIntervalId = setInterval(fetchCommands, 1000)
-    const statusIntervalId = setInterval(reportStatus, 2000)
+    let isFetchingMessages = false
+    let isFetchingCommands = false
+    let isReportingStatus = false
+
+    const safeFetchMessages = async () => {
+      if (isFetchingMessages) return
+      isFetchingMessages = true
+      try {
+        await fetchMessages()
+      } finally {
+        isFetchingMessages = false
+      }
+    }
+
+    const safeFetchCommands = async () => {
+      if (isFetchingCommands) return
+      isFetchingCommands = true
+      try {
+        await fetchCommands()
+      } finally {
+        isFetchingCommands = false
+      }
+    }
+
+    const safeReportStatus = async () => {
+      if (isReportingStatus) return
+      isReportingStatus = true
+      try {
+        await reportStatus()
+      } finally {
+        isReportingStatus = false
+      }
+    }
+
+    void safeFetchMessages()
+    void safeFetchCommands()
+    void safeReportStatus()
+    const intervalId = setInterval(() => void safeFetchMessages(), 1000)
+    const commandIntervalId = setInterval(() => void safeFetchCommands(), 1000)
+    const statusIntervalId = setInterval(() => void safeReportStatus(), 2000)
 
     return () => {
       clearInterval(intervalId)

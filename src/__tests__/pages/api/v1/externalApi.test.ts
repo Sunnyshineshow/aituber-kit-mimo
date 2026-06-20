@@ -55,15 +55,18 @@ function createMockRes(): NextApiResponse & {
 
 describe('/api/v1 external API', () => {
   const originalApiKey = process.env.AITUBERKIT_API_KEY
+  const originalPublicApiKey = process.env.NEXT_PUBLIC_AITUBERKIT_API_KEY
 
   beforeEach(() => {
     jest.resetModules()
     process.env.AITUBERKIT_API_KEY = 'test-api-key'
+    process.env.NEXT_PUBLIC_AITUBERKIT_API_KEY = originalPublicApiKey
     require('@/features/api/messageGateway').__resetMessageGatewayForTests()
   })
 
   afterAll(() => {
     process.env.AITUBERKIT_API_KEY = originalApiKey
+    process.env.NEXT_PUBLIC_AITUBERKIT_API_KEY = originalPublicApiKey
   })
 
   it('requires bearer authentication for v1 endpoints', () => {
@@ -83,6 +86,30 @@ describe('/api/v1 external API', () => {
     expect(res._json).toEqual({
       error: 'Invalid API key',
       code: 'INVALID_API_KEY',
+    })
+  })
+
+  it('does not use NEXT_PUBLIC variables as the server API key', () => {
+    process.env.AITUBERKIT_API_KEY = ''
+    process.env.NEXT_PUBLIC_AITUBERKIT_API_KEY = 'public-api-key'
+    jest.resetModules()
+    const speak = require('@/pages/api/v1/speak').default
+    const res = createMockRes()
+
+    speak(
+      createMockReq({
+        method: 'POST',
+        headers: { authorization: 'Bearer public-api-key' },
+        query: { clientId: 'client1' },
+        body: { text: 'hello' },
+      }),
+      res
+    )
+
+    expect(res._status).toBe(503)
+    expect(res._json).toEqual({
+      error: 'AITuberKit API key is not configured',
+      code: 'API_KEY_NOT_CONFIGURED',
     })
   })
 
