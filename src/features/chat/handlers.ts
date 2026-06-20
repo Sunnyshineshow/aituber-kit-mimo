@@ -8,6 +8,7 @@ import slideStore from '@/features/stores/slide'
 import { goToSlide } from '@/components/slides'
 import { messageSelectors } from '../messages/messageSelectors'
 import webSocketStore from '@/features/stores/websocketStore'
+import externalLinkageWebSocketStore from '@/features/stores/externalLinkageWebSocketStore'
 import i18next from 'i18next'
 import toastStore from '@/features/stores/toast'
 import { generateMessageId } from '@/utils/messageUtils'
@@ -17,12 +18,78 @@ import {
   searchMemoryContext,
 } from '@/features/memory/memoryStoreSync'
 import { THINKING_MARKER } from '@/features/chat/vercelAIChat'
+import {
+  createExternalLinkageLifecycleEvent,
+  createLegacyExternalLinkageChatPayload,
+  createV2ExternalLinkageChatEvent,
+} from '@/features/externalLinkage/externalLinkageProtocol'
 
 // セッションIDを生成する関数
 const generateSessionId = () => generateMessageId()
 
 // コードブロックのデリミネーター
 const CODE_DELIMITER = '```'
+
+type ExternalSpeechLifecycleState = {
+  pendingSpeechCount: number
+  speechSegmentCount: number
+  responseEnded: boolean
+  responseDoneSent: boolean
+}
+
+const externalSpeechLifecycleStates = new Map<
+  string,
+  ExternalSpeechLifecycleState
+>()
+
+const getExternalSpeechLifecycleState = (requestId: string) => {
+  const existing = externalSpeechLifecycleStates.get(requestId)
+  if (existing) return existing
+
+  const state: ExternalSpeechLifecycleState = {
+    pendingSpeechCount: 0,
+    speechSegmentCount: 0,
+    responseEnded: false,
+    responseDoneSent: false,
+  }
+  externalSpeechLifecycleStates.set(requestId, state)
+  return state
+}
+
+const sendExternalLinkageLifecycleEvent = (
+  type: string,
+  requestId?: string | null,
+  payload: Record<string, unknown> = {}
+) => {
+  if (!requestId) return
+
+  const state = externalLinkageWebSocketStore.getState()
+  if (state.protocolVersion !== '2') return
+
+  state.send(
+    JSON.stringify(createExternalLinkageLifecycleEvent(type, requestId, payload))
+  )
+}
+
+const maybeSendExternalResponseDone = (requestId?: string | null) => {
+  if (!requestId) return
+
+  const state = getExternalSpeechLifecycleState(requestId)
+  if (
+    !state.responseEnded ||
+    state.pendingSpeechCount > 0 ||
+    state.responseDoneSent
+  ) {
+    return
+  }
+
+  state.responseDoneSent = true
+  sendExternalLinkageLifecycleEvent('character.response.done', requestId, {
+    speechSegmentCount: state.speechSegmentCount,
+    completedAt: new Date().toISOString(),
+  })
+  externalSpeechLifecycleStates.delete(requestId)
+}
 
 /**
  * テキストから感情タグ `[...]` を抽出する
@@ -716,13 +783,13 @@ export const handleSendChatFn =
 
     const ss = settingsStore.getState()
     const sls = slideStore.getState()
-    const wsManager = webSocketStore.getState().wsManager
+    const externalWsManager = externalLinkageWebSocketStore.getState().wsManager
     const modalImage = homeStore.getState().modalImage
 
     if (ss.externalLinkageMode) {
       homeStore.setState({ chatProcessing: true })
 
-      if (wsManager?.websocket?.readyState === WebSocket.OPEN) {
+      if (externalWsManager?.websocket?.readyState === WebSocket.OPEN) {
         const userMessageContent: Message['content'] = modalImage
           ? [
               { type: 'text' as const, text: newMessage },
@@ -743,14 +810,21 @@ export const handleSendChatFn =
           timestamp: timestamp,
         }).catch(() => {})
 
-        const wsPayload: { content: string; type: string; image?: string } = {
-          content: newMessage,
-          type: 'chat',
+        const externalWsState = externalLinkageWebSocketStore.getState()
+        const wsPayload =
+          externalWsState.protocolVersion === '2'
+            ? createV2ExternalLinkageChatEvent(
+                newMessage,
+                modalImage || undefined
+              )
+            : createLegacyExternalLinkageChatPayload(
+                newMessage,
+                modalImage || undefined
+              )
+        if ('id' in wsPayload) {
+          externalWsState.startRequest(wsPayload.id)
         }
-        if (modalImage) {
-          wsPayload.image = modalImage
-        }
-        wsManager.websocket.send(JSON.stringify(wsPayload))
+        externalWsManager.websocket.send(JSON.stringify(wsPayload))
 
         if (modalImage) {
           homeStore.setState({ modalImage: '' })
@@ -766,6 +840,7 @@ export const handleSendChatFn =
         })
       }
     } else if (ss.realtimeAPIMode) {
+      const wsManager = webSocketStore.getState().wsManager
       if (wsManager?.websocket?.readyState === WebSocket.OPEN) {
         homeStore.getState().upsertMessage({
           role: 'user',
@@ -931,14 +1006,15 @@ export const handleReceiveTextFromWsFn =
     role?: string,
     emotion: EmotionType = 'neutral',
     type?: string,
-    image?: string
+    image?: string,
+    requestId?: string
   ) => {
     const sessionId = generateSessionId()
     if (text === null || role === undefined) return
 
     const ss = settingsStore.getState()
     const hs = homeStore.getState()
-    const wsManager = webSocketStore.getState().wsManager
+    const wsManager = externalLinkageWebSocketStore.getState().wsManager
 
     if (ss.externalLinkageMode) {
       console.log('ExternalLinkage Mode: true')
@@ -948,6 +1024,14 @@ export const handleReceiveTextFromWsFn =
     }
 
     homeStore.setState({ chatProcessing: true })
+    sendExternalLinkageLifecycleEvent('character.message.received', requestId, {
+      text,
+      role,
+      emotion,
+      messageType: type ?? '',
+      hasImage: Boolean(image),
+      receivedAt: new Date().toISOString(),
+    })
 
     if (role !== 'user') {
       if (type === 'start') {
@@ -983,6 +1067,18 @@ export const handleReceiveTextFromWsFn =
           role: role,
           content: appendedContent,
         })
+        sendExternalLinkageLifecycleEvent(
+          'character.message.rendered',
+          requestId,
+          {
+            text,
+            role,
+            emotion,
+            messageType: type ?? '',
+            hasImage: Boolean(image),
+            renderedAt: new Date().toISOString(),
+          }
+        )
       } else {
         // 新しいメッセージを追加（新規IDを生成）
         const messageContent: Message['content'] = image
@@ -996,10 +1092,28 @@ export const handleReceiveTextFromWsFn =
           role: role,
           content: messageContent,
         })
+        sendExternalLinkageLifecycleEvent(
+          'character.message.rendered',
+          requestId,
+          {
+            text,
+            role,
+            emotion,
+            messageType: type ?? '',
+            hasImage: Boolean(image),
+            renderedAt: new Date().toISOString(),
+          }
+        )
         wsManager?.setTextBlockStarted(true)
       }
 
       if (role === 'assistant' && text !== '') {
+        const speechSegmentId = generateMessageId()
+        if (requestId) {
+          const lifecycleState = getExternalSpeechLifecycleState(requestId)
+          lifecycleState.pendingSpeechCount += 1
+          lifecycleState.speechSegmentCount += 1
+        }
         try {
           // 文ごとに音声を生成 & 再生、返答を表示
           speakCharacter(
@@ -1010,13 +1124,61 @@ export const handleReceiveTextFromWsFn =
             },
             () => {
               // assistantMessage is now derived from chatLog, no need to set it separately
+              sendExternalLinkageLifecycleEvent(
+                'character.speech.start',
+                requestId,
+                {
+                  speechSegmentId,
+                  text,
+                  emotion,
+                  startedAt: new Date().toISOString(),
+                }
+              )
             },
             () => {
               // hs.decrementChatProcessingCount()
+              if (requestId) {
+                const lifecycleState =
+                  getExternalSpeechLifecycleState(requestId)
+                lifecycleState.pendingSpeechCount = Math.max(
+                  0,
+                  lifecycleState.pendingSpeechCount - 1
+                )
+              }
+              sendExternalLinkageLifecycleEvent(
+                'character.speech.done',
+                requestId,
+                {
+                  speechSegmentId,
+                  text,
+                  emotion,
+                  completedAt: new Date().toISOString(),
+                }
+              )
+              maybeSendExternalResponseDone(requestId)
             }
           )
         } catch (e) {
           console.error('Error in speakCharacter:', e)
+          if (requestId) {
+            const lifecycleState = getExternalSpeechLifecycleState(requestId)
+            lifecycleState.pendingSpeechCount = Math.max(
+              0,
+              lifecycleState.pendingSpeechCount - 1
+            )
+          }
+          sendExternalLinkageLifecycleEvent(
+            'character.speech.error',
+            requestId,
+            {
+              speechSegmentId,
+              text,
+              emotion,
+              message: e instanceof Error ? e.message : String(e),
+              failedAt: new Date().toISOString(),
+            }
+          )
+          maybeSendExternalResponseDone(requestId)
         }
       }
 
@@ -1025,6 +1187,10 @@ export const handleReceiveTextFromWsFn =
         console.log('Response ended')
         wsManager?.setTextBlockStarted(false)
         homeStore.setState({ chatProcessing: false })
+        if (requestId) {
+          getExternalSpeechLifecycleState(requestId).responseEnded = true
+          maybeSendExternalResponseDone(requestId)
+        }
       }
     }
 
