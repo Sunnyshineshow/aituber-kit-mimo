@@ -10,14 +10,14 @@ export const GitHubLink = () => {
         rel="noopener noreferrer"
         target="_blank"
       >
-        <div className="p-2 rounded-2xl bg-[#1F2328] hover:bg-[#33383E] active:bg-[565A60] flex">
+        <div className="theme-surface-contrast flex rounded-xl p-2 shadow-md shadow-primary/15 ring-1 ring-primary/15 transition-colors">
           <Image
             alt="GitHub Repository Link"
             height={24}
             width={24}
             src={buildUrl('/github-mark-white.svg')}
           />
-          <div className="mx-2 text-theme font-bold">Fork me</div>
+          <div className="mx-2 font-bold">Fork me</div>
         </div>
       </a>
     </div>

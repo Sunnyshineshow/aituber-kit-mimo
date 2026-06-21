@@ -46,9 +46,7 @@ test('opens the mobile shell, chat input, settings dropdown, and kiosk overlay',
 
   await openSettings(page)
   await openSettingsTab(page, 'kiosk')
-  await expect(
-    page.getByRole('heading', { name: 'Kiosk Mode Settings' })
-  ).toBeVisible()
+  await expect(page.getByTestId('kiosk-passcode-input')).toBeVisible()
 
   await page.getByTestId('kiosk-mode-toggle').evaluate((element) => {
     ;(element as HTMLElement).click()

@@ -49,9 +49,7 @@ test('can configure kiosk mode and enforce browser input restrictions', async ({
   await openSettings(page)
   await openSettingsTab(page, 'kiosk')
 
-  await expect(
-    page.getByRole('heading', { name: 'Kiosk Mode Settings' })
-  ).toBeVisible()
+  await expect(page.getByTestId('kiosk-passcode-input')).toBeVisible()
 
   await page.getByTestId('kiosk-passcode-input').fill('E2E9')
   await page.getByTestId('kiosk-passcode-input').blur()

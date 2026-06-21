@@ -9,6 +9,7 @@ import { aiServiceOptions } from './modelProvider/utils/aiServiceConfigs'
 import { useAIServiceHandlers } from './modelProvider/hooks/useAIServiceHandlers'
 import { useModelProviderState } from './modelProvider/hooks/useModelProviderState'
 import { ToggleSwitch } from '../toggleSwitch'
+import { languageOptions } from '@/components/settings/languageOptions'
 
 type QuickStartDestination =
   | 'based'
@@ -21,28 +22,8 @@ type QuickStartDestination =
   | 'idle'
   | 'other'
 
-const languageOptions: { value: Language; label: string }[] = [
-  { value: 'ja', label: 'Japanese - 日本語' },
-  { value: 'en', label: 'English - 英語' },
-  { value: 'ko', label: 'Korean - 韓国語' },
-  { value: 'zh-CN', label: 'Simplified Chinese - 簡体字中国語' },
-  { value: 'zh-TW', label: 'Traditional Chinese - 繁体字中国語' },
-  { value: 'fr', label: 'French - フランス語' },
-  { value: 'es', label: 'Spanish - スペイン語' },
-  { value: 'pt', label: 'Portuguese - ポルトガル語' },
-  { value: 'de', label: 'German - ドイツ語' },
-  { value: 'it', label: 'Italian - イタリア語' },
-  { value: 'vi', label: 'Vietnamese - ベトナム語' },
-  { value: 'th', label: 'Thai - タイ語' },
-  { value: 'pl', label: 'Polish - ポーランド語' },
-  { value: 'ru', label: 'Russian - ロシア語' },
-  { value: 'hi', label: 'Hindi - ヒンディー語' },
-  { value: 'ar', label: 'Arabic - アラビア語' },
-]
-
 const QuickStart = () => {
   const { t } = useTranslation()
-  const isJa = i18n.language === 'ja'
   const modelState = useModelProviderState()
   const { handleAIServiceChange, updateMultiModalModeForModel } =
     useAIServiceHandlers()
@@ -64,25 +45,24 @@ const QuickStart = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
-        <div className="text-lg font-bold">
-          {isJa ? 'まずはここだけで始められます' : 'Start here'}
+    <div className="space-y-4">
+      <div className="rounded-xl border border-primary/20 bg-primary/10 p-4 shadow-sm">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-lg font-bold text-theme">
+            1
+          </div>
+          <div className="min-w-0">
+            <div className="text-lg font-bold">{t('QuickStartTitle')}</div>
+            <p className="mt-1 text-sm leading-6 text-text-primary">
+              {t('QuickStartDescription')}
+            </p>
+          </div>
         </div>
-        <p className="mt-2 text-sm leading-6 text-gray-600">
-          {isJa
-            ? 'キャラクター名、使うAI、声、会話の長さだけをまとめています。細かい調整は下の各詳細設定から変更できます。'
-            : 'Set the character name, AI, voice, and conversation length here. Use the detailed settings for advanced control.'}
-        </p>
       </div>
 
       <QuickSection
-        title={isJa ? '1. 基本情報' : '1. Basics'}
-        description={
-          isJa
-            ? '表示名と言語など、最初に決める項目です。'
-            : 'Set names and language first.'
-        }
+        title={t('QuickStartBasicsTitle')}
+        description={t('QuickStartBasicsDescription')}
       >
         <div className="grid gap-4 sm:grid-cols-2">
           <LabeledField label={t('CharacterName')}>
@@ -139,21 +119,15 @@ const QuickStart = () => {
         </div>
         <div className="mt-4">
           <DetailLink
-            label={
-              isJa ? '見た目や背景を詳しく設定' : 'Detailed display settings'
-            }
+            label={t('QuickStartDetailedDisplaySettings')}
             onClick={() => goTo('based')}
           />
         </div>
       </QuickSection>
 
       <QuickSection
-        title={isJa ? '2. AIと会話' : '2. AI and conversation'}
-        description={
-          isJa
-            ? '迷ったらAIサービスとモデルだけ設定すれば大丈夫です。'
-            : 'Choose the AI service and model. Advanced behavior can be tuned later.'
-        }
+        title={t('QuickStartAIConversationTitle')}
+        description={t('QuickStartAIConversationDescription')}
       >
         <LabeledField label={t('SelectAIService')}>
           <select
@@ -220,23 +194,19 @@ const QuickStart = () => {
         )}
         <div className="mt-3 flex flex-wrap gap-3">
           <DetailLink
-            label={isJa ? 'AIを詳しく設定' : 'Detailed AI settings'}
+            label={t('QuickStartDetailedAISettings')}
             onClick={() => goTo('ai')}
           />
           <DetailLink
-            label={isJa ? '記憶を詳しく設定' : 'Detailed memory settings'}
+            label={t('QuickStartDetailedMemorySettings')}
             onClick={() => goTo('memory')}
           />
         </div>
       </QuickSection>
 
       <QuickSection
-        title={isJa ? '3. 声' : '3. Voice'}
-        description={
-          isJa
-            ? 'キャラクターがどの音声エンジンで話すかを選びます。'
-            : 'Choose the voice engine used by the character.'
-        }
+        title={t('QuickStartVoiceTitle')}
+        description={t('QuickStartVoiceDescription')}
       >
         <LabeledField label={t('SyntheticVoiceEngineChoice')}>
           <select
@@ -263,23 +233,19 @@ const QuickStart = () => {
         </LabeledField>
         <div className="mt-3 flex flex-wrap gap-3">
           <DetailLink
-            label={isJa ? '声を詳しく設定' : 'Detailed voice settings'}
+            label={t('QuickStartDetailedVoiceSettings')}
             onClick={() => goTo('voice')}
           />
           <DetailLink
-            label={isJa ? 'マイク入力を設定' : 'Speech input settings'}
+            label={t('QuickStartSpeechInputSettings')}
             onClick={() => goTo('speechInput')}
           />
         </div>
       </QuickSection>
 
       <QuickSection
-        title={isJa ? '4. 必要になったら使う設定' : '4. Optional features'}
-        description={
-          isJa
-            ? '配信、画像、スライド、自動発話などは、使いたくなった時に開けば大丈夫です。'
-            : 'Streaming, images, slides, and automation can be configured when needed.'
-        }
+        title={t('QuickStartOptionalFeaturesTitle')}
+        description={t('QuickStartOptionalFeaturesDescription')}
       >
         <div className="grid gap-3 sm:grid-cols-2">
           <DetailLink
@@ -310,7 +276,7 @@ const QuickSection = ({
   description: string
   title: string
 }) => (
-  <section className="border-t border-gray-200 pt-5 first:border-t-0 first:pt-0">
+  <section className="pt-0">
     <h2 className="text-xl font-bold">{title}</h2>
     <p className="mt-2 text-sm leading-6 text-gray-600">{description}</p>
     <div className="mt-4">{children}</div>
@@ -325,7 +291,9 @@ const LabeledField = ({
   label: string
 }) => (
   <label className="block">
-    <span className="mb-2 block text-sm font-bold text-text1">{label}</span>
+    <span className="mb-2 block text-xs font-bold uppercase tracking-wide text-text-primary">
+      {label}
+    </span>
     {children}
   </label>
 )
@@ -353,10 +321,11 @@ const DetailLink = ({
   onClick: () => void
 }) => (
   <button
-    className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-left text-sm font-bold text-text1 shadow-sm transition hover:border-primary hover:text-primary"
+    className="inline-flex items-center justify-between gap-3 rounded-lg border border-primary/20 bg-white/70 px-3 py-2 text-left text-sm font-bold text-text1 shadow-sm transition hover:border-primary hover:bg-primary/10 hover:text-primary"
     onClick={onClick}
   >
-    {label}
+    <span>{label}</span>
+    <span className="text-secondary">→</span>
   </button>
 )
 

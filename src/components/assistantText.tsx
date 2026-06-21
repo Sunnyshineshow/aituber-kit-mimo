@@ -18,23 +18,26 @@ export const AssistantText = ({ message }: { message: string }) => {
   // Check if preset questions should be shown AND there are actual questions
   const shouldShowPresetQuestions =
     showPresetQuestions && presetQuestions.length > 0
+  const sanitizedMessage = message
+    .replace(emotionPattern, '')
+    .replace(/\[motion:[^\]]*\]/gi, '')
 
   return (
     <div
-      className={`absolute bottom-0 left-0 ${shouldShowPresetQuestions ? 'mb-[140px] sm:mb-[180px]' : 'mb-[64px] sm:mb-[80px]'} w-full z-10`}
+      className={`absolute bottom-0 left-0 ${shouldShowPresetQuestions ? 'mb-[150px] sm:mb-[182px]' : 'mb-[86px] sm:mb-[104px]'} w-full z-10`}
     >
-      <div className="mx-auto max-w-4xl w-full p-2 sm:p-4">
-        <div className="bg-white rounded-lg">
+      <div className="mx-auto w-full max-w-4xl px-3 py-2 sm:px-4">
+        <div className="theme-surface-elevated overflow-hidden rounded-xl border backdrop-blur-md">
           {showCharacterName && (
-            <div className="px-3 sm:px-6 py-2 bg-secondary rounded-t-lg text-theme text-sm sm:text-base font-bold tracking-wider">
-              {characterName}
+            <div className="flex items-center gap-2 border-b border-primary/20 px-3 py-2 sm:px-5">
+              <span className="text-xs font-bold tracking-wide text-theme-default sm:text-sm">
+                {characterName}
+              </span>
             </div>
           )}
-          <div className="px-3 sm:px-6 py-4">
-            <div className="line-clamp-4 text-secondary text-sm sm:text-base font-bold">
-              {message
-                .replace(emotionPattern, '')
-                .replace(/\[motion:[^\]]*\]/gi, '')}
+          <div className="px-3 py-3 sm:px-5 sm:py-4">
+            <div className="line-clamp-4 text-sm font-bold leading-relaxed text-secondary sm:text-base">
+              {sanitizedMessage}
             </div>
           </div>
         </div>

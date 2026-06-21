@@ -63,9 +63,7 @@ test('can enable slide mode, persist the selected deck, and navigate rendered sl
   await openSettings(page)
   await openSettingsTab(page, 'slide')
 
-  await expect(
-    page.getByRole('heading', { name: 'Slide Settings' })
-  ).toBeVisible()
+  await expect(page.getByTestId('slide-folder-select')).toBeVisible()
   await expect(page.getByTestId('slide-folder-select')).toHaveValue('')
 
   await page.getByTestId('slide-folder-select').selectOption('demo')

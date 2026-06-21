@@ -53,11 +53,11 @@ export const PresetQuestionButtons = ({ onSelectQuestion }: Props) => {
   const sortedQuestions = [...presetQuestions].sort((a, b) => a.order - b.order)
 
   return (
-    <div className="absolute bottom-[80px] z-20 w-full">
-      <div className="mx-auto max-w-4xl px-2 sm:px-4" ref={containerRef}>
+    <div className="absolute bottom-[86px] z-20 w-full sm:bottom-[92px]">
+      <div className="mx-auto max-w-4xl px-3 sm:px-4" ref={containerRef}>
         <div
           ref={contentRef}
-          className={`flex overflow-x-auto pb-4 gap-2 sm:gap-4 preset-questions-scroll ${
+          className={`preset-questions-scroll flex gap-2 overflow-x-auto pb-2 ${
             shouldCenter ? 'justify-center' : 'justify-start'
           }`}
         >
@@ -65,9 +65,15 @@ export const PresetQuestionButtons = ({ onSelectQuestion }: Props) => {
             <button
               key={question.id}
               onClick={() => handleQuestionClick(question.text)}
-              className="bg-white text-black rounded-2xl px-3 py-2 sm:px-4 sm:py-3 text-sm sm:text-base whitespace-nowrap hover:bg-gray-100 transition-colors shadow-md"
+              className="theme-surface-popover group inline-flex max-w-[82vw] items-center gap-2 rounded-full border px-3.5 py-1.5 text-sm font-bold text-theme-default backdrop-blur-sm transition-colors duration-200 hover:border-secondary sm:max-w-none sm:px-4"
             >
-              {question.text}
+              <span className="truncate">{question.text}</span>
+              <span
+                className="flex h-5 w-5 shrink-0 items-center justify-center text-secondary transition-transform duration-200 group-hover:translate-x-0.5 [&_svg]:h-4 [&_svg]:w-4"
+                aria-hidden="true"
+              >
+                <pixiv-icon name="24/Send" scale="1" />
+              </span>
             </button>
           ))}
         </div>

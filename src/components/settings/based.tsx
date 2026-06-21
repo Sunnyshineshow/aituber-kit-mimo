@@ -10,6 +10,7 @@ import { TextButton } from '../textButton'
 import { ToggleSwitch } from '../toggleSwitch'
 import { IMAGE_CONSTANTS } from '@/constants/images'
 import { useRestrictedMode } from '@/hooks/useRestrictedMode'
+import { languageOptions } from '@/components/settings/languageOptions'
 
 const Based = () => {
   const { t } = useTranslation()
@@ -122,22 +123,11 @@ const Based = () => {
               i18n.changeLanguage(newLanguage)
             }}
           >
-            <option value="ar">Arabic - アラビア語</option>
-            <option value="en">English - 英語</option>
-            <option value="fr">French - フランス語</option>
-            <option value="de">German - ドイツ語</option>
-            <option value="hi">Hindi - ヒンディー語</option>
-            <option value="it">Italian - イタリア語</option>
-            <option value="ja">Japanese - 日本語</option>
-            <option value="ko">Korean - 韓語</option>
-            <option value="pl">Polish - ポーランド語</option>
-            <option value="pt">Portuguese - ポルトガル語</option>
-            <option value="ru">Russian - ロシア語</option>
-            <option value="es">Spanish - スペイン語</option>
-            <option value="th">Thai - タイ語</option>
-            <option value="zh-CN">Simplified Chinese - 簡体字中国語</option>
-            <option value="zh-TW">Traditional Chinese - 繁体字中国語</option>
-            <option value="vi">Vietnamese - ベトナム語</option>
+            {languageOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
           </select>
         </div>
       </div>

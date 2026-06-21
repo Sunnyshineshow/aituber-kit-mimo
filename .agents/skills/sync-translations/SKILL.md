@@ -1,7 +1,6 @@
 ---
 name: sync-translations
 description: 日本語の翻訳ファイル（ja/translation.json）から他の言語ファイルに不足しているキーを同期し、READMEの変更も多言語READMEに反映する。翻訳キーの追加、翻訳ファイルの同期、i18nキーの更新、READMEの多言語同期時に使用。
-user-invocable: true
 ---
 
 # 翻訳ファイル同期スキル
@@ -32,7 +31,31 @@ user-invocable: true
 
 ## 実行手順
 
-### 1. 日本語ファイルの読み込み
+### 1. 変更範囲とUI表示漏れの確認
+
+まず、翻訳JSONだけでなく、画面に出る文言を追加・変更したコードも確認します。
+
+```bash
+git status --short
+git diff --name-only
+rg -n "isJa \\?|i18n\\.language === 'ja'|i18n\\.language === \"ja\"|Search settings|Easy setup|Start here|Display settings|Detailed .* settings|Optional features|Choose a category|Core settings" src/components src/features src/pages
+```
+
+**必ず確認すること：**
+
+- `isJa ? '日本語' : 'English'` のような2言語だけの分岐
+- `i18n.language === 'ja' ? ... : ...` のUI文言
+- `placeholder`、`aria-label`、`title`、`alt`、ボタン文言、見出し、説明文の直書き
+- 新規UI・リデザイン・設定画面の文言が `t('...')` を通らず表示されていないか
+
+**対応ルール：**
+
+- UIに表示される文言は、原則として `t('KeyName')` に置き換える
+- まず `locales/ja/translation.json` に日本語キーを追加し、その後このスキルで15言語へ同期する
+- ブランド名、モデル名、API名、プロトコル名、画像パス、CSSクラス、テストIDなど翻訳すべきでない文字列は除外する
+- 既存UIの大規模なi18nリファクタは、今回の変更箇所・スクリーンショットで見えている範囲・新規追加UIに絞る
+
+### 2. 日本語ファイルの読み込み
 
 まず、マスターとなる日本語の翻訳ファイルを読み込みます：
 
@@ -40,7 +63,7 @@ user-invocable: true
 locales/ja/translation.json
 ```
 
-### 2. 不足キーの特定
+### 3. 不足キーの特定
 
 各言語ファイルを1つずつ読み込み、日本語ファイルに存在するが対象言語ファイルに存在しないキーを特定します。
 
@@ -49,7 +72,7 @@ locales/ja/translation.json
 - トップレベルのキー（例：`MemorySettings`, `PNGTuber`）
 - ネストされたオブジェクト内のキー（例：`PNGTuber.FileInfo`）
 
-### 3. キーの追加と翻訳
+### 4. キーの追加と翻訳
 
 不足しているキーを以下のルールで追加します：
 
@@ -66,11 +89,56 @@ locales/ja/translation.json
    - `{{count}}`、`{{min}}`、`{{max}}` 等のプレースホルダーはそのまま保持する
    - JSONの構造（ネスト、配列など）は保持する
 
-### 4. 効率的な処理方法
+### 5. 効率的な処理方法
 
 - Node.jsスクリプト（`node -e`）を使って不足キーの検出・マージを行うと効率的
 - 1言語ずつ処理し、不足キーの検出 → 翻訳値の設定 → ファイル書き込みの流れで進める
 - 最後に全言語の検証を行い、不足キーが0であることを確認する
+
+### 6. UI表示漏れの再検証
+
+翻訳JSON同期後、変更したUIファイルを再検索して、英語・日本語の直書き分岐が残っていないか確認します。
+
+```bash
+rg -n "isJa \\?|i18n\\.language === 'ja'|i18n\\.language === \"ja\"|Search settings|Easy setup|Start here|Display settings|Detailed .* settings|Optional features|Choose a category|Core settings" <変更したUIファイル>
+```
+
+さらに、翻訳キーの不足が0であることを確認します。
+
+```bash
+node - <<'NODE'
+const fs = require('fs')
+const langs = ['en','zh-CN','zh-TW','ko','fr','de','es','it','pt','ru','pl','th','vi','hi','ar']
+const ja = JSON.parse(fs.readFileSync('locales/ja/translation.json', 'utf8'))
+function walk(o, p = [], out = []) {
+  if (o && typeof o === 'object' && !Array.isArray(o)) {
+    for (const k of Object.keys(o)) walk(o[k], [...p, k], out)
+  } else {
+    out.push(p.join('.'))
+  }
+  return out
+}
+function has(o, path) {
+  let current = o
+  for (const part of path.split('.')) {
+    if (!current || typeof current !== 'object' || !(part in current)) return false
+    current = current[part]
+  }
+  return true
+}
+const keys = walk(ja)
+let total = 0
+for (const lang of langs) {
+  const obj = JSON.parse(fs.readFileSync(`locales/${lang}/translation.json`, 'utf8'))
+  const missing = keys.filter((key) => !has(obj, key))
+  total += missing.length
+  console.log(`${lang}: ${missing.length}`)
+}
+console.log(`total missing: ${total}`)
+NODE
+```
+
+可能なら、対象UIのスクリーンショットまたはビルドで、選択中の非日本語言語でも見出し・説明文・ボタンがその言語で表示されることを確認します。
 
 ## 注意事項
 
@@ -124,5 +192,7 @@ locales/ja/translation.json
 
 1. 更新した言語ファイルの一覧
 2. 各ファイルに追加したキーの数
-3. 多言語READMEの更新内容の要約
-4. エラーが発生した場合はその詳細
+3. UIコード側で `t('...')` 化した文言・ファイルの一覧
+4. 多言語READMEの更新内容の要約
+5. 検証結果（不足キー0、JSON parse、UI直書き検索、lint/build等）
+6. エラーが発生した場合はその詳細

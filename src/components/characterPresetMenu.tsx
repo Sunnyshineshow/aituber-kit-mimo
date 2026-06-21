@@ -113,7 +113,7 @@ const CharacterPresetMenu = () => {
       {/* メインボタン */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-12 h-12 rounded-full bg-primary text-theme shadow-lg flex items-center justify-center"
+        className="theme-surface-popover flex h-11 w-11 items-center justify-center rounded-xl border text-primary shadow-md transition-colors hover:border-secondary hover:text-secondary"
         aria-label={t('CharacterSettingsPrompt')}
         aria-expanded={isOpen}
         aria-controls="preset-menu"
@@ -156,28 +156,28 @@ const CharacterPresetMenu = () => {
       {/* プリセット・レイヤーメニュー */}
       {isOpen && (
         <div
-          className="absolute bottom-16 right-0 bg-white rounded-lg shadow-lg p-2 w-64"
+          className="theme-surface-elevated absolute bottom-14 right-0 w-72 rounded-xl border p-2 text-theme-default shadow-xl backdrop-blur-md"
           id="preset-menu"
           role="menu"
         >
           {/* タブナビゲーション */}
-          <div className="flex mb-3 border-b border-gray-200">
+          <div className="mb-3 grid grid-cols-2 gap-1 rounded-lg bg-primary/5 p-1">
             <button
               onClick={() => setActiveTab('presets')}
-              className={`flex-1 px-3 py-2 text-xs font-medium rounded-t-md ${
+              className={`rounded-md px-3 py-2 text-xs font-bold transition-colors ${
                 activeTab === 'presets'
-                  ? 'bg-primary text-theme border-b-2 border-primary'
-                  : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'
+                  ? 'bg-primary text-theme shadow-sm'
+                  : 'text-text-primary hover:bg-primary/10 hover:text-text1'
               }`}
             >
               {t('Presets')}
             </button>
             <button
               onClick={() => setActiveTab('layers')}
-              className={`flex-1 px-3 py-2 text-xs font-medium rounded-t-md ${
+              className={`rounded-md px-3 py-2 text-xs font-bold transition-colors ${
                 activeTab === 'layers'
-                  ? 'bg-primary text-theme border-b-2 border-primary'
-                  : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'
+                  ? 'bg-primary text-theme shadow-sm'
+                  : 'text-text-primary hover:bg-primary/10 hover:text-text1'
               }`}
             >
               {t('LayerOrder')}
@@ -187,7 +187,7 @@ const CharacterPresetMenu = () => {
           {/* プリセットタブの内容 */}
           {activeTab === 'presets' && (
             <div>
-              <div className="text-sm font-bold mb-2 text-center text-gray-700">
+              <div className="mb-2 px-2 text-sm font-bold text-text1">
                 {t('CharacterSettingsPrompt')}
               </div>
               {characterPresets.map(({ key, value, customName }, index) => {
@@ -205,10 +205,10 @@ const CharacterPresetMenu = () => {
                     role="menuitem"
                     tabIndex={0}
                     aria-current={isSelected ? 'true' : 'false'}
-                    className={`w-full text-left px-4 py-2 rounded-md mb-1 text-sm ${
+                    className={`mb-1 w-full rounded-lg px-3 py-2 text-left text-sm font-bold transition-colors ${
                       isSelected
-                        ? 'bg-primary text-theme'
-                        : 'hover:bg-gray-100 text-gray-800'
+                        ? 'bg-primary text-theme shadow-sm'
+                        : 'text-theme-default hover:bg-primary/10 hover:text-primary'
                     }`}
                   >
                     {isSelected && <span className="mr-1">▶ </span>}
@@ -223,13 +223,13 @@ const CharacterPresetMenu = () => {
           {activeTab === 'layers' && (
             <div>
               {layerItems.length === 1 ? (
-                <div className="text-xs text-gray-500 text-center py-4">
+                <div className="py-4 text-center text-xs text-text-primary">
                   {t('NoPlacedImages')}
                 </div>
               ) : (
                 <div className="max-h-64 overflow-y-auto">
                   {/* 最前面ラベル */}
-                  <div className="text-xs opacity-70 text-center mb-2 py-1 border-b border-dashed">
+                  <div className="mb-2 border-b border-dashed border-primary/20 py-1 text-center text-xs text-text-primary">
                     {t('BottomLayer')}
                   </div>
 
@@ -252,18 +252,18 @@ const CharacterPresetMenu = () => {
                                 <div
                                   ref={provided.innerRef}
                                   {...provided.draggableProps}
-                                  className={`flex items-center space-x-2 p-2 rounded text-xs transition-all duration-200 ${
+                                  className={`flex items-center space-x-2 rounded-lg border p-2 text-xs transition-all duration-200 ${
                                     snapshot.isDragging
-                                      ? 'shadow-md bg-primary bg-opacity-10'
+                                      ? 'border-primary bg-primary/10 shadow-md'
                                       : item.type === 'character'
-                                        ? 'bg-gray-50 border border-gray-300 hover:bg-gray-100'
-                                        : 'bg-white border hover:bg-gray-50'
+                                        ? 'border-primary/20 bg-primary/5 hover:bg-primary/10'
+                                        : 'border-primary/15 bg-white/70 hover:bg-primary/5'
                                   }`}
                                 >
                                   {/* ドラッグハンドル */}
                                   <div
                                     {...provided.dragHandleProps}
-                                    className="flex-shrink-0 cursor-grab active:cursor-grabbing text-gray-600"
+                                    className="flex-shrink-0 cursor-grab text-text-primary active:cursor-grabbing"
                                   >
                                     <svg
                                       className="w-3 h-3"
@@ -280,10 +280,10 @@ const CharacterPresetMenu = () => {
 
                                   {/* サムネイル */}
                                   <div
-                                    className={`w-8 h-8 rounded flex-shrink-0 flex items-center justify-center ${
+                                    className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg ${
                                       item.type === 'character'
                                         ? 'bg-primary'
-                                        : 'bg-white overflow-hidden'
+                                        : 'overflow-hidden bg-white/80'
                                     }`}
                                   >
                                     {item.type === 'character' ? (
@@ -327,7 +327,7 @@ const CharacterPresetMenu = () => {
                   </DragDropContext>
 
                   {/* 最背面ラベル */}
-                  <div className="text-xs opacity-70 text-center mt-2 py-1 border-t border-dashed">
+                  <div className="mt-2 border-t border-dashed border-primary/20 py-1 text-center text-xs text-text-primary">
                     {t('TopLayer')}
                   </div>
                 </div>

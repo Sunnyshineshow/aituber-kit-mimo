@@ -66,7 +66,7 @@ export const Menu = () => {
 
   const [showSettings, setShowSettings] = useState(false)
 
-  // キオスクモードで設定アクセス権が剥奪された場合に自動クローズ
+  // デモ端末モードで設定アクセス権が剥奪された場合に自動クローズ
   useEffect(() => {
     if (!canAccessSettings) {
       setShowSettings(false)
@@ -250,23 +250,26 @@ export const Menu = () => {
 
       <div className="absolute z-15 m-3 sm:m-6">
         <div
-          className="relative grid grid-flow-col gap-[8px] mb-10"
+          className="theme-surface-popover relative mb-10 grid grid-flow-col gap-1 rounded-xl border p-1 shadow-md backdrop-blur-md"
           style={{ width: 'max-content' }}
         >
           {effectiveShowControlPanel && (
             <>
               {canAccessSettings && (
-                <div className="md:order-1 order-2">
+                <div className="order-1">
                   <IconButton
                     iconName="24/Settings"
                     isProcessing={false}
                     onClick={() => setShowSettings(true)}
                     aria-label={t('Settings')}
                     data-testid="open-settings-button"
+                    backgroundColor="bg-transparent hover:bg-primary/10 active:bg-primary/15 disabled:bg-transparent"
+                    iconColor="text-text1"
+                    className="transition-colors duration-200"
                   ></IconButton>
                 </div>
               )}
-              <div className="md:order-2 order-1">
+              <div className="order-2">
                 <IconButton
                   iconName={
                     chatLogMode === CHAT_LOG_MODE.CHAT_LOG
@@ -280,6 +283,9 @@ export const Menu = () => {
                   isProcessing={false}
                   onClick={() => setChatLogMode((prev) => (prev + 1) % 3)}
                   aria-label={t('ChatLog')}
+                  backgroundColor="bg-transparent hover:bg-primary/10 active:bg-primary/15 disabled:bg-transparent"
+                  iconColor="text-text1"
+                  className="transition-colors duration-200"
                 />
               </div>
               <div className="order-3">
@@ -292,6 +298,9 @@ export const Menu = () => {
                   aria-label={t('Tools')}
                   aria-expanded={showToolMenu}
                   data-testid="main-tools-toggle-button"
+                  backgroundColor="bg-transparent hover:bg-primary/10 active:bg-primary/15 disabled:bg-transparent"
+                  iconColor="text-text1"
+                  className="transition-colors duration-200"
                 />
               </div>
               {showToolMenu && (

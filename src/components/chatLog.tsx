@@ -76,10 +76,10 @@ export const ChatLog = () => {
   return (
     <div
       ref={chatLogRef}
-      className="absolute h-[100svh] pb-16 z-10 max-w-full"
+      className="absolute z-10 h-[100svh] max-w-full pb-16"
       style={{ width: `${chatLogWidth}px` }}
     >
-      <div className="max-h-full px-2 sm:px-4 pt-24 pb-16 overflow-y-auto scroll-hidden">
+      <div className="scroll-hidden max-h-full overflow-y-auto px-2 pb-16 pt-24 sm:px-4">
         {messages.map((msg, i) => {
           return (
             <div key={i} ref={messages.length - 1 === i ? chatScrollRef : null}>
@@ -117,12 +117,12 @@ export const ChatLog = () => {
       </div>
       <div
         ref={resizeHandleRef}
-        className="absolute top-0 right-0 h-full w-4 cursor-ew-resize hover:bg-secondary hover:bg-opacity-20"
+        className="absolute right-0 top-0 h-full w-4 cursor-ew-resize transition-colors hover:bg-secondary/10"
         style={{
           cursor: isDragging ? 'grabbing' : 'ew-resize',
         }}
       >
-        <div className="absolute top-1/2 right-1 h-16 w-1 bg-secondary bg-opacity-40 rounded-full transform -translate-y-1/2"></div>
+        <div className="absolute right-1 top-1/2 h-16 w-1 -translate-y-1/2 transform rounded-full bg-secondary/40"></div>
       </div>
     </div>
   )
@@ -154,54 +154,60 @@ const Chat = ({
     .replace(emotionPattern, '')
     .replace(/\[motion:[^\]]*\]\s*/gi, '')
 
-  const roleColor =
-    role !== 'user' ? 'bg-secondary text-theme ' : 'bg-base-light text-primary'
-  const roleText = role !== 'user' ? 'text-secondary' : 'text-primary'
+  const isUser = role === 'user'
+  const roleBadge = isUser
+    ? 'bg-primary/10 text-primary'
+    : 'bg-secondary/10 text-secondary'
+  const roleText = isUser ? 'text-primary' : 'text-secondary'
   const offsetX = role === 'user' ? 'pl-4 sm:pl-10' : 'pr-4 sm:pr-10'
 
   return (
     <div
-      className={`mx-auto ml-0 md:ml-10 lg:ml-20 my-4 ${offsetX}`}
+      className={`mx-auto my-3 ml-0 md:ml-10 lg:ml-20 ${offsetX}`}
       data-testid={`chat-message-${role}`}
       data-message-index={index}
     >
       {role === 'code' ? (
-        <pre className="whitespace-pre-wrap break-words bg-[#1F2937] text-theme p-4 rounded-lg">
+        <pre className="theme-surface-contrast whitespace-pre-wrap break-words rounded-xl border border-primary/20 p-4 shadow-md">
           <code className="font-mono text-xs sm:text-sm">{message}</code>
         </pre>
       ) : (
-        <>
-          <div
-            className={`px-3 sm:px-6 py-2 rounded-t-lg text-sm sm:text-base font-bold tracking-wider ${roleColor}`}
-          >
-            {role !== 'user'
-              ? characterName || 'CHARACTER'
-              : userName || userDisplayName || 'YOU'}
+        <div className="theme-surface-popover rounded-xl border border-primary/20 px-3 py-3 text-sm shadow-md backdrop-blur-md sm:px-4 sm:text-base">
+          <div className="mb-2 flex items-center gap-2">
+            <span
+              className={`inline-flex max-w-full items-center rounded-full px-2.5 py-1 text-xs font-bold ${roleBadge}`}
+            >
+              <span className="truncate">
+                {role !== 'user'
+                  ? characterName || 'CHARACTER'
+                  : userName || userDisplayName || 'YOU'}
+              </span>
+            </span>
           </div>
-          <div className="px-3 sm:px-6 py-4 bg-white rounded-b-lg text-sm sm:text-base">
-            {thinking && role !== 'user' && (
-              <div className="mb-3">
-                <button
-                  onClick={() => setIsLocalExpanded(!isLocalExpanded)}
-                  className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 transition-colors"
+          {thinking && role !== 'user' && (
+            <div className="mb-3">
+              <button
+                onClick={() => setIsLocalExpanded(!isLocalExpanded)}
+                className="flex items-center gap-1 text-xs text-text-primary transition-colors hover:text-primary"
+              >
+                <span
+                  className={`inline-block transform transition-transform ${isThinkingExpanded ? 'rotate-90' : ''}`}
                 >
-                  <span
-                    className={`inline-block transform transition-transform ${isThinkingExpanded ? 'rotate-90' : ''}`}
-                  >
-                    &#9654;
-                  </span>
-                  <span>{t('ThinkingProcess')}</span>
-                </button>
-                {isThinkingExpanded && (
-                  <div className="mt-2 px-3 py-2 border-l-2 border-gray-300 bg-gray-50 rounded text-xs text-gray-600 italic whitespace-pre-wrap">
-                    {thinking}
-                  </div>
-                )}
-              </div>
-            )}
-            <div className={`font-bold ${roleText}`}>{processedMessage}</div>
+                  &#9654;
+                </span>
+                <span>{t('ThinkingProcess')}</span>
+              </button>
+              {isThinkingExpanded && (
+                <div className="theme-surface-soft mt-2 whitespace-pre-wrap rounded border border-l-2 border-l-primary px-3 py-2 text-xs italic text-theme-default">
+                  {thinking}
+                </div>
+              )}
+            </div>
+          )}
+          <div className={`font-bold leading-relaxed ${roleText}`}>
+            {processedMessage}
           </div>
-        </>
+        </div>
       )}
     </div>
   )
@@ -219,11 +225,11 @@ const ChatImage = ({
   const offsetX = role === 'user' ? 'pl-16 sm:pl-40' : 'pr-16 sm:pr-40'
 
   return (
-    <div className={`mx-auto ml-0 md:ml-10 lg:ml-20 my-4 ${offsetX}`}>
+    <div className={`mx-auto my-3 ml-0 md:ml-10 lg:ml-20 ${offsetX}`}>
       <Image
         src={imageUrl}
         alt="Generated Image"
-        className="rounded-lg"
+        className="rounded-xl border border-primary/20 shadow-md"
         width={512}
         height={512}
       />

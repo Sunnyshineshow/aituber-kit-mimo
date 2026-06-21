@@ -398,13 +398,13 @@ export const MessageInput = ({
     <div className="absolute bottom-0 z-20 w-screen">
       {showPermissionModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-4 sm:p-6 rounded-2xl max-w-[calc(100vw-2rem)] sm:max-w-md">
+          <div className="theme-surface-elevated max-w-[calc(100vw-2rem)] rounded-xl border p-4 text-theme-default shadow-xl backdrop-blur-md sm:max-w-md sm:p-6">
             <h3 className="text-lg sm:text-xl font-bold mb-4">
               {t('MicrophonePermission')}
             </h3>
             <p className="mb-4">{t('MicrophonePermissionMessage')}</p>
             <button
-              className="bg-secondary hover:bg-secondary-hover px-4 py-2 rounded-lg"
+              className="rounded-lg bg-secondary px-4 py-2 font-bold text-theme transition-colors hover:bg-secondary-hover"
               onClick={() => setShowPermissionModal(false)}
             >
               {t('Close')}
@@ -412,183 +412,194 @@ export const MessageInput = ({
           </div>
         </div>
       )}
-      <div className="bg-base-light text-black">
-        <div className="mx-auto max-w-4xl p-2 sm:p-4 pb-3">
-          {/* プログレスバー - 設定に基づいて表示/非表示 */}
-          {isMicRecording && showSilenceProgressBar && (
-            <div className="w-full h-2 bg-gray-200 rounded-full mb-2 overflow-hidden">
+      <div className="text-theme-default">
+        <div className="mx-auto max-w-4xl px-3 pb-2 pt-2 sm:px-4 sm:pb-4">
+          <div className="theme-surface-dock rounded-xl border p-1.5 backdrop-blur-md sm:p-2">
+            {/* プログレスバー - 設定に基づいて表示/非表示 */}
+            {isMicRecording && showSilenceProgressBar && (
+              <div className="theme-surface-soft mb-2 h-2 w-full overflow-hidden rounded-full border">
+                <div
+                  className="h-full rounded-full bg-secondary transition-all duration-200 ease-linear"
+                  style={{
+                    // プログレスバーの幅計算 - 最初と最後の0.3秒は表示しない
+                    width:
+                      silenceTimeoutRemaining !== null
+                        ? `${Math.min(
+                            100,
+                            Math.max(
+                              0,
+                              ((settingsStore.getState().noSpeechTimeout *
+                                1000 -
+                                silenceTimeoutRemaining -
+                                300) /
+                                (settingsStore.getState().noSpeechTimeout *
+                                  1000 -
+                                  600)) *
+                                100
+                            )
+                          )}%`
+                        : '0%',
+                  }}
+                ></div>
+              </div>
+            )}
+            {/* エラーメッセージ表示 */}
+            {fileError && (
+              <div className="mb-2 rounded-2xl border border-red-200 bg-red-50/90 p-2 text-sm font-medium text-red-700 shadow-sm">
+                {fileError}
+              </div>
+            )}
+            {/* 入力バリデーションエラー表示 (Kiosk mode) */}
+            {inputValidationError && (
+              <div className="mb-2 rounded-2xl border border-red-200 bg-red-50/90 p-2 text-sm font-medium text-red-700 shadow-sm">
+                {inputValidationError}
+              </div>
+            )}
+            {/* 画像プレビュー - 入力欄表示設定の場合のみ */}
+            {modalImage && imageDisplayPosition === 'input' && (
               <div
-                className="h-full bg-secondary transition-all duration-200 ease-linear"
-                style={{
-                  // プログレスバーの幅計算 - 最初と最後の0.3秒は表示しない
-                  width:
-                    silenceTimeoutRemaining !== null
-                      ? `${Math.min(
-                          100,
-                          Math.max(
-                            0,
-                            ((settingsStore.getState().noSpeechTimeout * 1000 -
-                              silenceTimeoutRemaining -
-                              300) /
-                              (settingsStore.getState().noSpeechTimeout * 1000 -
-                                600)) *
-                              100
-                          )
-                        )}%`
-                      : '0%',
-                }}
-              ></div>
-            </div>
-          )}
-          {/* エラーメッセージ表示 */}
-          {fileError && (
-            <div className="mb-2 p-2 bg-red-100 border border-red-300 text-red-700 rounded-lg text-sm">
-              {fileError}
-            </div>
-          )}
-          {/* 入力バリデーションエラー表示 (Kiosk mode) */}
-          {inputValidationError && (
-            <div className="mb-2 p-2 bg-red-100 border border-red-300 text-red-700 rounded-lg text-sm">
-              {inputValidationError}
-            </div>
-          )}
-          {/* 画像プレビュー - 入力欄表示設定の場合のみ */}
-          {modalImage && imageDisplayPosition === 'input' && (
-            <div
-              className="mb-2 p-2 bg-gray-100 rounded-lg relative"
-              onDragOver={handleDragOver}
-              onDrop={handleDrop}
-            >
-              <button
-                onClick={handleRemoveImage}
-                className="absolute top-1 right-1 text-red-500 hover:text-red-700 text-sm font-medium w-6 h-6 flex items-center justify-center rounded-full hover:bg-red-50"
-              >
-                ×
-              </button>
-              <Image
-                src={modalImage}
-                alt="Pasted image"
-                width={0}
-                height={0}
-                sizes="100vw"
-                className="max-w-full max-h-32 rounded object-contain w-auto h-auto"
-              />
-            </div>
-          )}
-
-          <div className="flex gap-2 items-end">
-            <div className="flex-shrink-0 pb-[0.3rem]">
-              <IconButton
-                iconName={
-                  continuousMicListeningMode ? '24/Close' : '24/Microphone'
-                }
-                backgroundColor={
-                  continuousMicListeningMode
-                    ? isMicRecording
-                      ? 'bg-green-500 text-theme'
-                      : 'bg-green-600 text-theme'
-                    : undefined
-                }
-                isProcessing={isMicRecording}
-                isProcessingIcon={
-                  continuousMicListeningMode ? '24/Microphone' : '24/PauseAlt'
-                }
-                disabled={
-                  continuousMicListeningMode || chatProcessing || isSpeaking
-                }
-                onClick={handleMicClick}
-              />
-            </div>
-            <div className="flex-1 relative">
-              {/* 画像添付インジケーター - アイコンのみ表示設定の場合 */}
-              {showIconDisplay && (
-                <div className="absolute left-3 top-3 z-10">
-                  <div
-                    className="relative cursor-pointer"
-                    onMouseEnter={() => setShowImageActions(true)}
-                    onMouseLeave={() => setShowImageActions(false)}
-                    onFocus={() => setShowImageActions(true)}
-                    onBlur={() => setShowImageActions(false)}
-                    tabIndex={0}
-                    role="button"
-                    aria-label={t('RemoveImage')}
-                  >
-                    <svg
-                      className="w-4 h-4 text-gray-500"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"
-                      />
-                    </svg>
-                    {showImageActions && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleRemoveImage()
-                          setShowImageActions(false)
-                        }}
-                        className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-theme rounded-full flex items-center justify-center text-xs hover:bg-red-600 transition-colors"
-                        title={t('RemoveImage')}
-                      >
-                        ×
-                      </button>
-                    )}
-                  </div>
-                </div>
-              )}
-              <textarea
-                ref={textareaRef}
-                data-testid="chat-message-input"
-                placeholder={
-                  chatProcessing
-                    ? `${t('AnswerGenerating')}${loadingDots}`
-                    : continuousMicListeningMode && isMicRecording
-                      ? t('ListeningContinuously')
-                      : isMultiModalSupported && !isSmallScreen
-                        ? `${t('EnterYourQuestion')} (${t('PasteImageSupported') || 'Paste image supported'})`
-                        : t('EnterYourQuestion')
-                }
-                onChange={handleTextChange}
-                onPaste={handlePaste}
-                onKeyDown={handleKeyPress}
+                className="theme-surface-control relative mb-2 rounded-lg border p-2 shadow-inner"
                 onDragOver={handleDragOver}
                 onDrop={handleDrop}
-                disabled={chatProcessing || slidePlaying || realtimeAPIMode}
-                className="bg-white hover:bg-white-hover focus:bg-white disabled:bg-gray-100 disabled:text-primary-disabled rounded-2xl w-full px-4 text-sm sm:text-base text-theme-default font-bold disabled"
-                value={userMessage}
-                rows={rows}
-                maxLength={maxInputLength}
-                style={{
-                  lineHeight: '1.5',
-                  padding: showIconDisplay ? '8px 16px 8px 32px' : '8px 16px',
-                  resize: 'none',
-                  whiteSpace: 'pre-wrap',
-                }}
-              ></textarea>
-            </div>
-            <div className="flex gap-2 flex-shrink-0 pb-[0.3rem]">
-              <IconButton
-                iconName="24/Send"
-                className="bg-secondary hover:bg-secondary-hover active:bg-secondary-press disabled:bg-secondary-disabled"
-                isProcessing={chatProcessing}
-                disabled={chatProcessing || !userMessage || realtimeAPIMode}
-                onClick={handleSendClick}
-                data-testid="chat-send-button"
-              />
+              >
+                <button
+                  onClick={handleRemoveImage}
+                  className="theme-surface-control absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full border text-sm font-medium text-secondary shadow-sm transition-colors hover:text-secondary-hover"
+                >
+                  ×
+                </button>
+                <Image
+                  src={modalImage}
+                  alt="Pasted image"
+                  width={0}
+                  height={0}
+                  sizes="100vw"
+                  className="h-auto max-h-32 w-auto max-w-full rounded-xl object-contain"
+                />
+              </div>
+            )}
 
-              <IconButton
-                iconName="stop"
-                className="bg-secondary hover:bg-secondary-hover active:bg-secondary-press disabled:bg-secondary-disabled"
-                onClick={onClickStopButton}
-                isProcessing={false}
-                data-testid="chat-stop-button"
-              />
+            <div className="flex items-end gap-1.5 sm:gap-2">
+              <div className="flex-shrink-0 pb-[0.2rem]">
+                <IconButton
+                  iconName={
+                    continuousMicListeningMode ? '24/Close' : '24/Microphone'
+                  }
+                  backgroundColor={
+                    continuousMicListeningMode
+                      ? isMicRecording
+                        ? 'bg-green-500 text-theme'
+                        : 'bg-green-600 text-theme'
+                      : undefined
+                  }
+                  isProcessing={isMicRecording}
+                  isProcessingIcon={
+                    continuousMicListeningMode ? '24/Microphone' : '24/PauseAlt'
+                  }
+                  disabled={
+                    continuousMicListeningMode || chatProcessing || isSpeaking
+                  }
+                  onClick={handleMicClick}
+                  className="!min-h-10 !min-w-10 !rounded-xl !border !border-white/35 !p-2 shadow-md shadow-primary/10 ring-0 transition-colors duration-200 focus:outline-none focus-visible:outline-none focus-visible:ring-0 sm:!min-h-[44px] sm:!min-w-[44px]"
+                />
+              </div>
+              <div className="flex-1 relative">
+                {/* 画像添付インジケーター - アイコンのみ表示設定の場合 */}
+                {showIconDisplay && (
+                  <div className="absolute left-3 top-3 z-10">
+                    <div
+                      className="relative cursor-pointer"
+                      onMouseEnter={() => setShowImageActions(true)}
+                      onMouseLeave={() => setShowImageActions(false)}
+                      onFocus={() => setShowImageActions(true)}
+                      onBlur={() => setShowImageActions(false)}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.preventDefault()
+                          setShowImageActions(true)
+                        }
+                      }}
+                      tabIndex={0}
+                      role="button"
+                      aria-label={t('RemoveImage')}
+                    >
+                      <svg
+                        className="h-4 w-4 text-text-primary"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"
+                        />
+                      </svg>
+                      {showImageActions && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleRemoveImage()
+                            setShowImageActions(false)
+                          }}
+                          className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-xs text-theme transition-colors hover:bg-red-600"
+                          title={t('RemoveImage')}
+                        >
+                          ×
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+                <textarea
+                  ref={textareaRef}
+                  data-testid="chat-message-input"
+                  placeholder={
+                    chatProcessing
+                      ? `${t('AnswerGenerating')}${loadingDots}`
+                      : continuousMicListeningMode && isMicRecording
+                        ? t('ListeningContinuously')
+                        : isMultiModalSupported && !isSmallScreen
+                          ? `${t('EnterYourQuestion')} (${t('PasteImageSupported') || 'Paste image supported'})`
+                          : t('EnterYourQuestion')
+                  }
+                  onChange={handleTextChange}
+                  onPaste={handlePaste}
+                  onKeyDown={handleKeyPress}
+                  onDragOver={handleDragOver}
+                  onDrop={handleDrop}
+                  disabled={chatProcessing || slidePlaying || realtimeAPIMode}
+                  className="theme-surface-control w-full rounded-xl border px-4 text-sm font-bold text-theme-default outline-none transition-all duration-200 placeholder:text-text-primary disabled:bg-primary-disabled disabled:text-primary-disabled sm:text-base"
+                  value={userMessage}
+                  rows={rows}
+                  maxLength={maxInputLength}
+                  style={{
+                    lineHeight: '1.5',
+                    padding: showIconDisplay ? '7px 14px 7px 32px' : '7px 14px',
+                    resize: 'none',
+                    whiteSpace: 'pre-wrap',
+                  }}
+                ></textarea>
+              </div>
+              <div className="flex flex-shrink-0 gap-1.5 pb-[0.2rem] sm:gap-2">
+                <IconButton
+                  iconName="24/Send"
+                  className="!min-h-10 !min-w-10 !rounded-xl !border !border-white/35 !p-2 bg-secondary shadow-md shadow-secondary/15 ring-0 transition-colors duration-200 hover:bg-secondary-hover active:bg-secondary-press focus:outline-none focus-visible:outline-none focus-visible:ring-0 disabled:bg-secondary-disabled disabled:shadow-none sm:!min-h-[44px] sm:!min-w-[44px]"
+                  isProcessing={chatProcessing}
+                  disabled={chatProcessing || !userMessage || realtimeAPIMode}
+                  onClick={handleSendClick}
+                  data-testid="chat-send-button"
+                />
+
+                <IconButton
+                  iconName="stop"
+                  className="!min-h-10 !min-w-10 !rounded-xl !border !border-white/35 !p-2 bg-primary shadow-md shadow-primary/15 ring-0 transition-colors duration-200 hover:bg-primary-hover focus:outline-none focus-visible:outline-none focus-visible:ring-0 sm:!min-h-[44px] sm:!min-w-[44px]"
+                  onClick={onClickStopButton}
+                  isProcessing={false}
+                  data-testid="chat-stop-button"
+                />
+              </div>
             </div>
           </div>
         </div>

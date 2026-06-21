@@ -1,7 +1,7 @@
 /**
  * Menu Component - Kiosk Mode Tests
  *
- * キオスクモード時のメニュー表示制御テスト
+ * デモ端末モード時のメニュー表示制御テスト
  */
 
 import React from 'react'

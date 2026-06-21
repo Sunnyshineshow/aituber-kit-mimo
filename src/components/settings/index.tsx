@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import menuStore from '@/features/stores/menu'
 import settingsStore from '@/features/stores/settings'
+import { Language } from '@/features/constants/settings'
 
 import { IconButton } from '../iconButton'
 import Image from 'next/image'
@@ -21,14 +22,33 @@ import IdleSettings from './idleSettings'
 import GameCommentarySettings from './gameCommentarySettings'
 import KioskSettings from './kioskSettings'
 import QuickStart from './quickStart'
+import { languageOptions } from '@/components/settings/languageOptions'
 
 type Props = {
   onClickClose: () => void
 }
+
+const tabsWithRedundantPanelTitle = new Set([
+  'character',
+  'ai',
+  'memory',
+  'voice',
+  'speechInput',
+  'youtube',
+  'gameCommentary',
+  'slide',
+  'images',
+  'presence',
+  'idle',
+  'kiosk',
+  'based',
+  'other',
+])
+
 const Settings = (props: Props) => {
   return (
-    <div className="absolute z-40 w-full h-full overflow-hidden bg-white/65 backdrop-blur-md">
-      <div className="mx-auto flex h-full w-full max-w-[1280px] flex-col overflow-hidden border-x border-white/60 bg-white/90 shadow-2xl md:my-4 md:h-[calc(100%-2rem)] md:w-[calc(100%-2rem)] md:rounded-xl md:border">
+    <div className="theme-settings-backdrop absolute z-40 h-full w-full overflow-hidden">
+      <div className="theme-settings-shell mx-auto flex h-full w-full max-w-[1280px] flex-col overflow-hidden border-x shadow-xl backdrop-blur-sm md:my-5 md:h-[calc(100%-2.5rem)] md:w-[calc(100%-3rem)] md:rounded-xl md:border">
         <Header {...props} />
         <Main />
         <Footer />
@@ -39,45 +59,134 @@ const Settings = (props: Props) => {
 export default Settings
 
 const Header = ({ onClickClose }: Pick<Props, 'onClickClose'>) => {
-  const { t, i18n } = useTranslation()
+  const { i18n, t } = useTranslation()
   const selectAIService = settingsStore((s) => s.selectAIService)
   const selectVoice = settingsStore((s) => s.selectVoice)
+  const selectLanguage = settingsStore((s) => s.selectLanguage)
+  const settingsSearchQuery = menuStore((state) => state.settingsSearchQuery)
+  const [showMobileSearch, setShowMobileSearch] = useState(false)
   const youtubeMode = settingsStore((s) => s.youtubeMode)
-  const isJa = i18n.language === 'ja'
+  const realtimeAPIMode = settingsStore((s) => s.realtimeAPIMode)
+  const audioMode = settingsStore((s) => s.audioMode)
+  const slideMode = settingsStore((s) => s.slideMode)
+  const externalLinkageMode = settingsStore((s) => s.externalLinkageMode)
+  const presenceDetectionEnabled = settingsStore(
+    (s) => s.presenceDetectionEnabled
+  )
+  const idleModeEnabled = settingsStore((s) => s.idleModeEnabled)
+  const kioskModeEnabled = settingsStore((s) => s.kioskModeEnabled)
+  const gameCommentaryEnabled = settingsStore((s) => s.gameCommentaryEnabled)
+  const modeItems: ModeStatusItem[] = [
+    { label: 'YouTube', active: youtubeMode, tab: 'youtube' },
+    { label: 'Realtime API', active: realtimeAPIMode, tab: 'ai' },
+    { label: t('SettingsModeVoiceChat'), active: audioMode, tab: 'ai' },
+    { label: t('SettingsModeSlides'), active: slideMode, tab: 'slide' },
+    {
+      label: t('SettingsModeExternal'),
+      active: externalLinkageMode,
+      tab: 'ai',
+    },
+    {
+      label: t('SettingsModePresence'),
+      active: presenceDetectionEnabled,
+      tab: 'presence',
+    },
+    { label: t('SettingsModeIdle'), active: idleModeEnabled, tab: 'idle' },
+    { label: t('SettingsModeKiosk'), active: kioskModeEnabled, tab: 'kiosk' },
+    {
+      label: t('SettingsModeGame'),
+      active: gameCommentaryEnabled,
+      tab: 'gameCommentary',
+    },
+  ]
+  const openHeaderTab = (tab: TabKey) => {
+    menuStore.setState({
+      activeSettingsTab: tab,
+      settingsSearchQuery: '',
+    })
+  }
 
   return (
-    <header className="grid shrink-0 grid-cols-[auto_1fr] items-center gap-3 border-b border-gray-200 bg-white/85 px-3 py-3 sm:grid-cols-[auto_auto_1fr_auto] sm:px-4">
+    <header className="theme-surface-popover relative z-30 grid shrink-0 grid-cols-[auto_auto_minmax(0,1fr)_minmax(6.75rem,8rem)_auto] items-center gap-2 border-b border-primary/20 px-3 py-3 backdrop-blur-sm sm:grid-cols-[auto_auto_auto_minmax(10rem,14rem)_1fr_auto] sm:gap-3 sm:px-4">
       <div className="z-15">
         <IconButton
           iconName="24/Close"
           isProcessing={false}
-          aria-label={isJa ? '設定を閉じる' : 'Close settings'}
+          aria-label={t('SettingsClose')}
           onClick={onClickClose}
           data-testid="close-settings-button"
+          backgroundColor="bg-transparent hover:bg-primary/10 active:bg-primary/15 disabled:bg-transparent"
+          iconColor="text-text1"
+          className="border border-primary/15 shadow-sm"
         ></IconButton>
       </div>
+      <span
+        className="h-7 w-7 shrink-0 bg-primary opacity-90"
+        style={{
+          WebkitMask:
+            'url(/images/setting-icons/logo2-2favicon.svg) center / contain no-repeat',
+          mask: 'url(/images/setting-icons/logo2-2favicon.svg) center / contain no-repeat',
+        }}
+        aria-hidden="true"
+      />
       <div className="min-w-0">
         <h1 className="text-lg font-bold leading-tight text-text1">
-          {isJa ? '設定' : 'Settings'}
+          {t('Settings')}
         </h1>
-        <div className="text-xs text-gray-500">AITuberKit</div>
+        <div className="hidden text-xs text-text-primary/80 sm:block">
+          AITuberKit
+        </div>
       </div>
-      <div className="order-3 col-span-2 sm:order-none sm:col-span-1">
+      <label className="theme-surface-control flex h-10 min-w-0 items-center rounded-lg border px-2 text-sm text-text1 sm:order-none sm:col-span-1 sm:px-3">
+        <select
+          aria-label={t('SettingsDisplayLanguage')}
+          className="min-w-0 flex-1 bg-transparent font-bold outline-none"
+          value={selectLanguage}
+          onChange={(event) => {
+            const language = event.target.value as Language
+            settingsStore.setState({ selectLanguage: language })
+            i18n.changeLanguage(language)
+          }}
+        >
+          {languageOptions.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      </label>
+      <button
+        type="button"
+        className={`theme-surface-control flex h-10 w-10 items-center justify-center rounded-lg border text-text-primary transition-colors hover:border-primary/35 hover:text-text1 sm:hidden ${
+          showMobileSearch || settingsSearchQuery ? 'border-primary/35' : ''
+        }`}
+        aria-label={t('SettingsSearch')}
+        aria-expanded={showMobileSearch || !!settingsSearchQuery}
+        onClick={() => setShowMobileSearch((value) => !value)}
+      >
+        <pixiv-icon name="24/Search" scale="1" />
+      </button>
+      <div
+        className={`order-6 col-span-5 sm:order-none sm:col-span-1 sm:block ${
+          showMobileSearch || settingsSearchQuery ? 'block' : 'hidden'
+        }`}
+      >
         <SettingsSearch />
       </div>
       <div className="hidden items-center gap-2 lg:flex">
-        <StatusChip label="AI" value={formatStatusValue(selectAIService)} />
         <StatusChip
-          label={isJa ? '音声' : 'Voice'}
+          label="AI"
+          value={formatStatusValue(selectAIService)}
+          onClick={() => openHeaderTab('ai')}
+        />
+        <StatusChip
+          label={t('SettingsVoice')}
           value={formatStatusValue(selectVoice)}
+          onClick={() => openHeaderTab('voice')}
         />
-        <StatusChip
-          label="YouTube"
-          value={youtubeMode ? 'ON' : 'OFF'}
-          emphasized={youtubeMode}
-        />
+        <ModeStatusSummary items={modeItems} onSelect={openHeaderTab} />
         <a
-          className="flex h-8 items-center gap-2 rounded-lg bg-[#1F2328] px-3 text-sm font-bold text-white hover:bg-[#33383E]"
+          className="theme-surface-contrast flex h-8 items-center gap-2 rounded-lg px-3 text-sm font-bold shadow-sm transition-colors"
           draggable={false}
           href="https://github.com/tegnike/aituber-kit"
           rel="noopener noreferrer"
@@ -94,6 +203,12 @@ const Header = ({ onClickClose }: Pick<Props, 'onClickClose'>) => {
       </div>
     </header>
   )
+}
+
+type ModeStatusItem = {
+  label: string
+  active: boolean
+  tab: TabKey
 }
 
 // タブの定義
@@ -148,17 +263,18 @@ type TabGroup = {
 }
 
 const SettingsSearch = () => {
-  const { i18n } = useTranslation()
+  const { t } = useTranslation()
   const searchQuery = menuStore((state) => state.settingsSearchQuery)
-  const searchLabel = i18n.language === 'ja' ? '設定を検索' : 'Search settings'
+  const searchLabel = t('SettingsSearch')
+  const clearLabel = t('SettingsSearchClear')
 
   return (
-    <label className="relative block">
-      <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-500">
-        ⌕
+    <div className="relative block">
+      <span className="pointer-events-none absolute left-2.5 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center text-text-primary">
+        <pixiv-icon name="24/Search" scale="1" />
       </span>
       <input
-        className="h-10 w-full rounded-lg border border-gray-200 bg-white px-9 text-sm text-text1 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+        className="theme-surface-control h-10 w-full rounded-lg border py-2 pl-9 pr-11 text-sm text-text1 outline-none transition"
         placeholder={searchLabel}
         value={searchQuery}
         aria-label={searchLabel}
@@ -169,7 +285,22 @@ const SettingsSearch = () => {
           })
         }
       />
-    </label>
+      {searchQuery && (
+        <button
+          type="button"
+          aria-label={clearLabel}
+          title={clearLabel}
+          className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-lg text-text-primary transition-colors hover:bg-primary/10 hover:text-text1 focus:outline-none focus-visible:ring-1 focus-visible:ring-primary/30"
+          onClick={() =>
+            menuStore.setState({
+              settingsSearchQuery: '',
+            })
+          }
+        >
+          <pixiv-icon name="24/Close" scale="1" />
+        </button>
+      )}
+    </div>
   )
 }
 
@@ -184,36 +315,117 @@ const StatusChip = ({
   label,
   value,
   emphasized = false,
+  onClick,
 }: {
   label: string
   value: string
   emphasized?: boolean
+  onClick?: () => void
 }) => {
-  return (
-    <div
-      className={`inline-flex h-8 max-w-44 items-center gap-1 rounded-full border px-3 text-xs ${
-        emphasized
-          ? 'border-primary/30 bg-primary/10 text-primary'
-          : 'border-gray-200 bg-white text-gray-600'
-      }`}
-    >
+  const className = `inline-flex h-8 max-w-44 items-center gap-1 rounded-full border px-3 text-xs ${
+    emphasized
+      ? 'theme-surface-soft text-primary'
+      : 'theme-surface-control text-text-primary'
+  }`
+  const content = (
+    <>
       <span className="shrink-0">{label}</span>
       <strong className="truncate text-text1">{value}</strong>
-    </div>
+    </>
+  )
+
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        className={`${className} transition-colors hover:border-primary/35 hover:text-text1`}
+        onClick={onClick}
+      >
+        {content}
+      </button>
+    )
+  }
+
+  return <div className={className}>{content}</div>
+}
+
+const ModeStatusSummary = ({
+  items,
+  onSelect,
+}: {
+  items: ModeStatusItem[]
+  onSelect: (tab: TabKey) => void
+}) => {
+  const { t } = useTranslation()
+  const detailsRef = useRef<HTMLDetailsElement>(null)
+  const activeItems = items.filter((item) => item.active)
+  const summaryLabel = activeItems.length === 0 ? t('SettingsModeAllOff') : 'ON'
+  const modeLabel = t('SettingsModeModes')
+  const detailLabel =
+    activeItems.length === 0
+      ? t('SettingsModeNoActiveModes')
+      : activeItems.map((item) => item.label).join(' / ')
+  const accessibleLabel = `${modeLabel}: ${detailLabel}`
+
+  return (
+    <details ref={detailsRef} className="group relative">
+      <summary
+        className="theme-surface-control inline-flex h-8 cursor-pointer list-none items-center gap-1.5 rounded-full border px-3 text-xs text-text-primary transition-colors hover:border-primary/35 hover:text-text1 [&::-webkit-details-marker]:hidden"
+        aria-label={accessibleLabel}
+        title={accessibleLabel}
+      >
+        <span
+          className={`h-2 w-2 rounded-full ${
+            activeItems.length > 0 ? 'bg-primary' : 'bg-text-primary/25'
+          }`}
+          aria-hidden="true"
+        />
+        <span className="shrink-0">{modeLabel}</span>
+        <strong className="text-text1">{summaryLabel}</strong>
+      </summary>
+      <div className="theme-surface-popover absolute right-0 top-10 z-50 hidden max-h-[calc(100vh-6rem)] w-64 overflow-y-auto rounded-xl border border-primary/20 p-3 text-xs shadow-xl group-open:block">
+        <div className="mb-2 font-bold text-text1">{accessibleLabel}</div>
+        <div className="space-y-1.5">
+          {items.map((item) => (
+            <button
+              type="button"
+              key={item.label}
+              className={`flex w-full items-center justify-between gap-2 rounded-lg border px-2.5 py-2 text-left transition-colors hover:border-primary/40 hover:bg-primary/10 ${
+                item.active
+                  ? 'border-primary/30 bg-primary/10 text-text1'
+                  : 'border-primary/10 bg-white/45 text-text-primary'
+              }`}
+              onClick={() => {
+                onSelect(item.tab)
+                detailsRef.current?.removeAttribute('open')
+              }}
+            >
+              <span className="truncate font-bold">{item.label}</span>
+              <span
+                className={`shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
+                  item.active
+                    ? 'bg-primary text-theme'
+                    : 'bg-text-primary/10 text-text-primary'
+                }`}
+              >
+                {item.active ? 'ON' : 'OFF'}
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
+    </details>
   )
 }
 
-const getTabGroups = (
-  t: (key: string) => string,
-  isJa: boolean
-): TabGroup[] => [
+const getTabGroups = (t: (key: string) => string): TabGroup[] => [
   {
     key: 'start',
-    label: isJa ? 'はじめに' : 'Start',
+    label: t('SettingsGroupStart'),
     tabs: [
       {
         key: 'quickStart',
-        label: isJa ? 'かんたん設定' : 'Easy setup',
+        label: t('SettingsEasySetup'),
         keywords: [
           'start',
           'easy',
@@ -256,7 +468,7 @@ const getTabGroups = (
   },
   {
     key: 'conversation',
-    label: isJa ? '会話' : 'Conversation',
+    label: t('SettingsGroupConversation'),
     tabs: [
       {
         key: 'ai',
@@ -302,7 +514,7 @@ const getTabGroups = (
   },
   {
     key: 'voiceInput',
-    label: isJa ? '声・入力' : 'Voice & Input',
+    label: t('SettingsGroupVoiceInput'),
     tabs: [
       {
         key: 'voice',
@@ -327,8 +539,28 @@ const getTabGroups = (
   },
   {
     key: 'streaming',
-    label: isJa ? '配信・表示' : 'Streaming & View',
+    label: t('SettingsGroupStreamingView'),
     tabs: [
+      {
+        key: 'based',
+        label: t('SettingsDisplaySettings'),
+        keywords: [
+          'display',
+          'basic',
+          'language',
+          'theme',
+          'background',
+          'assistant text',
+          'control panel',
+          '表示',
+          '基本',
+          '言語',
+          'テーマ',
+          '背景',
+          'アシスタントテキスト',
+          'コントロールパネル',
+        ],
+      },
       {
         key: 'youtube',
         label: t('YoutubeSettings'),
@@ -353,7 +585,7 @@ const getTabGroups = (
   },
   {
     key: 'automation',
-    label: isJa ? '自動化' : 'Automation',
+    label: t('SettingsGroupAutomation'),
     tabs: [
       {
         key: 'presence',
@@ -381,16 +613,11 @@ const getTabGroups = (
   },
   {
     key: 'system',
-    label: isJa ? '詳細設定' : 'Advanced',
+    label: t('OtherSettings'),
     tabs: [
       {
-        key: 'based',
-        label: isJa ? '表示・基本設定' : 'Display & Basics',
-        keywords: ['language', 'theme', 'background', '言語', 'テーマ', '背景'],
-      },
-      {
         key: 'other',
-        label: isJa ? 'その他・詳細' : 'Other Advanced',
+        label: t('SettingsAdvancedSettings'),
         keywords: ['system', 'debug', 'other', 'その他', 'システム', '詳細'],
       },
       {
@@ -403,13 +630,12 @@ const getTabGroups = (
 ]
 
 const Main = () => {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
   const activeTab = menuStore((state) => state.activeSettingsTab)
   const searchQuery = menuStore((state) => state.settingsSearchQuery)
   const [activeMobileGroup, setActiveMobileGroup] = useState('start')
   const contentScrollRef = useRef<HTMLElement>(null)
   const settingsPanelRef = useRef<HTMLDivElement>(null)
-  const isJa = i18n.language === 'ja'
 
   const setActiveTab = (tab: TabKey) => {
     menuStore.setState({ activeSettingsTab: tab })
@@ -423,7 +649,7 @@ const Main = () => {
     }
   }
 
-  const groups = useMemo(() => getTabGroups(t, isJa), [t, isJa])
+  const groups = useMemo(() => getTabGroups(t), [t])
   const tabs = groups.flatMap((group) => group.tabs)
   const normalizedSearchQuery = searchQuery.trim().toLowerCase()
   const visibleGroups = useMemo(() => {
@@ -517,11 +743,11 @@ const Main = () => {
 
   return (
     <main className="grid min-h-0 flex-1 grid-cols-1 grid-rows-[auto_1fr] text-text1 md:grid-cols-[260px_1fr] md:grid-rows-1">
-      <aside className="hidden min-h-0 overflow-y-auto border-r border-gray-200 bg-white/70 p-3 md:block">
+      <aside className="theme-surface-popover hidden min-h-0 overflow-y-auto border-r border-primary/20 p-3 backdrop-blur-sm md:block">
         <nav aria-label="Settings navigation" className="space-y-4">
           {visibleGroups.map((group) => (
             <section key={group.key}>
-              <div className="mb-1 px-2 text-xs font-bold text-gray-500">
+              <div className="mb-1 px-2 text-xs font-bold text-text-primary/80">
                 {group.label}
               </div>
               <ul className="space-y-1">
@@ -541,15 +767,15 @@ const Main = () => {
         </nav>
       </aside>
 
-      <div className="min-w-0 border-b border-gray-200 bg-white/80 py-3 md:hidden">
-        <div className="scroll-hidden flex gap-2 overflow-x-auto px-3 pb-3">
+      <div className="theme-surface-popover min-w-0 border-b border-primary/20 py-2 md:hidden">
+        <div className="scroll-hidden flex gap-2 overflow-x-auto px-3 pb-2">
           {visibleGroups.map((group) => (
             <button
               key={group.key}
-              className={`h-10 shrink-0 rounded-lg border px-4 text-sm font-bold shadow-sm ${
+              className={`h-9 shrink-0 rounded-lg border px-4 text-sm font-bold shadow-sm ${
                 selectedMobileGroup === group.key
                   ? 'border-primary bg-primary text-theme'
-                  : 'border-gray-200 bg-white text-text1 hover:border-primary/50'
+                  : 'theme-surface-control text-text1 hover:border-primary/50'
               }`}
               onClick={() => setActiveGroup(group)}
               data-testid={`settings-group-${group.key}`}
@@ -558,7 +784,7 @@ const Main = () => {
             </button>
           ))}
         </div>
-        <div className="scroll-hidden flex gap-2 overflow-x-auto border-t border-gray-100 px-3 pt-3">
+        <div className="scroll-hidden flex gap-2 overflow-x-auto border-t border-primary/10 px-3 pt-2">
           {visibleMobileTabs.map((tab) => (
             <SettingsTabButton
               key={tab.key}
@@ -593,19 +819,25 @@ const Main = () => {
                 )}
                 <div className="text-2xl font-bold">{currentTab?.label}</div>
               </div>
-              <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-600">
-                {isJa
-                  ? '関連する設定だけをまとめて表示します。左のカテゴリまたは検索から目的の項目を選んでください。'
-                  : 'Choose a category or search to find related settings quickly.'}
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-text-primary/80">
+                {t('SettingsIntroDescription')}
               </p>
             </div>
           </div>
           <div
             ref={settingsPanelRef}
-            className="rounded-lg border border-gray-200 bg-white/90 p-4 shadow-sm sm:p-6"
+            className="theme-surface-elevated rounded-xl border p-4 backdrop-blur-sm sm:p-6"
             data-testid="settings-panel"
           >
-            {renderTabContent()}
+            <div
+              className={
+                tabsWithRedundantPanelTitle.has(activeTab)
+                  ? 'settings-panel-content settings-panel-content--hide-title'
+                  : 'settings-panel-content'
+              }
+            >
+              {renderTabContent()}
+            </div>
           </div>
         </div>
       </section>
@@ -635,7 +867,7 @@ const SettingsTabButton = ({
       } ${
         active
           ? 'border-primary bg-primary text-theme'
-          : 'border-transparent bg-transparent text-text1 hover:border-gray-200 hover:bg-white'
+          : 'border-transparent bg-transparent text-text1 hover:border-primary/30 hover:bg-primary/5'
       }`}
       onClick={onClick}
       data-testid={`settings-tab-${tabKey}`}
@@ -733,7 +965,7 @@ const escapeRegExp = (value: string) =>
 
 const Footer = () => {
   return (
-    <footer className="shrink-0 border-t border-gray-200 bg-[#413D43] py-1 text-center font-Montserrat text-xs text-theme">
+    <footer className="theme-surface-contrast shrink-0 border-t border-primary/20 py-1 text-center font-Montserrat text-xs">
       powered by ChatVRM from Pixiv / ver. 2.46.0
     </footer>
   )

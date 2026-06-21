@@ -45,29 +45,34 @@ export const Introduction = () => {
   }
 
   return displayIntroduction && opened ? (
-    <div className="absolute z-40 w-full h-full px-3 sm:px-6 py-10 bg-black/30 font-M_PLUS_2">
-      <div className="relative mx-auto my-auto max-w-3xl max-h-full p-4 sm:p-6 overflow-y-auto bg-white rounded-2xl">
-        <div className="sticky top-0 right-0 z-10 flex justify-end">
+    <div className="absolute z-40 flex h-full w-full items-center bg-black/35 px-3 py-8 font-M_PLUS_2 backdrop-blur-sm sm:px-6">
+      <div className="theme-surface-elevated relative mx-auto max-h-full w-full max-w-3xl overflow-y-auto rounded-xl border p-4 text-theme-default shadow-xl backdrop-blur-md sm:p-6">
+        <div className="sticky -top-4 z-10 -mx-4 mb-5 flex items-center justify-between border-b border-primary/20 bg-[color-mix(in_srgb,var(--color-text-base)_94%,transparent)] px-4 py-3 backdrop-blur-md sm:-top-6 sm:-mx-6 sm:px-6">
+          <div>
+            <div className="text-xs font-bold uppercase tracking-wider text-text-primary">
+              AITuberKit
+            </div>
+            <div className="text-lg font-bold text-secondary">
+              {t('AboutThisApplication')}
+            </div>
+          </div>
           <IconButton
             iconName="24/Close"
             isProcessing={false}
             onClick={handleClose}
-            className="bg-secondary hover:bg-secondary-hover active:bg-secondary-press disabled:bg-secondary-disabled text-theme"
+            className="bg-secondary shadow-md shadow-secondary/15 ring-1 ring-secondary/15 transition-colors duration-200 hover:bg-secondary-hover active:bg-secondary-press disabled:bg-secondary-disabled"
           ></IconButton>
         </div>
         <div className="mb-6">
-          <div className="mb-2 font-bold text-xl text-secondary ">
-            {t('AboutThisApplication')}
-          </div>
-          <div>
+          <div className="leading-relaxed">
             <Trans i18nKey="AboutThisApplicationDescription2" />
           </div>
         </div>
         <div className="my-6">
-          <div className="my-2 font-bold text-xl text-secondary">
+          <div className="my-2 text-xl font-bold text-secondary">
             {t('TechnologyIntroduction')}
           </div>
-          <div>
+          <div className="leading-relaxed">
             <Trans
               i18nKey="TechnologyIntroductionDescription1"
               components={{ b: <b /> }}
@@ -100,7 +105,7 @@ export const Introduction = () => {
             />
             {t('TechnologyIntroductionDescription7')}
           </div>
-          <div className="my-4">
+          <div className="my-4 leading-relaxed">
             {t('SourceCodeDescription1')}
             <br />
             {t('RepositoryURL')}
@@ -114,14 +119,14 @@ export const Introduction = () => {
         </div>
 
         <div className="my-6">
-          <label className="flex items-center">
+          <label className="flex items-center gap-2 text-sm font-bold">
             <input
               type="checkbox"
               checked={dontShowAgain}
               onChange={(e) => {
                 setDontShowAgain(e.target.checked)
               }}
-              className="mr-2"
+              className="h-4 w-4 accent-primary"
             />
             <span>{t('DontShowIntroductionNextTime')}</span>
           </label>
@@ -130,20 +135,20 @@ export const Introduction = () => {
         <div className="my-6">
           <button
             onClick={handleClose}
-            className="font-bold bg-secondary hover:bg-secondary-hover active:bg-secondary-press disabled:bg-secondary-disabled text-theme px-6 py-2 rounded-full"
+            className="rounded-full bg-secondary px-6 py-2 font-bold text-theme shadow-md shadow-secondary/15 transition-colors hover:bg-secondary-hover active:bg-secondary-press disabled:bg-secondary-disabled"
           >
             {t('Close')}
           </button>
         </div>
 
         {selectLanguage === 'ja' && (
-          <div className="mt-6">
-            <p>You can select the language from the settings.</p>
+          <div className="mt-6 text-sm text-text-primary">
+            <p>{t('LanguageCanBeSelectedFromSettings')}</p>
           </div>
         )}
 
         {process.env.NEXT_PUBLIC_DEMO_MODE === 'true' && (
-          <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-sm">
+          <div className="mt-6 rounded-lg border border-yellow-200 bg-yellow-50/90 p-4 text-sm text-gray-900">
             <p className="mb-1">{t('DemoModeAppNotice')}</p>
             <p className="mb-2">{t('DemoModeLimitedFeaturesNotice')}</p>
             <p className="text-yellow-700">⚠ {t('DemoModeLogNotice')}</p>

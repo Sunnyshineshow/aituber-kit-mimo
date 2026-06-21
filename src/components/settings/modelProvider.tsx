@@ -350,7 +350,7 @@ const ModelProvider = () => {
           onChange={(value) => handleAIServiceChange(value as AIService)}
         >
           <div className="relative inline-block min-w-[240px]">
-            <Listbox.Button className="flex w-full cursor-pointer items-center rounded-lg border border-gray-300 bg-white px-4 py-2 shadow-sm transition hover:bg-white-hover focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20">
+            <Listbox.Button className="flex w-full cursor-pointer items-center rounded-lg border border-gray-300 bg-white px-4 py-2 shadow-sm transition hover:bg-white-hover focus:border-primary focus:outline-none focus:ring-0">
               <ServiceLogo service={state.selectAIService as any} />
               <span>{selectedServiceOption?.label}</span>
             </Listbox.Button>
