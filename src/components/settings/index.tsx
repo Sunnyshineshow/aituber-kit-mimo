@@ -264,7 +264,7 @@ const SettingsSearch = () => {
         <pixiv-icon name="24/Search" scale="1" />
       </span>
       <input
-        className="theme-surface-control h-10 w-full rounded-lg border py-2 pl-8 pr-11 text-sm text-text1 outline-none transition"
+        className="theme-surface-control h-10 w-full rounded-lg border py-2 pl-9 pr-11 text-sm text-text1 outline-none transition"
         placeholder={searchLabel}
         value={searchQuery}
         aria-label={searchLabel}
