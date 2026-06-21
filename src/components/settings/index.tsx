@@ -22,7 +22,7 @@ import IdleSettings from './idleSettings'
 import GameCommentarySettings from './gameCommentarySettings'
 import KioskSettings from './kioskSettings'
 import QuickStart from './quickStart'
-import { languageOptions } from './languageOptions'
+import { languageOptions } from '@/components/settings/languageOptions'
 
 type Props = {
   onClickClose: () => void

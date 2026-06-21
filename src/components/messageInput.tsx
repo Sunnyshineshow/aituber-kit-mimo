@@ -513,6 +513,12 @@ export const MessageInput = ({
                       onMouseLeave={() => setShowImageActions(false)}
                       onFocus={() => setShowImageActions(true)}
                       onBlur={() => setShowImageActions(false)}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.preventDefault()
+                          setShowImageActions(true)
+                        }
+                      }}
                       tabIndex={0}
                       role="button"
                       aria-label={t('RemoveImage')}

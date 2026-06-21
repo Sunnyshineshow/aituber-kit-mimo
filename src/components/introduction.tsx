@@ -143,7 +143,7 @@ export const Introduction = () => {
 
         {selectLanguage === 'ja' && (
           <div className="mt-6 text-sm text-text-primary">
-            <p>You can select the language from the settings.</p>
+            <p>{t('LanguageCanBeSelectedFromSettings')}</p>
           </div>
         )}
 

@@ -10,7 +10,7 @@ import { TextButton } from '../textButton'
 import { ToggleSwitch } from '../toggleSwitch'
 import { IMAGE_CONSTANTS } from '@/constants/images'
 import { useRestrictedMode } from '@/hooks/useRestrictedMode'
-import { languageOptions } from './languageOptions'
+import { languageOptions } from '@/components/settings/languageOptions'
 
 const Based = () => {
   const { t } = useTranslation()

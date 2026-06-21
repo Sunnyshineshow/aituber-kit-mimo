@@ -9,7 +9,7 @@ import { aiServiceOptions } from './modelProvider/utils/aiServiceConfigs'
 import { useAIServiceHandlers } from './modelProvider/hooks/useAIServiceHandlers'
 import { useModelProviderState } from './modelProvider/hooks/useModelProviderState'
 import { ToggleSwitch } from '../toggleSwitch'
-import { languageOptions } from './languageOptions'
+import { languageOptions } from '@/components/settings/languageOptions'
 
 type QuickStartDestination =
   | 'based'
