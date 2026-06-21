@@ -31,11 +31,13 @@ const CollapsibleSection = ({
   description,
   children,
   defaultOpen = false,
+  testId,
 }: {
   title: string
   description?: string
   children: React.ReactNode
   defaultOpen?: boolean
+  testId?: string
 }) => {
   const [isOpen, setIsOpen] = useState(defaultOpen)
 
@@ -44,6 +46,7 @@ const CollapsibleSection = ({
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
+        data-testid={testId}
         className="w-full px-4 py-3 bg-gray-50 flex items-center justify-between text-left hover:bg-gray-100 transition-colors"
       >
         <div>
@@ -518,6 +521,7 @@ const PresenceSettings = () => {
         <CollapsibleSection
           title={t('PresenceTimingSettings')}
           description={t('PresenceTimingSettingsInfo')}
+          testId="presence-timing-settings-button"
         >
           {/* 離脱判定時間 */}
           <div className="mb-6">

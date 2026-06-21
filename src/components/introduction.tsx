@@ -148,10 +148,10 @@ export const Introduction = () => {
         )}
 
         {process.env.NEXT_PUBLIC_DEMO_MODE === 'true' && (
-          <div className="mt-6 rounded-lg border border-yellow-200 bg-yellow-50/90 p-4 text-sm text-gray-900">
+          <div className="mt-6 rounded-lg border border-secondary/30 bg-[color-mix(in_srgb,var(--color-secondary)_12%,var(--color-text-base))] p-4 text-sm text-theme-default">
             <p className="mb-1">{t('DemoModeAppNotice')}</p>
             <p className="mb-2">{t('DemoModeLimitedFeaturesNotice')}</p>
-            <p className="text-yellow-700">⚠ {t('DemoModeLogNotice')}</p>
+            <p className="text-secondary">⚠ {t('DemoModeLogNotice')}</p>
           </div>
         )}
       </div>

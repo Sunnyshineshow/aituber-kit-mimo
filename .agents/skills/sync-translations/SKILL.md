@@ -1,11 +1,16 @@
 ---
 name: sync-translations
 description: 日本語の翻訳ファイル（ja/translation.json）から他の言語ファイルに不足しているキーを同期し、READMEの変更も多言語READMEに反映する。翻訳キーの追加、翻訳ファイルの同期、i18nキーの更新、READMEの多言語同期時に使用。
+user-invocable: true
 ---
 
 # 翻訳ファイル同期スキル
 
 日本語の翻訳ファイル（`locales/ja/translation.json`）をマスターとして、他の言語ファイルに不足しているキーを同期します。
+
+## 保守方針
+
+この `.agents/skills/sync-translations/SKILL.md` を現在のエージェント向け手順の正本として扱います。`.claude/skills/sync-translations/SKILL.md` は既存Claude環境向けの互換コピーで、Codex/AgentTools向けの手順更新はまず `.agents/` 側へ反映します。
 
 ## 対象言語
 
@@ -38,7 +43,7 @@ description: 日本語の翻訳ファイル（ja/translation.json）から他の
 ```bash
 git status --short
 git diff --name-only
-rg -n "isJa \\?|i18n\\.language === 'ja'|i18n\\.language === \"ja\"|Search settings|Easy setup|Start here|Display settings|Detailed .* settings|Optional features|Choose a category|Core settings" src/components src/features src/pages
+rg -n "isJa\\s*\\?|i18n\\.language === 'ja'|i18n\\.language === \"ja\"|Search settings|Easy setup|Start here|Display settings|Detailed .* settings|Optional features|Choose a category|Core settings" src/components src/features src/pages
 ```
 
 **必ず確認すること：**
@@ -100,7 +105,7 @@ locales/ja/translation.json
 翻訳JSON同期後、変更したUIファイルを再検索して、英語・日本語の直書き分岐が残っていないか確認します。
 
 ```bash
-rg -n "isJa \\?|i18n\\.language === 'ja'|i18n\\.language === \"ja\"|Search settings|Easy setup|Start here|Display settings|Detailed .* settings|Optional features|Choose a category|Core settings" <変更したUIファイル>
+rg -n "isJa\\s*\\?|i18n\\.language === 'ja'|i18n\\.language === \"ja\"|Search settings|Easy setup|Start here|Display settings|Detailed .* settings|Optional features|Choose a category|Core settings" <変更したUIファイル>
 ```
 
 さらに、翻訳キーの不足が0であることを確認します。
@@ -109,7 +114,6 @@ rg -n "isJa \\?|i18n\\.language === 'ja'|i18n\\.language === \"ja\"|Search setti
 node - <<'NODE'
 const fs = require('fs')
 const langs = ['en','zh-CN','zh-TW','ko','fr','de','es','it','pt','ru','pl','th','vi','hi','ar']
-const ja = JSON.parse(fs.readFileSync('locales/ja/translation.json', 'utf8'))
 function walk(o, p = [], out = []) {
   if (o && typeof o === 'object' && !Array.isArray(o)) {
     for (const k of Object.keys(o)) walk(o[k], [...p, k], out)
@@ -126,13 +130,27 @@ function has(o, path) {
   }
   return true
 }
-const keys = walk(ja)
 let total = 0
-for (const lang of langs) {
-  const obj = JSON.parse(fs.readFileSync(`locales/${lang}/translation.json`, 'utf8'))
-  const missing = keys.filter((key) => !has(obj, key))
-  total += missing.length
-  console.log(`${lang}: ${missing.length}`)
+let keys = []
+try {
+  const ja = JSON.parse(fs.readFileSync('locales/ja/translation.json', 'utf8'))
+  keys = walk(ja)
+} catch (error) {
+  console.error(`ja: ${error.message}`)
+  process.exitCode = 1
+}
+if (keys.length > 0) {
+  for (const lang of langs) {
+    try {
+      const obj = JSON.parse(fs.readFileSync(`locales/${lang}/translation.json`, 'utf8'))
+      const missing = keys.filter((key) => !has(obj, key))
+      total += missing.length
+      console.log(`${lang}: ${missing.length}`)
+    } catch (error) {
+      process.exitCode = 1
+      console.error(`${lang}: ${error.message}`)
+    }
+  }
 }
 console.log(`total missing: ${total}`)
 NODE

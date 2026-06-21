@@ -257,7 +257,7 @@ const CharacterPresetMenu = () => {
                                       ? 'border-primary bg-primary/10 shadow-md'
                                       : item.type === 'character'
                                         ? 'border-primary/20 bg-primary/5 hover:bg-primary/10'
-                                        : 'border-primary/15 bg-white/70 hover:bg-primary/5'
+                                        : 'border-primary/15 bg-[color-mix(in_srgb,var(--color-text-base)_90%,transparent)] hover:bg-primary/5'
                                   }`}
                                 >
                                   {/* ドラッグハンドル */}
