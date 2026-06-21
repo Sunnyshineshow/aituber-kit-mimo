@@ -105,6 +105,7 @@ describe('ExternalLinkageWebSocketManager', () => {
     manager.connect()
 
     expect(mockStatusChange).toHaveBeenCalledWith('closed', {
+      connectedAt: null,
       lastError: 'Toasts.WebSocketConnectionError',
     })
     expect(mockAddToast).toHaveBeenCalledWith(

@@ -124,6 +124,7 @@ export class ExternalLinkageWebSocketManager {
       console.error('External linkage WebSocket connection failed:', error)
       this.removeToast()
       this.updateStatus('closed', {
+        connectedAt: null,
         lastError: this.t('Toasts.WebSocketConnectionError'),
       })
       toastStore.getState().addToast({
