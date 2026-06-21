@@ -528,12 +528,10 @@ export async function closeSettings(page: Page) {
 
 export async function openSettingsTab(page: Page, tab: string) {
   const tabTestId = `settings-tab-${tab}`
-  let tabButton = page.getByTestId(tabTestId).filter({ visible: true }).first()
-
-  if (!(await tabButton.isVisible().catch(() => false))) {
-    await openMobileSettingsTabGroup(page, tab)
-    tabButton = page.getByTestId(tabTestId).filter({ visible: true }).first()
-  }
+  const tabButton = page
+    .getByTestId(tabTestId)
+    .filter({ visible: true })
+    .first()
 
   await expect(tabButton).toBeVisible()
   await tabButton.evaluate((element) => {
@@ -546,23 +544,6 @@ export async function openSettingsTab(page: Page, tab: string) {
   }
 }
 
-async function openMobileSettingsTabGroup(page: Page, tab: string) {
-  const tabGroup = settingsTabGroups[tab]
-  if (!tabGroup) {
-    throw new Error(`Unknown settings tab group mapping for tab: ${tab}`)
-  }
-
-  const groupButton = page
-    .getByTestId(`settings-group-${tabGroup}`)
-    .filter({ visible: true })
-    .first()
-
-  await expect(groupButton).toBeVisible()
-  await groupButton.evaluate((element) => {
-    ;(element as HTMLElement).click()
-  })
-}
-
 export async function openToolsMenu(page: Page) {
   const toolsToggle = page.getByTestId('main-tools-toggle-button')
   await expect(toolsToggle).toBeVisible()
@@ -570,25 +551,6 @@ export async function openToolsMenu(page: Page) {
     ;(element as HTMLElement).click()
   })
   await expect(page.getByTestId('main-tools-menu')).toBeVisible()
-}
-
-const settingsTabGroups: Record<string, string> = {
-  quickStart: 'start',
-  character: 'start',
-  ai: 'conversation',
-  memory: 'conversation',
-  voice: 'voiceInput',
-  speechInput: 'voiceInput',
-  youtube: 'streaming',
-  gameCommentary: 'streaming',
-  slide: 'streaming',
-  images: 'streaming',
-  presence: 'automation',
-  idle: 'automation',
-  kiosk: 'automation',
-  based: 'system',
-  other: 'system',
-  description: 'system',
 }
 
 export async function readPersistedSetting<T = PersistedValue>(

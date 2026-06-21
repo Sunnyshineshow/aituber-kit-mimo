@@ -256,7 +256,7 @@ export const Menu = () => {
           {effectiveShowControlPanel && (
             <>
               {canAccessSettings && (
-                <div className="md:order-1 order-2">
+                <div className="order-1">
                   <IconButton
                     iconName="24/Settings"
                     isProcessing={false}
@@ -269,7 +269,7 @@ export const Menu = () => {
                   ></IconButton>
                 </div>
               )}
-              <div className="md:order-2 order-1">
+              <div className="order-2">
                 <IconButton
                   iconName={
                     chatLogMode === CHAT_LOG_MODE.CHAT_LOG

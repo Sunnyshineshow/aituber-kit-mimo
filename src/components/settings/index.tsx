@@ -59,10 +59,12 @@ const Settings = (props: Props) => {
 export default Settings
 
 const Header = ({ onClickClose }: Pick<Props, 'onClickClose'>) => {
-  const { i18n } = useTranslation()
+  const { i18n, t } = useTranslation()
   const selectAIService = settingsStore((s) => s.selectAIService)
   const selectVoice = settingsStore((s) => s.selectVoice)
   const selectLanguage = settingsStore((s) => s.selectLanguage)
+  const settingsSearchQuery = menuStore((state) => state.settingsSearchQuery)
+  const [showMobileSearch, setShowMobileSearch] = useState(false)
   const youtubeMode = settingsStore((s) => s.youtubeMode)
   const realtimeAPIMode = settingsStore((s) => s.realtimeAPIMode)
   const audioMode = settingsStore((s) => s.audioMode)
@@ -74,29 +76,28 @@ const Header = ({ onClickClose }: Pick<Props, 'onClickClose'>) => {
   const idleModeEnabled = settingsStore((s) => s.idleModeEnabled)
   const kioskModeEnabled = settingsStore((s) => s.kioskModeEnabled)
   const gameCommentaryEnabled = settingsStore((s) => s.gameCommentaryEnabled)
-  const isJa = i18n.language === 'ja'
   const modeItems = [
     { label: 'YouTube', active: youtubeMode },
     { label: 'Realtime API', active: realtimeAPIMode },
-    { label: isJa ? '音声会話' : 'Voice chat', active: audioMode },
-    { label: isJa ? 'スライド' : 'Slides', active: slideMode },
-    { label: isJa ? '外部連携' : 'External', active: externalLinkageMode },
+    { label: t('SettingsModeVoiceChat'), active: audioMode },
+    { label: t('SettingsModeSlides'), active: slideMode },
+    { label: t('SettingsModeExternal'), active: externalLinkageMode },
     {
-      label: isJa ? '人感検知' : 'Presence',
+      label: t('SettingsModePresence'),
       active: presenceDetectionEnabled,
     },
-    { label: isJa ? 'アイドル' : 'Idle', active: idleModeEnabled },
-    { label: isJa ? 'キオスク' : 'Kiosk', active: kioskModeEnabled },
-    { label: isJa ? 'ゲーム実況' : 'Game', active: gameCommentaryEnabled },
+    { label: t('SettingsModeIdle'), active: idleModeEnabled },
+    { label: t('SettingsModeKiosk'), active: kioskModeEnabled },
+    { label: t('SettingsModeGame'), active: gameCommentaryEnabled },
   ]
 
   return (
-    <header className="theme-surface-popover relative z-30 grid shrink-0 grid-cols-[auto_auto_1fr] items-center gap-3 border-b border-primary/20 px-3 py-3 backdrop-blur-sm sm:grid-cols-[auto_auto_auto_minmax(10rem,14rem)_1fr_auto] sm:px-4">
+    <header className="theme-surface-popover relative z-30 grid shrink-0 grid-cols-[auto_auto_minmax(0,1fr)_minmax(6.75rem,8rem)_auto] items-center gap-2 border-b border-primary/20 px-3 py-3 backdrop-blur-sm sm:grid-cols-[auto_auto_auto_minmax(10rem,14rem)_1fr_auto] sm:gap-3 sm:px-4">
       <div className="z-15">
         <IconButton
           iconName="24/Close"
           isProcessing={false}
-          aria-label={isJa ? '設定を閉じる' : 'Close settings'}
+          aria-label={t('SettingsClose')}
           onClick={onClickClose}
           data-testid="close-settings-button"
           backgroundColor="bg-transparent hover:bg-primary/10 active:bg-primary/15 disabled:bg-transparent"
@@ -115,13 +116,15 @@ const Header = ({ onClickClose }: Pick<Props, 'onClickClose'>) => {
       />
       <div className="min-w-0">
         <h1 className="text-lg font-bold leading-tight text-text1">
-          {isJa ? '設定' : 'Settings'}
+          {t('Settings')}
         </h1>
-        <div className="text-xs text-text-primary/80">AITuberKit</div>
+        <div className="hidden text-xs text-text-primary/80 sm:block">
+          AITuberKit
+        </div>
       </div>
-      <label className="theme-surface-control order-3 col-span-3 flex h-10 items-center rounded-lg border px-3 text-sm text-text1 sm:order-none sm:col-span-1">
+      <label className="theme-surface-control flex h-10 min-w-0 items-center rounded-lg border px-2 text-sm text-text1 sm:order-none sm:col-span-1 sm:px-3">
         <select
-          aria-label={isJa ? '表示言語' : 'Display language'}
+          aria-label={t('SettingsDisplayLanguage')}
           className="min-w-0 flex-1 bg-transparent font-bold outline-none"
           value={selectLanguage}
           onChange={(event) => {
@@ -137,16 +140,31 @@ const Header = ({ onClickClose }: Pick<Props, 'onClickClose'>) => {
           ))}
         </select>
       </label>
-      <div className="order-4 col-span-3 sm:order-none sm:col-span-1">
+      <button
+        type="button"
+        className={`theme-surface-control flex h-10 w-10 items-center justify-center rounded-lg border text-text-primary transition-colors hover:border-primary/35 hover:text-text1 sm:hidden ${
+          showMobileSearch || settingsSearchQuery ? 'border-primary/35' : ''
+        }`}
+        aria-label={t('SettingsSearch')}
+        aria-expanded={showMobileSearch || !!settingsSearchQuery}
+        onClick={() => setShowMobileSearch((value) => !value)}
+      >
+        <pixiv-icon name="24/Search" scale="1" />
+      </button>
+      <div
+        className={`order-6 col-span-5 sm:order-none sm:col-span-1 sm:block ${
+          showMobileSearch || settingsSearchQuery ? 'block' : 'hidden'
+        }`}
+      >
         <SettingsSearch />
       </div>
       <div className="hidden items-center gap-2 lg:flex">
         <StatusChip label="AI" value={formatStatusValue(selectAIService)} />
         <StatusChip
-          label={isJa ? '音声' : 'Voice'}
+          label={t('SettingsVoice')}
           value={formatStatusValue(selectVoice)}
         />
-        <ModeStatusSummary items={modeItems} isJa={isJa} />
+        <ModeStatusSummary items={modeItems} />
         <a
           className="theme-surface-contrast flex h-8 items-center gap-2 rounded-lg px-3 text-sm font-bold shadow-sm transition-colors"
           draggable={false}
@@ -224,10 +242,10 @@ type TabGroup = {
 }
 
 const SettingsSearch = () => {
-  const { i18n } = useTranslation()
+  const { t } = useTranslation()
   const searchQuery = menuStore((state) => state.settingsSearchQuery)
-  const searchLabel = i18n.language === 'ja' ? '設定を検索' : 'Search settings'
-  const clearLabel = i18n.language === 'ja' ? '検索をクリア' : 'Clear search'
+  const searchLabel = t('SettingsSearch')
+  const clearLabel = t('SettingsSearchClear')
 
   return (
     <div className="relative block">
@@ -295,83 +313,43 @@ const StatusChip = ({
   )
 }
 
-const ModeStatusSummary = ({
-  items,
-  isJa,
-}: {
-  items: ModeStatusItem[]
-  isJa: boolean
-}) => {
+const ModeStatusSummary = ({ items }: { items: ModeStatusItem[] }) => {
+  const { t } = useTranslation()
   const activeItems = items.filter((item) => item.active)
-  const visibleActiveItems = activeItems.slice(0, 2)
-  const hasMoreActiveItems = activeItems.length > visibleActiveItems.length
-  const summaryLabel =
+  const summaryLabel = activeItems.length === 0 ? t('SettingsModeAllOff') : 'ON'
+  const modeLabel = t('SettingsModeModes')
+  const detailLabel =
     activeItems.length === 0
-      ? isJa
-        ? '全OFF'
-        : 'All off'
-      : `${visibleActiveItems.map((item) => item.label).join(' / ')}${
-          hasMoreActiveItems ? ' ...' : ''
-        }`
-  const modeLabel = isJa ? 'モード' : 'Modes'
+      ? t('SettingsModeNoActiveModes')
+      : activeItems.map((item) => item.label).join(' / ')
+  const accessibleLabel = `${modeLabel}: ${detailLabel}`
 
   return (
-    <details className="group relative">
-      <summary className="theme-surface-control inline-flex h-8 cursor-pointer list-none items-center gap-1.5 rounded-full border px-3 text-xs text-text-primary transition-colors hover:border-primary/35 hover:text-text1 [&::-webkit-details-marker]:hidden">
-        <span className="flex items-center gap-1">
-          {activeItems.length > 0 && (
-            <span
-              className="h-2 w-2 rounded-full bg-primary"
-              aria-hidden="true"
-            />
-          )}
-          <span className="shrink-0">{modeLabel}</span>
-        </span>
-        <strong className="max-w-36 truncate text-text1">{summaryLabel}</strong>
-      </summary>
-      <div className="theme-surface-popover absolute right-0 top-10 z-50 hidden max-h-[calc(100vh-6rem)] w-64 overflow-y-auto rounded-xl border border-primary/20 p-3 text-xs shadow-xl group-open:block">
-        <div className="mb-2 font-bold text-text1">
-          {isJa ? 'モード状態' : 'Mode status'}
-        </div>
-        <div className="space-y-1.5">
-          {items.map((item) => (
-            <div
-              key={item.label}
-              className={`flex items-center justify-between gap-2 rounded-lg border px-2.5 py-2 ${
-                item.active
-                  ? 'border-primary/30 bg-primary/10 text-text1'
-                  : 'border-primary/10 bg-white/45 text-text-primary'
-              }`}
-            >
-              <span className="truncate font-bold">{item.label}</span>
-              <span
-                className={`shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
-                  item.active
-                    ? 'bg-primary text-theme'
-                    : 'bg-text-primary/10 text-text-primary'
-                }`}
-              >
-                {item.active ? 'ON' : 'OFF'}
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
-    </details>
+    <div
+      className="theme-surface-control inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-xs text-text-primary"
+      aria-label={accessibleLabel}
+      title={accessibleLabel}
+    >
+      <span
+        className={`h-2 w-2 rounded-full ${
+          activeItems.length > 0 ? 'bg-primary' : 'bg-text-primary/25'
+        }`}
+        aria-hidden="true"
+      />
+      <span className="shrink-0">{modeLabel}</span>
+      <strong className="text-text1">{summaryLabel}</strong>
+    </div>
   )
 }
 
-const getTabGroups = (
-  t: (key: string) => string,
-  isJa: boolean
-): TabGroup[] => [
+const getTabGroups = (t: (key: string) => string): TabGroup[] => [
   {
     key: 'start',
-    label: isJa ? 'はじめに' : 'Start',
+    label: t('SettingsGroupStart'),
     tabs: [
       {
         key: 'quickStart',
-        label: isJa ? 'かんたん設定' : 'Easy setup',
+        label: t('SettingsEasySetup'),
         keywords: [
           'start',
           'easy',
@@ -414,7 +392,7 @@ const getTabGroups = (
   },
   {
     key: 'conversation',
-    label: isJa ? '会話' : 'Conversation',
+    label: t('SettingsGroupConversation'),
     tabs: [
       {
         key: 'ai',
@@ -460,7 +438,7 @@ const getTabGroups = (
   },
   {
     key: 'voiceInput',
-    label: isJa ? '声・入力' : 'Voice & Input',
+    label: t('SettingsGroupVoiceInput'),
     tabs: [
       {
         key: 'voice',
@@ -485,11 +463,11 @@ const getTabGroups = (
   },
   {
     key: 'streaming',
-    label: isJa ? '配信・表示' : 'Streaming & View',
+    label: t('SettingsGroupStreamingView'),
     tabs: [
       {
         key: 'based',
-        label: isJa ? '表示設定' : 'Display settings',
+        label: t('SettingsDisplaySettings'),
         keywords: [
           'display',
           'basic',
@@ -531,7 +509,7 @@ const getTabGroups = (
   },
   {
     key: 'automation',
-    label: isJa ? '自動化' : 'Automation',
+    label: t('SettingsGroupAutomation'),
     tabs: [
       {
         key: 'presence',
@@ -559,11 +537,11 @@ const getTabGroups = (
   },
   {
     key: 'system',
-    label: isJa ? 'その他' : 'Other',
+    label: t('OtherSettings'),
     tabs: [
       {
         key: 'other',
-        label: isJa ? '詳細設定' : 'Advanced settings',
+        label: t('SettingsAdvancedSettings'),
         keywords: ['system', 'debug', 'other', 'その他', 'システム', '詳細'],
       },
       {
@@ -576,27 +554,17 @@ const getTabGroups = (
 ]
 
 const Main = () => {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
   const activeTab = menuStore((state) => state.activeSettingsTab)
   const searchQuery = menuStore((state) => state.settingsSearchQuery)
-  const [activeMobileGroup, setActiveMobileGroup] = useState('start')
   const contentScrollRef = useRef<HTMLElement>(null)
   const settingsPanelRef = useRef<HTMLDivElement>(null)
-  const isJa = i18n.language === 'ja'
 
   const setActiveTab = (tab: TabKey) => {
     menuStore.setState({ activeSettingsTab: tab })
   }
 
-  const setActiveGroup = (group: TabGroup) => {
-    setActiveMobileGroup(group.key)
-    const defaultTab = group.tabs[0]?.key
-    if (defaultTab) {
-      setActiveTab(defaultTab)
-    }
-  }
-
-  const groups = useMemo(() => getTabGroups(t, isJa), [t, isJa])
+  const groups = useMemo(() => getTabGroups(t), [t])
   const tabs = groups.flatMap((group) => group.tabs)
   const normalizedSearchQuery = searchQuery.trim().toLowerCase()
   const visibleGroups = useMemo(() => {
@@ -616,18 +584,7 @@ const Main = () => {
       }))
       .filter((group) => group.tabs.length > 0)
   }, [groups, normalizedSearchQuery])
-  const activeTabGroup =
-    groups.find((group) => group.tabs.some((tab) => tab.key === activeTab))
-      ?.key ?? activeMobileGroup
-  const selectedMobileGroup = normalizedSearchQuery
-    ? activeMobileGroup
-    : activeTabGroup
-
-  const visibleMobileTabs = normalizedSearchQuery
-    ? visibleGroups.flatMap((group) => group.tabs)
-    : (visibleGroups.find((group) => group.key === selectedMobileGroup)?.tabs ??
-      visibleGroups[0]?.tabs ??
-      [])
+  const visibleMobileTabs = visibleGroups.flatMap((group) => group.tabs)
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -714,24 +671,8 @@ const Main = () => {
         </nav>
       </aside>
 
-      <div className="theme-surface-popover min-w-0 border-b border-primary/20 py-3 md:hidden">
-        <div className="scroll-hidden flex gap-2 overflow-x-auto px-3 pb-3">
-          {visibleGroups.map((group) => (
-            <button
-              key={group.key}
-              className={`h-10 shrink-0 rounded-lg border px-4 text-sm font-bold shadow-sm ${
-                selectedMobileGroup === group.key
-                  ? 'border-primary bg-primary text-theme'
-                  : 'theme-surface-control text-text1 hover:border-primary/50'
-              }`}
-              onClick={() => setActiveGroup(group)}
-              data-testid={`settings-group-${group.key}`}
-            >
-              {group.label}
-            </button>
-          ))}
-        </div>
-        <div className="scroll-hidden flex gap-2 overflow-x-auto border-t border-primary/10 px-3 pt-3">
+      <div className="theme-surface-popover min-w-0 border-b border-primary/20 py-2 md:hidden">
+        <div className="scroll-hidden flex gap-2 overflow-x-auto px-3">
           {visibleMobileTabs.map((tab) => (
             <SettingsTabButton
               key={tab.key}
@@ -767,9 +708,7 @@ const Main = () => {
                 <div className="text-2xl font-bold">{currentTab?.label}</div>
               </div>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-text-primary/80">
-                {isJa
-                  ? '関連する設定だけをまとめて表示します。左のカテゴリまたは検索から目的の項目を選んでください。'
-                  : 'Choose a category or search to find related settings quickly.'}
+                {t('SettingsIntroDescription')}
               </p>
             </div>
           </div>
