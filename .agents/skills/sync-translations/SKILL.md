@@ -105,7 +105,7 @@ locales/ja/translation.json
 翻訳JSON同期後、変更したUIファイルを再検索して、英語・日本語の直書き分岐が残っていないか確認します。
 
 ```bash
-rg -n "isJa\\s*\\?|i18n\\.language === 'ja'|i18n\\.language === \"ja\"|Search settings|Easy setup|Start here|Display settings|Detailed .* settings|Optional features|Choose a category|Core settings" <変更したUIファイル>
+git diff --name-only | xargs rg -n "isJa\\s*\\?|i18n\\.language === 'ja'|i18n\\.language === \"ja\"|Search settings|Easy setup|Start here|Display settings|Detailed .* settings|Optional features|Choose a category|Core settings"
 ```
 
 さらに、翻訳キーの不足が0であることを確認します。
@@ -137,7 +137,7 @@ try {
   keys = walk(ja)
 } catch (error) {
   console.error(`ja: ${error.message}`)
-  process.exitCode = 1
+  process.exit(1)
 }
 if (keys.length > 0) {
   for (const lang of langs) {
