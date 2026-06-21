@@ -91,7 +91,7 @@ const Header = ({ onClickClose }: Pick<Props, 'onClickClose'>) => {
   ]
 
   return (
-    <header className="theme-surface-popover relative z-30 grid shrink-0 grid-cols-[auto_1fr] items-center gap-3 border-b border-primary/20 px-3 py-3 backdrop-blur-sm sm:grid-cols-[auto_auto_minmax(10rem,14rem)_1fr_auto] sm:px-4">
+    <header className="theme-surface-popover relative z-30 grid shrink-0 grid-cols-[auto_auto_1fr] items-center gap-3 border-b border-primary/20 px-3 py-3 backdrop-blur-sm sm:grid-cols-[auto_auto_auto_minmax(10rem,14rem)_1fr_auto] sm:px-4">
       <div className="z-15">
         <IconButton
           iconName="24/Close"
@@ -104,24 +104,22 @@ const Header = ({ onClickClose }: Pick<Props, 'onClickClose'>) => {
           className="border border-primary/15 shadow-sm"
         ></IconButton>
       </div>
+      <span
+        className="h-7 w-7 shrink-0 bg-primary opacity-90"
+        style={{
+          WebkitMask:
+            'url(/images/setting-icons/logo2-2favicon.svg) center / contain no-repeat',
+          mask: 'url(/images/setting-icons/logo2-2favicon.svg) center / contain no-repeat',
+        }}
+        aria-hidden="true"
+      />
       <div className="min-w-0">
         <h1 className="text-lg font-bold leading-tight text-text1">
           {isJa ? '設定' : 'Settings'}
         </h1>
-        <div className="flex items-center gap-1.5 text-xs text-text-primary/80">
-          <span
-            className="h-3.5 w-3.5 shrink-0 bg-primary opacity-80"
-            style={{
-              WebkitMask:
-                'url(/images/setting-icons/logo2-2favicon.svg) center / contain no-repeat',
-              mask: 'url(/images/setting-icons/logo2-2favicon.svg) center / contain no-repeat',
-            }}
-            aria-hidden="true"
-          />
-          <span>AITuberKit</span>
-        </div>
+        <div className="text-xs text-text-primary/80">AITuberKit</div>
       </div>
-      <label className="theme-surface-control order-3 col-span-2 flex h-10 items-center gap-2 rounded-lg border px-3 text-sm text-text1 sm:order-none sm:col-span-1">
+      <label className="theme-surface-control order-3 col-span-3 flex h-10 items-center gap-2 rounded-lg border px-3 text-sm text-text1 sm:order-none sm:col-span-1">
         <span
           className="flex h-5 w-5 shrink-0 items-center justify-center text-text-primary"
           aria-hidden="true"
@@ -145,7 +143,7 @@ const Header = ({ onClickClose }: Pick<Props, 'onClickClose'>) => {
           ))}
         </select>
       </label>
-      <div className="order-4 col-span-2 sm:order-none sm:col-span-1">
+      <div className="order-4 col-span-3 sm:order-none sm:col-span-1">
         <SettingsSearch />
       </div>
       <div className="hidden items-center gap-2 lg:flex">
@@ -312,13 +310,15 @@ const ModeStatusSummary = ({
 }) => {
   const activeItems = items.filter((item) => item.active)
   const visibleActiveItems = activeItems.slice(0, 2)
-  const remainingActiveCount = activeItems.length - visibleActiveItems.length
+  const hasMoreActiveItems = activeItems.length > visibleActiveItems.length
   const summaryLabel =
     activeItems.length === 0
       ? isJa
         ? '全OFF'
         : 'All off'
-      : visibleActiveItems.map((item) => item.label).join(' / ')
+      : `${visibleActiveItems.map((item) => item.label).join(' / ')}${
+          hasMoreActiveItems ? ' ...' : ''
+        }`
   const modeLabel = isJa ? 'モード' : 'Modes'
 
   return (
@@ -333,20 +333,11 @@ const ModeStatusSummary = ({
           )}
           <span className="shrink-0">{modeLabel}</span>
         </span>
-        <strong className="max-w-36 truncate text-text1">
-          {summaryLabel}
-          {remainingActiveCount > 0 ? ` +${remainingActiveCount}` : ''}
-        </strong>
-        <pixiv-icon name="16/Down" scale="1" />
+        <strong className="max-w-36 truncate text-text1">{summaryLabel}</strong>
       </summary>
       <div className="theme-surface-popover absolute right-0 top-10 z-50 hidden max-h-[calc(100vh-6rem)] w-64 overflow-y-auto rounded-xl border border-primary/20 p-3 text-xs shadow-xl group-open:block">
-        <div className="mb-2 flex items-center justify-between gap-3">
-          <div className="font-bold text-text1">
-            {isJa ? 'モード状態' : 'Mode status'}
-          </div>
-          <div className="rounded-full bg-primary/10 px-2 py-0.5 font-bold text-primary">
-            {activeItems.length} ON
-          </div>
+        <div className="mb-2 font-bold text-text1">
+          {isJa ? 'モード状態' : 'Mode status'}
         </div>
         <div className="space-y-1.5">
           {items.map((item) => (
