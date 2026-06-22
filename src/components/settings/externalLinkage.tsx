@@ -6,7 +6,7 @@ import { useRestrictedMode } from '@/hooks/useRestrictedMode'
 import externalLinkageWebSocketStore from '@/features/stores/externalLinkageWebSocketStore'
 import { TextButton } from '@/components/textButton'
 import { createExternalLinkageCancelEvent } from '@/features/externalLinkage/externalLinkageProtocol'
-import { DisabledSettingNote } from './disabledSettingNote'
+import { DisabledSettingNote } from '@/components/settings/disabledSettingNote'
 
 const SEND_EXAMPLE = `{
   "content": "ユーザーのメッセージ",

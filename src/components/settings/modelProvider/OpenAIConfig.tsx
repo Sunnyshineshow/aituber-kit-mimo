@@ -8,7 +8,7 @@ import { ToggleSwitch } from '../../toggleSwitch'
 import { ApiKeyInput } from './ApiKeyInput'
 import { ModelSelector } from './ModelSelector'
 import { MultiModalToggle } from './MultiModalToggle'
-import { ModelCapabilityLegend } from './ModelCapabilityLegend'
+import { ModelCapabilityLegend } from '@/components/settings/modelProvider/ModelCapabilityLegend'
 import {
   getModels,
   getOpenAIRealtimeModels,

@@ -4,7 +4,7 @@ export const ModelCapabilityLegend = () => {
   const { t } = useTranslation()
 
   return (
-    <div className="mt-2 text-xs text-gray-500 whitespace-pre-wrap">
+    <div className="mt-2 text-xs text-theme-default opacity-70 whitespace-pre-wrap">
       {t('ModelCapabilityLegend')}
     </div>
   )

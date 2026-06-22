@@ -1,6 +1,7 @@
 import { useRef, useState, useEffect, useCallback } from 'react'
 import homeStore from '@/features/stores/home'
 import menuStore from '@/features/stores/menu'
+import settingsStore from '@/features/stores/settings'
 import CaptureService from '@/features/gameCommentary/captureService'
 import { VideoDisplay } from './common/VideoDisplay'
 
@@ -35,6 +36,10 @@ const Capture = () => {
 
   const stopCapture = useCallback(() => {
     cleanupStream()
+    settingsStore.setState({
+      hideVideoDisplay: false,
+      useVideoAsBackground: false,
+    })
     menuStore.setState({ showCapture: false })
   }, [cleanupStream])
 
@@ -132,9 +137,9 @@ const Capture = () => {
 
   useEffect(() => {
     return () => {
-      cleanupStream()
+      stopCapture()
     }
-  }, [cleanupStream])
+  }, [stopCapture])
 
   return (
     <VideoDisplay

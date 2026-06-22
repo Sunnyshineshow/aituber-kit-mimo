@@ -10,7 +10,7 @@ import { TextButton } from '../textButton'
 import { ToggleSwitch } from '../toggleSwitch'
 import SlideConvert from './slideConvert'
 import { useRestrictedMode } from '@/hooks/useRestrictedMode'
-import { DisabledSettingNote } from './disabledSettingNote'
+import { DisabledSettingNote } from '@/components/settings/disabledSettingNote'
 
 const Slide = () => {
   const { t } = useTranslation()

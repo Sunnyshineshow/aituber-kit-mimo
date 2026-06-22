@@ -7,7 +7,7 @@ import {
   isReasoningModel,
 } from '@/features/constants/aiModels'
 import { AIService } from '@/features/constants/settings'
-import { ModelCapabilityLegend } from './ModelCapabilityLegend'
+import { ModelCapabilityLegend } from '@/components/settings/modelProvider/ModelCapabilityLegend'
 
 interface ModelSelectorProps {
   aiService: AIService

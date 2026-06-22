@@ -21,7 +21,7 @@ import { extractTextContent } from '@/features/memory/memoryStoreSync'
 import { Message } from '@/features/messages/messages'
 import { messageSelectors } from '@/features/messages/messageSelectors'
 import { useRestrictedMode } from '@/hooks/useRestrictedMode'
-import { DisabledSettingNote } from './disabledSettingNote'
+import { DisabledSettingNote } from '@/components/settings/disabledSettingNote'
 
 /** Close icon SVG component */
 function CloseIcon(): JSX.Element {

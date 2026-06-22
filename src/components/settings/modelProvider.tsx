@@ -17,7 +17,7 @@ import {
   getServiceConfigByKey,
 } from './modelProvider/utils/aiServiceConfigs'
 import { AIService, ReasoningEffort } from '@/features/constants/settings'
-import { DisabledSettingNote } from './disabledSettingNote'
+import { DisabledSettingNote } from '@/components/settings/disabledSettingNote'
 
 const ModelProvider = () => {
   const { t } = useTranslation()

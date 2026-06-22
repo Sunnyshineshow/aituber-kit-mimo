@@ -7,7 +7,7 @@ import { ToggleSwitch } from '../toggleSwitch'
 import { v4 as uuidv4 } from 'uuid'
 import Link from 'next/link'
 import { useRestrictedMode } from '@/hooks/useRestrictedMode'
-import { DisabledSettingNote } from './disabledSettingNote'
+import { DisabledSettingNote } from '@/components/settings/disabledSettingNote'
 
 const MessageReceiverSetting = () => {
   const { t } = useTranslation()

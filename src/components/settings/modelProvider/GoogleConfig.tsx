@@ -5,13 +5,13 @@ import { TextButton } from '../../textButton'
 import { ToggleSwitch } from '../../toggleSwitch'
 import {
   getModels,
-  googleSearchGroundingModels,
   isMultiModalModel,
   isReasoningModel,
+  isSearchGroundingModel,
 } from '@/features/constants/aiModels'
 import { AIService } from '@/features/constants/settings'
-import { DisabledSettingNote } from '../disabledSettingNote'
-import { ModelCapabilityLegend } from './ModelCapabilityLegend'
+import { DisabledSettingNote } from '@/components/settings/disabledSettingNote'
+import { ModelCapabilityLegend } from '@/components/settings/modelProvider/ModelCapabilityLegend'
 
 interface GoogleConfigProps {
   googleKey: string
@@ -33,6 +33,10 @@ export const GoogleConfig = ({
   updateMultiModalModeForModel,
 }: GoogleConfigProps) => {
   const { t } = useTranslation()
+  const isSelectedModelSearchEnabled = isSearchGroundingModel(
+    'google',
+    selectAIModel
+  )
 
   const handleModelChange = useCallback(
     (model: string) => {
@@ -109,8 +113,9 @@ export const GoogleConfig = ({
               >
                 {getModels('google').map((model) => {
                   const isMultiModal = isMultiModalModel('google', model)
-                  const isSearchEnabled = googleSearchGroundingModels.includes(
-                    model as any
+                  const isSearchEnabled = isSearchGroundingModel(
+                    'google',
+                    model
                   )
                   const isReasoning = isReasoningModel('google', model)
                   let icons = ''
@@ -152,53 +157,48 @@ export const GoogleConfig = ({
         <div className="my-2 text-sm whitespace-pre-wrap">
           {t('SearchGroundingDescription')}
         </div>
-        <DisabledSettingNote
-          show={!googleSearchGroundingModels.includes(selectAIModel as any)}
-        >
+        <DisabledSettingNote show={!isSelectedModelSearchEnabled}>
           {t('SearchGroundingDisabledInfo')}
         </DisabledSettingNote>
         <div className="my-2">
           <ToggleSwitch
             enabled={useSearchGrounding}
             onChange={(v) => settingsStore.setState({ useSearchGrounding: v })}
-            disabled={
-              !googleSearchGroundingModels.includes(selectAIModel as any)
-            }
+            disabled={!isSelectedModelSearchEnabled}
           />
         </div>
 
-        {useSearchGrounding &&
-          googleSearchGroundingModels.includes(selectAIModel as any) && (
-            <>
-              <div className="mt-6 mb-4 text-xl font-bold">
-                {t('DynamicRetrieval')}
+        {useSearchGrounding && isSelectedModelSearchEnabled && (
+          <>
+            <div className="mt-6 mb-4 text-xl font-bold">
+              {t('DynamicRetrieval')}
+            </div>
+            <div className="my-2 text-sm whitespace-pre-wrap">
+              {t('DynamicRetrievalDescription')}
+            </div>
+            <div className="my-4">
+              <div className="mb-2 font-medium">
+                {t('DynamicRetrievalThreshold')}:{' '}
+                {dynamicRetrievalThreshold.toFixed(1)}
               </div>
-              <div className="my-2 text-sm whitespace-pre-wrap">
-                {t('DynamicRetrievalDescription')}
+              <div className="flex items-center">
+                <input
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.1"
+                  value={dynamicRetrievalThreshold}
+                  onChange={(e) => {
+                    settingsStore.setState({
+                      dynamicRetrievalThreshold: parseFloat(e.target.value),
+                    })
+                  }}
+                  className="mt-2 mb-4 input-range"
+                />
               </div>
-              <div className="my-4">
-                <div className="mb-2 font-medium">
-                  {t('DynamicRetrievalThreshold')}:{' '}
-                  {dynamicRetrievalThreshold.toFixed(1)}
-                </div>
-                <div className="flex items-center">
-                  <input
-                    type="range"
-                    min="0"
-                    max="1"
-                    step="0.1"
-                    value={dynamicRetrievalThreshold}
-                    onChange={(e) => {
-                      settingsStore.setState({
-                        dynamicRetrievalThreshold: parseFloat(e.target.value),
-                      })
-                    }}
-                    className="mt-2 mb-4 input-range"
-                  />
-                </div>
-              </div>
-            </>
-          )}
+            </div>
+          </>
+        )}
       </div>
     </>
   )

@@ -6,7 +6,7 @@ import settingsStore from '@/features/stores/settings'
 import toastStore from '@/features/stores/toast'
 import { ToggleSwitch } from '../toggleSwitch'
 import { loadPreset } from '@/features/presets/presetLoader'
-import { DisabledSettingNote } from './disabledSettingNote'
+import { DisabledSettingNote } from '@/components/settings/disabledSettingNote'
 
 const YouTube = () => {
   const [showAdvancedPrompts, setShowAdvancedPrompts] = useState(false)

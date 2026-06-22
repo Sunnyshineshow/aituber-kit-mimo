@@ -12,7 +12,7 @@ export const DisabledSettingNote = ({
   if (!show) return null
 
   return (
-    <div className="my-3 text-sm text-orange-500 whitespace-pre-line">
+    <div className="my-3 text-sm text-secondary whitespace-pre-line">
       {children}
     </div>
   )
