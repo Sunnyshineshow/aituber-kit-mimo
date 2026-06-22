@@ -7,6 +7,7 @@ import { ToggleSwitch } from '../toggleSwitch'
 import { v4 as uuidv4 } from 'uuid'
 import Link from 'next/link'
 import { useRestrictedMode } from '@/hooks/useRestrictedMode'
+import { DisabledSettingNote } from './disabledSettingNote'
 
 const MessageReceiverSetting = () => {
   const { t } = useTranslation()
@@ -77,6 +78,9 @@ const MessageReceiverSetting = () => {
       <p className="my-2 text-sm whitespace-pre-wrap">
         {t('MessageReceiverDescription')}
       </p>
+      <DisabledSettingNote show={isRestrictedMode}>
+        {t('RestrictedModeDisabledInfo')}
+      </DisabledSettingNote>
       <div className="my-2">
         <ToggleSwitch
           enabled={messageReceiverEnabled}

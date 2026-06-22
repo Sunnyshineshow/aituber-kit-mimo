@@ -21,6 +21,7 @@ import { extractTextContent } from '@/features/memory/memoryStoreSync'
 import { Message } from '@/features/messages/messages'
 import { messageSelectors } from '@/features/messages/messageSelectors'
 import { useRestrictedMode } from '@/hooks/useRestrictedMode'
+import { DisabledSettingNote } from './disabledSettingNote'
 
 /** Close icon SVG component */
 function CloseIcon(): JSX.Element {
@@ -557,6 +558,9 @@ const MemorySettings = () => {
             <div className="my-2 text-sm whitespace-pre-wrap">
               {t('VectorizeOnRestoreInfo')}
             </div>
+            <DisabledSettingNote show={!memoryEnabled}>
+              {t('VectorizeOnRestoreDisabledInfo')}
+            </DisabledSettingNote>
             <div className="my-2">
               <ToggleSwitch
                 enabled={vectorizeOnRestore}

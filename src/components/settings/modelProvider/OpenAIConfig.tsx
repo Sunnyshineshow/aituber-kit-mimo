@@ -8,6 +8,7 @@ import { ToggleSwitch } from '../../toggleSwitch'
 import { ApiKeyInput } from './ApiKeyInput'
 import { ModelSelector } from './ModelSelector'
 import { MultiModalToggle } from './MultiModalToggle'
+import { ModelCapabilityLegend } from './ModelCapabilityLegend'
 import {
   getModels,
   getOpenAIRealtimeModels,
@@ -172,6 +173,7 @@ export const OpenAIConfig = ({
                 </option>
               ))}
             </select>
+            <ModelCapabilityLegend />
           </div>
 
           <div className="my-4">
@@ -234,6 +236,7 @@ export const OpenAIConfig = ({
                 </option>
               ))}
             </select>
+            <ModelCapabilityLegend />
           </div>
         </>
       )}

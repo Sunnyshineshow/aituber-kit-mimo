@@ -17,6 +17,7 @@ import {
   getServiceConfigByKey,
 } from './modelProvider/utils/aiServiceConfigs'
 import { AIService, ReasoningEffort } from '@/features/constants/settings'
+import { DisabledSettingNote } from './disabledSettingNote'
 
 const ModelProvider = () => {
   const { t } = useTranslation()
@@ -205,6 +206,9 @@ const ModelProvider = () => {
                 {t('CustomAPIStream')}
               </div>
               <div className="">{t('CustomAPIStreamForced')}</div>
+              <DisabledSettingNote>
+                {t('CustomAPIStreamDisabledInfo')}
+              </DisabledSettingNote>
               <div className="my-2">
                 <ToggleSwitch
                   enabled={true}

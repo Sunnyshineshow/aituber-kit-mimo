@@ -6,6 +6,7 @@ import { useRestrictedMode } from '@/hooks/useRestrictedMode'
 import externalLinkageWebSocketStore from '@/features/stores/externalLinkageWebSocketStore'
 import { TextButton } from '@/components/textButton'
 import { createExternalLinkageCancelEvent } from '@/features/externalLinkage/externalLinkageProtocol'
+import { DisabledSettingNote } from './disabledSettingNote'
 
 const SEND_EXAMPLE = `{
   "content": "ユーザーのメッセージ",
@@ -73,6 +74,9 @@ const ExternalLinkage = () => {
       <div className="my-2 text-sm whitespace-pre-wrap">
         {t('ExternalLinkageModeInfo')}
       </div>
+      <DisabledSettingNote show={isRestrictedMode}>
+        {t('RestrictedModeDisabledInfo')}
+      </DisabledSettingNote>
       <div className="my-2">
         <ToggleSwitch
           enabled={externalLinkageMode}

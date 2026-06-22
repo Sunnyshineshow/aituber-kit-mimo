@@ -27,10 +27,10 @@ describe('VideoDisplay controls', () => {
   it('uses eye icons for display visibility', () => {
     renderVideoDisplay()
 
-    const hideButton = screen.getByLabelText('HideVideoDisplay')
+    const hideButton = screen.getByLabelText('HideVideoPreview')
     expect(hideButton.querySelector('pixiv-icon')).toHaveAttribute(
       'name',
-      '24/Show'
+      '24/Hide'
     )
 
     fireEvent.click(hideButton)
@@ -38,16 +38,16 @@ describe('VideoDisplay controls', () => {
     const showButton = screen.getByLabelText('ShowVideoDisplay')
     expect(showButton.querySelector('pixiv-icon')).toHaveAttribute(
       'name',
-      '24/Hide'
+      '24/Show'
     )
   })
 
-  it('uses close button for the provided stop handler', () => {
-    const onClose = jest.fn()
-    renderVideoDisplay({ onClose })
+  it('uses stop button for the provided stop source handler', () => {
+    const onStopSource = jest.fn()
+    renderVideoDisplay({ onStopSource })
 
-    fireEvent.click(screen.getByLabelText('Close'))
+    fireEvent.click(screen.getByLabelText('StopScreenShare'))
 
-    expect(onClose).toHaveBeenCalledTimes(1)
+    expect(onStopSource).toHaveBeenCalledTimes(1)
   })
 })

@@ -7,8 +7,11 @@ import {
   getModels,
   googleSearchGroundingModels,
   isMultiModalModel,
+  isReasoningModel,
 } from '@/features/constants/aiModels'
 import { AIService } from '@/features/constants/settings'
+import { DisabledSettingNote } from '../disabledSettingNote'
+import { ModelCapabilityLegend } from './ModelCapabilityLegend'
 
 interface GoogleConfigProps {
   googleKey: string
@@ -98,26 +101,31 @@ export const GoogleConfig = ({
               }}
             />
           ) : (
-            <select
-              className="px-4 py-2 w-full sm:w-col-span-2 bg-white hover:bg-white-hover rounded-lg"
-              value={selectAIModel}
-              onChange={(e) => handleModelChange(e.target.value)}
-            >
-              {getModels('google').map((model) => {
-                const isMultiModal = isMultiModalModel('google', model)
-                const isSearchEnabled = googleSearchGroundingModels.includes(
-                  model as any
-                )
-                let icons = ''
-                if (isMultiModal) icons += '📷'
-                if (isSearchEnabled) icons += '🔍'
-                return (
-                  <option key={model} value={model}>
-                    {model} {icons}
-                  </option>
-                )
-              })}
-            </select>
+            <>
+              <select
+                className="px-4 py-2 w-full sm:w-col-span-2 bg-white hover:bg-white-hover rounded-lg"
+                value={selectAIModel}
+                onChange={(e) => handleModelChange(e.target.value)}
+              >
+                {getModels('google').map((model) => {
+                  const isMultiModal = isMultiModalModel('google', model)
+                  const isSearchEnabled = googleSearchGroundingModels.includes(
+                    model as any
+                  )
+                  const isReasoning = isReasoningModel('google', model)
+                  let icons = ''
+                  if (isMultiModal) icons += '📷'
+                  if (isSearchEnabled) icons += '🔍'
+                  if (isReasoning) icons += '💡'
+                  return (
+                    <option key={model} value={model}>
+                      {model} {icons}
+                    </option>
+                  )
+                })}
+              </select>
+              <ModelCapabilityLegend />
+            </>
           )}
         </div>
 
@@ -144,6 +152,11 @@ export const GoogleConfig = ({
         <div className="my-2 text-sm whitespace-pre-wrap">
           {t('SearchGroundingDescription')}
         </div>
+        <DisabledSettingNote
+          show={!googleSearchGroundingModels.includes(selectAIModel as any)}
+        >
+          {t('SearchGroundingDisabledInfo')}
+        </DisabledSettingNote>
         <div className="my-2">
           <ToggleSwitch
             enabled={useSearchGrounding}

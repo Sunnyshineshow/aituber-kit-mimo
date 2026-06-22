@@ -310,7 +310,14 @@ export const Menu = () => {
                 >
                   <ToolMenuButton
                     iconName="screen-share"
-                    label={t('ScreenShare')}
+                    label={
+                      showCapture
+                        ? (t(
+                            'StopScreenShare',
+                            'Stop screen sharing'
+                          ) as string)
+                        : t('ScreenShare')
+                    }
                     active={showCapture}
                     onClick={toggleCapture}
                     data-testid="capture-toggle-button"
