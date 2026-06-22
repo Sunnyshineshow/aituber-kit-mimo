@@ -10,6 +10,7 @@ import { TextButton } from '../textButton'
 import { ToggleSwitch } from '../toggleSwitch'
 import SlideConvert from './slideConvert'
 import { useRestrictedMode } from '@/hooks/useRestrictedMode'
+import { DisabledSettingNote } from './disabledSettingNote'
 
 const Slide = () => {
   const { t } = useTranslation()
@@ -72,6 +73,9 @@ const Slide = () => {
       <p className="my-2 text-sm whitespace-pre-wrap">
         {t('SlideModeDescription')}
       </p>
+      <DisabledSettingNote show={!isSlideAvailable}>
+        {t('SlideModeDisabledInfo')}
+      </DisabledSettingNote>
       <div className="my-2">
         <ToggleSwitch
           enabled={slideMode}

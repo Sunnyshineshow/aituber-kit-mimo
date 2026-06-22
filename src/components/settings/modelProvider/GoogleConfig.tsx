@@ -9,6 +9,7 @@ import {
   isMultiModalModel,
 } from '@/features/constants/aiModels'
 import { AIService } from '@/features/constants/settings'
+import { DisabledSettingNote } from '../disabledSettingNote'
 
 interface GoogleConfigProps {
   googleKey: string
@@ -144,6 +145,11 @@ export const GoogleConfig = ({
         <div className="my-2 text-sm whitespace-pre-wrap">
           {t('SearchGroundingDescription')}
         </div>
+        <DisabledSettingNote
+          show={!googleSearchGroundingModels.includes(selectAIModel as any)}
+        >
+          {t('SearchGroundingDisabledInfo')}
+        </DisabledSettingNote>
         <div className="my-2">
           <ToggleSwitch
             enabled={useSearchGrounding}

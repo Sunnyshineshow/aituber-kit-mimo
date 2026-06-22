@@ -6,6 +6,7 @@ import settingsStore from '@/features/stores/settings'
 import toastStore from '@/features/stores/toast'
 import { ToggleSwitch } from '../toggleSwitch'
 import { loadPreset } from '@/features/presets/presetLoader'
+import { DisabledSettingNote } from './disabledSettingNote'
 
 const YouTube = () => {
   const [showAdvancedPrompts, setShowAdvancedPrompts] = useState(false)
@@ -45,6 +46,13 @@ const YouTube = () => {
   const slideMode = settingsStore((s) => s.slideMode)
 
   const { t, i18n } = useTranslation()
+  const conversationContinuityDisabledReason = slideMode
+    ? t('SlideMode')
+    : externalLinkageMode
+      ? t('ExternalLinkageMode')
+      : selectAIService === 'dify'
+        ? 'Dify'
+        : ''
 
   const handleChangeYoutubeMode = (youtubeMode: boolean) => {
     settingsStore.setState({ youtubeMode })
@@ -201,6 +209,13 @@ const YouTube = () => {
           <div className="my-2 text-sm whitespace-pre-wrap">
             {t('ConversationContinuityModeInfo3')}
           </div>
+          <DisabledSettingNote
+            show={Boolean(conversationContinuityDisabledReason)}
+          >
+            {t('ConversationContinuityModeDisabledInfo', {
+              reason: conversationContinuityDisabledReason,
+            })}
+          </DisabledSettingNote>
           <ToggleSwitch
             enabled={conversationContinuityMode}
             onChange={(v) =>
