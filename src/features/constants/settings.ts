@@ -96,6 +96,7 @@ export type AIVoice =
   | 'cartesia'
   | 'openai'
   | 'azure'
+  | 'mimo'
 
 export type Language = (typeof LANGUAGES)[number]
 
@@ -152,6 +153,13 @@ export type OpenAITTSVoice =
   | 'shimmer'
 export type OpenAITTSModel = (typeof openAITTSModels)[number]
 
+export const MIMO_TTS_MODELS = [
+  'mimo-v2.5-tts',
+  'mimo-v2.5-tts-voicedesign',
+] as const
+
+export type MimoTtsModel = (typeof MIMO_TTS_MODELS)[number]
+
 export type RealtimeAPIModeModel = (typeof openAIRealtimeModels)[number]
 export type RealtimeAPIModeContentType = 'input_text' | 'input_audio'
 export type RealtimeAPIModeVoice =
@@ -179,9 +187,11 @@ export type RealtimeAPIModeAzureVoice =
 export type AudioModeModel = string
 export type AudioModeInputType = 'input_text' | 'input_audio'
 
-export type SpeechRecognitionMode = 'browser' | 'whisper'
+export type SpeechRecognitionMode = 'browser' | 'whisper' | 'mimo'
 
 export type WhisperTranscriptionModel = (typeof openAIWhisperModels)[number]
+
+export type MimoAsrLanguage = 'auto' | 'zh' | 'en'
 
 export type ReasoningEffort =
   | 'none'

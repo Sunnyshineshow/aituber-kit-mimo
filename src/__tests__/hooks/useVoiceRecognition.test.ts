@@ -97,6 +97,18 @@ const mockWhisperSpeech = {
   stopListening: jest.fn().mockResolvedValue(undefined),
 }
 
+const mockMimoSpeech = {
+  userMessage: '',
+  isListening: false,
+  isProcessing: false,
+  silenceTimeoutRemaining: null,
+  handleInputChange: jest.fn(),
+  handleSendMessage: jest.fn(),
+  toggleListening: jest.fn(),
+  startListening: jest.fn().mockResolvedValue(undefined),
+  stopListening: jest.fn().mockResolvedValue(undefined),
+}
+
 const mockRealtimeAPI = {
   userMessage: '',
   isListening: false,
@@ -114,6 +126,10 @@ jest.mock('@/hooks/useBrowserSpeechRecognition', () => ({
 
 jest.mock('@/hooks/useWhisperRecognition', () => ({
   useWhisperRecognition: jest.fn(() => mockWhisperSpeech),
+}))
+
+jest.mock('@/hooks/useMimoRecognition', () => ({
+  useMimoRecognition: jest.fn(() => mockMimoSpeech),
 }))
 
 jest.mock('@/hooks/useRealtimeVoiceAPI', () => ({
@@ -137,6 +153,11 @@ describe('useVoiceRecognition', () => {
     mockBrowserSpeech.stopListening.mockClear()
     mockBrowserSpeech.handleInputChange.mockClear()
     mockBrowserSpeech.checkRecognitionActive.mockReturnValue(true)
+    mockMimoSpeech.userMessage = ''
+    mockMimoSpeech.isListening = false
+    mockMimoSpeech.startListening.mockClear()
+    mockMimoSpeech.stopListening.mockClear()
+    mockMimoSpeech.handleInputChange.mockClear()
 
     // settingsStoreのモックをデフォルト状態に戻す
     const mockSettingsStore = settingsStore as jest.Mock
@@ -1003,6 +1024,32 @@ describe('useVoiceRecognition', () => {
       // realtimeAPIモードでも正常に動作すること
       expect(result.current.isListening).toBeDefined()
       expect(result.current.startListening).toBeDefined()
+    })
+
+    it('MiMoモードの場合にMiMo音声認識フックが使用されること', async () => {
+      const mockSettingsStore = settingsStore as jest.Mock
+      mockSettingsStore.mockImplementation((selector) => {
+        const state = {
+          selectLanguage: 'ja',
+          speechRecognitionMode: 'mimo',
+          realtimeAPIMode: false,
+          continuousMicListeningMode: false,
+          initialSpeechTimeout: 5,
+          noSpeechTimeout: 2,
+        }
+        return selector ? selector(state) : state
+      })
+
+      mockMimoSpeech.userMessage = 'mimo transcript'
+
+      const mockOnChatProcessStart = jest.fn()
+      const { result } = renderHook(() =>
+        useVoiceRecognition({ onChatProcessStart: mockOnChatProcessStart })
+      )
+
+      expect(result.current.userMessage).toBe('mimo transcript')
+      expect(result.current.startListening).toBe(mockMimoSpeech.startListening)
+      expect(result.current.stopListening).toBe(mockMimoSpeech.stopListening)
     })
   })
 

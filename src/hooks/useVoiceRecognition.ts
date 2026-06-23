@@ -6,6 +6,7 @@ import { SpeakQueue } from '@/features/messages/speakQueue'
 import { useBrowserSpeechRecognition } from './useBrowserSpeechRecognition'
 import { useWhisperRecognition } from './useWhisperRecognition'
 import { useRealtimeVoiceAPI } from './useRealtimeVoiceAPI'
+import { useMimoRecognition } from './useMimoRecognition'
 
 type UseVoiceRecognitionProps = {
   onChatProcessStart: (text: string) => void
@@ -32,6 +33,9 @@ export function useVoiceRecognition({
   // Whisper音声認識フック
   const whisperSpeech = useWhisperRecognition(onChatProcessStart)
 
+  // MiMo音声認識フック
+  const mimoSpeech = useMimoRecognition(onChatProcessStart)
+
   // リアルタイムAPI処理フック
   const realtimeAPI = useRealtimeVoiceAPI(onChatProcessStart)
 
@@ -41,7 +45,9 @@ export function useVoiceRecognition({
       ? realtimeAPIMode
         ? realtimeAPI
         : browserSpeech
-      : whisperSpeech
+      : speechRecognitionMode === 'mimo'
+        ? mimoSpeech
+        : whisperSpeech
 
   // ----- currentHookの関数参照をrefで保持（依存配列からcurrentHookを除去するため） -----
   const currentHookRef = useRef({

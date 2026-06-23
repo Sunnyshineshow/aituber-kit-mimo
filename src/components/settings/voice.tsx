@@ -12,6 +12,7 @@ import {
   AIVoice,
   OpenAITTSVoice,
   OpenAITTSModel,
+  MimoTtsModel,
 } from '@/features/constants/settings'
 import { getOpenAITTSModels } from '@/features/constants/aiModels'
 import { testVoice } from '@/features/messages/speakCharacter'
@@ -27,6 +28,7 @@ const Voice = () => {
   const koeiromapKey = settingsStore((s) => s.koeiromapKey)
   const elevenlabsApiKey = settingsStore((s) => s.elevenlabsApiKey)
   const cartesiaApiKey = settingsStore((s) => s.cartesiaApiKey)
+  const mimoApiKey = settingsStore((s) => s.mimoApiKey)
 
   const realtimeAPIMode = settingsStore((s) => s.realtimeAPIMode)
   const audioMode = settingsStore((s) => s.audioMode)
@@ -88,6 +90,12 @@ const Voice = () => {
   const gsviTtsSpeechRate = settingsStore((s) => s.gsviTtsSpeechRate)
   const elevenlabsVoiceId = settingsStore((s) => s.elevenlabsVoiceId)
   const cartesiaVoiceId = settingsStore((s) => s.cartesiaVoiceId)
+  const mimoTtsModel = settingsStore((s) => s.mimoTtsModel)
+  const mimoTtsVoice = settingsStore((s) => s.mimoTtsVoice)
+  const mimoTtsStylePrompt = settingsStore((s) => s.mimoTtsStylePrompt)
+  const mimoTtsVoiceDesignPrompt = settingsStore(
+    (s) => s.mimoTtsVoiceDesignPrompt
+  )
   const openaiAPIKey = settingsStore((s) => s.openaiKey)
   const openaiTTSVoice = settingsStore((s) => s.openaiTTSVoice)
   const openaiTTSModel = settingsStore((s) => s.openaiTTSModel)
@@ -187,6 +195,7 @@ const Voice = () => {
           <option value="cartesia">{t('UsingCartesia')}</option>
           <option value="openai">{t('UsingOpenAITTS')}</option>
           <option value="azure">{t('UsingAzureTTS')}</option>
+          <option value="mimo">{t('UsingMimoTTS')}</option>
         </select>
       </div>
 
@@ -1161,6 +1170,123 @@ const Voice = () => {
                     onChange={(e) =>
                       settingsStore.setState({
                         cartesiaVoiceId: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+              </>
+            )
+          } else if (selectVoice === 'mimo') {
+            return (
+              <>
+                <div className="my-2 text-sm whitespace-pre-wrap">
+                  {t('MimoTTSInfo')}
+                  <br />
+                  <Link
+                    url="https://mimo.mi.com/docs/en-US/quick-start/usage-guide/audio/speech-synthesis-v2.5"
+                    label="MiMo Speech Synthesis"
+                  />
+                </div>
+                <div className="mt-4 font-bold">{t('MimoAPIKeyLabel')}</div>
+                <div className="my-2 text-sm whitespace-pre-wrap">
+                  {t('MimoAPIKeyInfo')}
+                </div>
+                <div className="mt-2">
+                  <input
+                    className="text-ellipsis px-4 py-2 w-full bg-white hover:bg-white-hover rounded-lg"
+                    type="text"
+                    placeholder={t('MimoAPIKeyPlaceholder')}
+                    value={mimoApiKey}
+                    onChange={(e) =>
+                      settingsStore.setState({ mimoApiKey: e.target.value })
+                    }
+                  />
+                </div>
+                <div className="mt-4 font-bold">{t('MimoTTSModel')}</div>
+                <div className="my-2 text-sm whitespace-pre-wrap">
+                  {t('MimoTTSModelInfo')}
+                </div>
+                <div className="mt-2">
+                  <select
+                    value={mimoTtsModel}
+                    onChange={(e) =>
+                      settingsStore.setState({
+                        mimoTtsModel: e.target.value as MimoTtsModel,
+                      })
+                    }
+                    className="px-4 py-2 bg-white hover:bg-white-hover rounded-lg"
+                  >
+                    <option value="mimo-v2.5-tts">
+                      {t('MimoTTSModelBuiltin')}
+                    </option>
+                    <option value="mimo-v2.5-tts-voicedesign">
+                      {t('MimoTTSModelVoiceDesign')}
+                    </option>
+                  </select>
+                </div>
+                {mimoTtsModel === 'mimo-v2.5-tts-voicedesign' && (
+                  <>
+                    <div className="mt-4 font-bold">
+                      {t('MimoTTSVoiceDesignPrompt')}
+                    </div>
+                    <div className="my-2 text-sm whitespace-pre-wrap">
+                      {t('MimoTTSVoiceDesignPromptInfo')}
+                    </div>
+                    <div className="mt-2">
+                      <textarea
+                        className="px-4 py-2 w-full bg-white hover:bg-white-hover rounded-lg"
+                        rows={4}
+                        placeholder={t('MimoTTSVoiceDesignPromptPlaceholder')}
+                        value={mimoTtsVoiceDesignPrompt}
+                        onChange={(e) =>
+                          settingsStore.setState({
+                            mimoTtsVoiceDesignPrompt: e.target.value,
+                          })
+                        }
+                      />
+                    </div>
+                  </>
+                )}
+                {mimoTtsModel === 'mimo-v2.5-tts' && (
+                  <>
+                    <div className="mt-4 font-bold">{t('MimoTTSVoice')}</div>
+                    <div className="my-2 text-sm whitespace-pre-wrap">
+                      {t('MimoTTSVoiceInfo')}
+                    </div>
+                    <div className="mt-2">
+                      <select
+                        value={mimoTtsVoice}
+                        onChange={(e) =>
+                          settingsStore.setState({
+                            mimoTtsVoice: e.target.value,
+                          })
+                        }
+                        className="px-4 py-2 bg-white hover:bg-white-hover rounded-lg"
+                      >
+                        <option value="Chloe">Chloe</option>
+                        <option value="Milo">Milo</option>
+                        <option value="Dean">Dean</option>
+                        <option value="青玄">青玄</option>
+                        <option value="伊柠">伊柠</option>
+                        <option value="乐玖">乐玖</option>
+                        <option value="Purple">Purple</option>
+                      </select>
+                    </div>
+                  </>
+                )}
+                <div className="mt-4 font-bold">{t('MimoTTSStylePrompt')}</div>
+                <div className="my-2 text-sm whitespace-pre-wrap">
+                  {t('MimoTTSStylePromptInfo')}
+                </div>
+                <div className="mt-2">
+                  <textarea
+                    className="px-4 py-2 w-full bg-white hover:bg-white-hover rounded-lg"
+                    rows={4}
+                    placeholder={t('MimoTTSStylePromptPlaceholder')}
+                    value={mimoTtsStylePrompt}
+                    onChange={(e) =>
+                      settingsStore.setState({
+                        mimoTtsStylePrompt: e.target.value,
                       })
                     }
                   />

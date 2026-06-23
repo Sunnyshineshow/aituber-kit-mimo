@@ -1,9 +1,12 @@
 import { useTranslation } from 'react-i18next'
 import settingsStore from '@/features/stores/settings'
-import { TextButton } from '../textButton'
 import { ToggleSwitch } from '../toggleSwitch'
 import Image from 'next/image'
-import { WhisperTranscriptionModel } from '@/features/constants/settings'
+import {
+  MimoAsrLanguage,
+  SpeechRecognitionMode,
+  WhisperTranscriptionModel,
+} from '@/features/constants/settings'
 import { Link } from '../link'
 import { getOpenAIWhisperModels } from '@/features/constants/aiModels'
 
@@ -15,6 +18,8 @@ const SpeechInput = () => {
     (s) => s.whisperTranscriptionModel
   )
   const openaiKey = settingsStore((s) => s.openaiKey)
+  const mimoApiKey = settingsStore((s) => s.mimoApiKey)
+  const mimoAsrLanguage = settingsStore((s) => s.mimoAsrLanguage)
   const continuousMicListeningMode = settingsStore(
     (s) => s.continuousMicListeningMode
   )
@@ -58,19 +63,20 @@ const SpeechInput = () => {
           </div>
         )}
         <div className="mt-2">
-          <TextButton
-            onClick={() =>
+          <select
+            className="px-4 py-2 bg-white hover:bg-white-hover rounded-lg w-full md:w-1/2"
+            value={speechRecognitionMode}
+            disabled={isSpeechModeSwitchDisabled}
+            onChange={(e) =>
               settingsStore.setState({
-                speechRecognitionMode:
-                  speechRecognitionMode === 'browser' ? 'whisper' : 'browser',
+                speechRecognitionMode: e.target.value as SpeechRecognitionMode,
               })
             }
-            disabled={isSpeechModeSwitchDisabled}
           >
-            {speechRecognitionMode === 'browser'
-              ? t('BrowserSpeechRecognition')
-              : t('WhisperSpeechRecognition')}
-          </TextButton>
+            <option value="browser">{t('BrowserSpeechRecognition')}</option>
+            <option value="whisper">{t('WhisperSpeechRecognition')}</option>
+            <option value="mimo">{t('MimoSpeechRecognition')}</option>
+          </select>
         </div>
       </div>
       {speechRecognitionMode === 'whisper' && (
@@ -120,6 +126,49 @@ const SpeechInput = () => {
                   {model.label}
                 </option>
               ))}
+            </select>
+          </div>
+        </>
+      )}
+      {speechRecognitionMode === 'mimo' && (
+        <>
+          <div className="my-6">
+            <div className="my-4 text-xl font-bold">{t('MimoAPIKeyLabel')}</div>
+            <div className="my-4">
+              {t('MimoAPIKeyInfo')}
+              <br />
+              <Link
+                url="https://platform.xiaomimimo.com/"
+                label="MiMo Console"
+              />
+            </div>
+            <input
+              className="text-ellipsis px-4 py-2 w-full md:w-1/2 bg-white hover:bg-white-hover rounded-lg"
+              type="text"
+              placeholder={t('MimoAPIKeyPlaceholder')}
+              value={mimoApiKey}
+              onChange={(e) =>
+                settingsStore.setState({ mimoApiKey: e.target.value })
+              }
+            />
+          </div>
+          <div className="mt-6">
+            <div className="mb-4 text-xl font-bold">{t('MimoASRLanguage')}</div>
+            <div className="my-2 text-sm whitespace-pre-wrap">
+              {t('MimoASRLanguageInfo')}
+            </div>
+            <select
+              className="px-4 py-2 bg-white hover:bg-white-hover rounded-lg w-full md:w-1/2"
+              value={mimoAsrLanguage}
+              onChange={(e) =>
+                settingsStore.setState({
+                  mimoAsrLanguage: e.target.value as MimoAsrLanguage,
+                })
+              }
+            >
+              <option value="auto">{t('MimoASRLanguageAuto')}</option>
+              <option value="zh">{t('MimoASRLanguageChinese')}</option>
+              <option value="en">{t('MimoASRLanguageEnglish')}</option>
             </select>
           </div>
         </>

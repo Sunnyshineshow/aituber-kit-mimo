@@ -30,12 +30,14 @@ import {
   Language,
   OpenAITTSVoice,
   OpenAITTSModel,
+  MimoTtsModel,
   RealtimeAPIModeContentType,
   RealtimeAPIModeVoice,
   RealtimeAPIModeAzureVoice,
   AudioModeInputType,
   SpeechRecognitionMode,
   WhisperTranscriptionModel,
+  MimoAsrLanguage,
   ReasoningEffort,
 } from '../constants/settings'
 import {
@@ -67,6 +69,7 @@ interface APIKeys {
   youtubeApiKey: string
   elevenlabsApiKey: string
   cartesiaApiKey: string
+  mimoApiKey: string
   azureEndpoint: string
   azureTTSKey: string
   azureTTSEndpoint: string
@@ -140,6 +143,10 @@ interface ModelProvider extends Live2DSettings {
   openaiTTSVoice: OpenAITTSVoice
   openaiTTSModel: OpenAITTSModel
   openaiTTSSpeed: number
+  mimoTtsModel: MimoTtsModel
+  mimoTtsVoice: string
+  mimoTtsStylePrompt: string
+  mimoTtsVoiceDesignPrompt: string
 }
 
 interface Integrations {
@@ -258,6 +265,7 @@ interface General {
   showPresetQuestions: boolean
   speechRecognitionMode: SpeechRecognitionMode
   whisperTranscriptionModel: WhisperTranscriptionModel
+  mimoAsrLanguage: MimoAsrLanguage
   initialSpeechTimeout: number
   chatLogWidth: number
   imageDisplayPosition: 'input' | 'side' | 'icon'
@@ -305,6 +313,11 @@ const parseEnvInt = (value: string | undefined, fallback: number): number => {
   return Number.isNaN(parsed) ? fallback : parsed
 }
 
+const getMimoTtsModel = (value: string | undefined): MimoTtsModel =>
+  value === 'mimo-v2.5-tts-voicedesign'
+    ? 'mimo-v2.5-tts-voicedesign'
+    : 'mimo-v2.5-tts'
+
 // Function to get initial values from environment variables
 const getInitialValuesFromEnv = (): SettingsState => ({
   // API Keys
@@ -333,6 +346,7 @@ const getInitialValuesFromEnv = (): SettingsState => ({
   youtubeApiKey: process.env.NEXT_PUBLIC_YOUTUBE_API_KEY || '',
   elevenlabsApiKey: '',
   cartesiaApiKey: '',
+  mimoApiKey: process.env.NEXT_PUBLIC_MIMO_API_KEY || '',
   azureEndpoint: process.env.NEXT_PUBLIC_AZURE_ENDPOINT || '',
 
   // Model Provider
@@ -428,6 +442,11 @@ const getInitialValuesFromEnv = (): SettingsState => ({
     (process.env.NEXT_PUBLIC_OPENAI_TTS_MODEL as OpenAITTSModel) || 'tts-1',
   openaiTTSSpeed:
     parseFloat(process.env.NEXT_PUBLIC_OPENAI_TTS_SPEED || '1.0') || 1.0,
+  mimoTtsModel: getMimoTtsModel(process.env.NEXT_PUBLIC_MIMO_TTS_MODEL),
+  mimoTtsVoice: process.env.NEXT_PUBLIC_MIMO_TTS_VOICE || 'Chloe',
+  mimoTtsStylePrompt: process.env.NEXT_PUBLIC_MIMO_TTS_STYLE_PROMPT || '',
+  mimoTtsVoiceDesignPrompt:
+    process.env.NEXT_PUBLIC_MIMO_TTS_VOICE_DESIGN_PROMPT || '',
   azureTTSKey: '',
   azureTTSEndpoint: '',
   customApiUrl: process.env.NEXT_PUBLIC_CUSTOM_API_URL || '',
@@ -608,6 +627,8 @@ const getInitialValuesFromEnv = (): SettingsState => ({
     (process.env
       .NEXT_PUBLIC_WHISPER_TRANSCRIPTION_MODEL as WhisperTranscriptionModel) ||
     'whisper-1',
+  mimoAsrLanguage:
+    (process.env.NEXT_PUBLIC_MIMO_ASR_LANGUAGE as MimoAsrLanguage) || 'auto',
   initialSpeechTimeout:
     parseFloat(process.env.NEXT_PUBLIC_INITIAL_SPEECH_TIMEOUT || '5.0') || 5.0,
   chatLogWidth:
@@ -901,6 +922,10 @@ const migratePersistedSettings = (
     delete migrated.multiModalMode
   }
 
+  if (typeof migrated.mimoTtsModel === 'string') {
+    migrated.mimoTtsModel = getMimoTtsModel(migrated.mimoTtsModel)
+  }
+
   // Game commentary migration: ensure defaults for new fields
   if (migrated.gameCommentaryEnabled === undefined) {
     migrated.gameCommentaryEnabled =
@@ -974,6 +999,7 @@ const settingsStore = create<SettingsState>()(
         koeiromapKey: state.koeiromapKey,
         youtubeApiKey: state.youtubeApiKey,
         elevenlabsApiKey: state.elevenlabsApiKey,
+        mimoApiKey: state.mimoApiKey,
         azureEndpoint: state.azureEndpoint,
         selectAIService: state.selectAIService,
         selectAIModel: state.selectAIModel,
@@ -1017,6 +1043,10 @@ const settingsStore = create<SettingsState>()(
         gsviTtsSpeechRate: state.gsviTtsSpeechRate,
         elevenlabsVoiceId: state.elevenlabsVoiceId,
         cartesiaVoiceId: state.cartesiaVoiceId,
+        mimoTtsModel: state.mimoTtsModel,
+        mimoTtsVoice: state.mimoTtsVoice,
+        mimoTtsStylePrompt: state.mimoTtsStylePrompt,
+        mimoTtsVoiceDesignPrompt: state.mimoTtsVoiceDesignPrompt,
         difyUrl: state.difyUrl,
         difyConversationId: state.difyConversationId,
         youtubeMode: state.youtubeMode,
@@ -1121,6 +1151,7 @@ const settingsStore = create<SettingsState>()(
         showPresetQuestions: state.showPresetQuestions,
         speechRecognitionMode: state.speechRecognitionMode,
         whisperTranscriptionModel: state.whisperTranscriptionModel,
+        mimoAsrLanguage: state.mimoAsrLanguage,
         customApiUrl: state.customApiUrl,
         customApiHeaders: state.customApiHeaders,
         customApiBody: state.customApiBody,
